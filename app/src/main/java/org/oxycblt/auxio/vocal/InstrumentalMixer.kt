@@ -10,53 +10,118 @@ import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-/** Mixes the non-vocal Demucs stems into a single PCM16 WAV without loading the whole song in RAM. */
+/** Mixes the non-vocal Demucs stems into one stereo PCM16 WAV without loading the song into RAM. */
 internal object InstrumentalMixer {
     private const val WAV_HEADER_BYTES = 44
     private const val CHUNK_BYTES = 16 * 1024
 
     fun mix(stemsDirectory: File, destination: File) {
-        val names = listOf("drums.wav", "bass.wav", "other.wav", "guitar.wav", "piano.wav")
-        val files = names.map { File(stemsDirectory, it) }.filter { it.isFile && it.length() > WAV_HEADER_BYTES }
-        require(files.size >= 3) { "The separation engine did not produce enough instrumental stems." }
+        val required = listOf("drums.wav", "bass.wav", "other.wav")
+        val optional = listOf("guitar.wav", "piano.wav")
+        val files = (required + optional)
+            .map { File(stemsDirectory, it) }
+            .filter { it.isFile && it.length() > WAV_HEADER_BYTES }
 
-        val inputs = files.map(::FileInputStream)
-        try {
-            val headers = inputs.map { input ->
+        require(required.all { name -> files.any { it.name == name } }) {
+            "The separation engine did not produce the required instrumental stems."
+        }
+
+        val headers = files.map { file ->
+            FileInputStream(file).use { input ->
                 ByteArray(WAV_HEADER_BYTES).also { readFully(input, it) }
             }
-            val dataBytes = ByteBuffer.wrap(headers.first()).order(ByteOrder.LITTLE_ENDIAN).getInt(40)
-            require(dataBytes > 0 && headers.all {
-                ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN).getInt(40) == dataBytes
-            }) { "The generated stems have incompatible WAV lengths." }
+        }
+        val first = headers.first()
+        val firstFormat = ByteBuffer.wrap(first).order(ByteOrder.LITTLE_ENDIAN)
+        require(first.copyOfRange(0, 4).decodeToString() == "RIFF" &&
+            first.copyOfRange(8, 12).decodeToString() == "WAVE" &&
+            firstFormat.getShort(20).toInt() == 1 &&
+            firstFormat.getShort(22).toInt() == 2 &&
+            firstFormat.getInt(24) == 44_100 &&
+            firstFormat.getShort(34).toInt() == 16
+        ) { "The separation engine returned an unsupported WAV format." }
 
-            val header = headers.first().copyOf()
-            ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN)
-                .putInt(4, dataBytes + 36)
-                .putInt(40, dataBytes)
+        val dataBytes = firstFormat.getInt(40)
+        require(dataBytes > 0 && dataBytes % 4 == 0 && headers.all { header ->
+            val format = ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN)
+            format.getInt(40) == dataBytes &&
+                format.getShort(22).toInt() == 2 &&
+                format.getInt(24) == 44_100 &&
+                format.getShort(34).toInt() == 16
+        }) { "The generated stems have incompatible WAV formats or lengths." }
 
+        // First pass finds the peak of the summed stems. A single global gain prevents
+        // hard clipping while preserving the relative dynamics of the instrumental mix.
+        val peak = scanPeak(files, dataBytes)
+        val gain = if (peak > Short.MAX_VALUE) Short.MAX_VALUE.toDouble() / peak else 1.0
+
+        val outputHeader = first.copyOf()
+        ByteBuffer.wrap(outputHeader).order(ByteOrder.LITTLE_ENDIAN)
+            .putInt(4, dataBytes + 36)
+            .putInt(40, dataBytes)
+
+        openInputs(files).use { inputs ->
             FileOutputStream(destination).use { output ->
-                output.write(header)
-                val sourceBuffers = inputs.map { ByteArray(CHUNK_BYTES) }
-                val mixed = ByteArray(CHUNK_BYTES)
-                var remaining = dataBytes
-                while (remaining > 0) {
-                    val count = minOf(CHUNK_BYTES, remaining)
-                    sourceBuffers.forEachIndexed { index, bytes -> readFully(inputs[index], bytes, count) }
-                    val samples = count / 2
-                    val sources = sourceBuffers.map { ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN) }
-                    val out = ByteBuffer.wrap(mixed).order(ByteOrder.LITTLE_ENDIAN)
-                    for (sample in 0 until samples) {
-                        var sum = 0
-                        sources.forEach { source -> sum += source.short.toInt() }
-                        out.putShort(sum.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort())
-                    }
-                    output.write(mixed, 0, count)
-                    remaining -= count
-                }
+                output.write(outputHeader)
+                mixPass(inputs, output, dataBytes, gain)
             }
-        } finally {
-            inputs.forEach { try { it.close() } catch (_: Exception) {} }
+        }
+    }
+
+    private fun scanPeak(files: List<File>, dataBytes: Int): Double {
+        var peak = 0.0
+        openInputs(files).use { inputs ->
+            val buffers = inputs.map { ByteArray(CHUNK_BYTES) }
+            var remaining = dataBytes
+            while (remaining > 0) {
+                val count = minOf(CHUNK_BYTES, remaining)
+                buffers.forEachIndexed { index, bytes -> readFully(inputs[index], bytes, count) }
+                val sources = buffers.map { ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN) }
+                repeat(count / 2) {
+                    var sum = 0
+                    sources.forEach { sum += it.short.toInt() }
+                    peak = maxOf(peak, kotlin.math.abs(sum.toDouble()))
+                }
+                remaining -= count
+            }
+        }
+        return peak
+    }
+
+    private fun mixPass(
+        inputs: List<FileInputStream>,
+        output: FileOutputStream,
+        dataBytes: Int,
+        gain: Double,
+    ) {
+        val buffers = inputs.map { ByteArray(CHUNK_BYTES) }
+        val mixed = ByteArray(CHUNK_BYTES)
+        var remaining = dataBytes
+        while (remaining > 0) {
+            val count = minOf(CHUNK_BYTES, remaining)
+            buffers.forEachIndexed { index, bytes -> readFully(inputs[index], bytes, count) }
+            val sources = buffers.map { ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN) }
+            val destinationBuffer = ByteBuffer.wrap(mixed).order(ByteOrder.LITTLE_ENDIAN)
+            repeat(count / 2) {
+                var sum = 0
+                sources.forEach { sum += it.short.toInt() }
+                destinationBuffer.putShort((sum * gain).toInt()
+                    .coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort())
+            }
+            output.write(mixed, 0, count)
+            remaining -= count
+        }
+    }
+
+    private fun openInputs(files: List<File>): List<FileInputStream> =
+        files.map { FileInputStream(it).apply { skipFully(WAV_HEADER_BYTES) } }
+
+    private fun FileInputStream.skipFully(bytes: Int) {
+        var remaining = bytes.toLong()
+        while (remaining > 0) {
+            val skipped = skip(remaining)
+            check(skipped > 0) { "Could not skip the WAV header." }
+            remaining -= skipped
         }
     }
 
@@ -66,6 +131,14 @@ internal object InstrumentalMixer {
             val count = input.read(buffer, offset, length - offset)
             check(count > 0) { "Unexpected end of WAV stem." }
             offset += count
+        }
+    }
+
+    private inline fun <T> List<FileInputStream>.use(block: (List<FileInputStream>) -> T): T {
+        try {
+            return block(this)
+        } finally {
+            forEach { runCatching { it.close() } }
         }
     }
 }
