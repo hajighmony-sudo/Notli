@@ -18,11 +18,29 @@
             app:title="@string/set_bass_boost"
             app:summary="@string/set_bass_boost_desc" />
 
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="60"
+            app:dependency="@string/set_key_bass_boost"
+            app:entries="@array/entries_effect_strength"
+            app:entryValues="@array/values_effect_strength"
+            app:key="@string/set_key_bass_strength"
+            app:title="@string/set_bass_strength"
+            app:summary="@string/set_bass_strength_desc" />
+
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="@string/set_key_spatial_audio"
             app:title="@string/set_spatial_audio"
             app:summary="@string/set_spatial_audio_desc" />
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="60"
+            app:dependency="@string/set_key_spatial_audio"
+            app:entries="@array/entries_effect_strength"
+            app:entryValues="@array/values_effect_strength"
+            app:key="@string/set_key_spatial_strength"
+            app:title="@string/set_spatial_strength"
+            app:summary="@string/set_spatial_strength_desc" />
 
         <org.oxycblt.auxio.settings.ui.IntListPreference
             app:defaultValue="0"
