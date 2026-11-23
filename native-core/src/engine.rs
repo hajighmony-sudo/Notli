@@ -66,7 +66,7 @@ impl PlayerCore {
             || snapshot.state.duration_ms.is_some_and(|duration| snapshot.state.position_ms > duration)
             || snapshot.state.last_error.as_ref().is_some_and(|message| message.len() > 4096)
             || state_requires_track != has_track
-            || (snapshot.state.is_buffering && snapshot.state.status != PlaybackStatus::Loading)
+            || (snapshot.state.is_buffering && !matches!(snapshot.state.status, PlaybackStatus::Loading | PlaybackStatus::Playing | PlaybackStatus::Paused))
             || (!has_track && snapshot.state.duration_ms.is_some())
             || (snapshot.state.status == PlaybackStatus::Error && snapshot.state.last_error.is_none())
         {
@@ -90,7 +90,7 @@ impl PlayerCore {
             }
             PlayerCommand::Play | PlayerCommand::Resume => {
                 let track = self.queue.current().cloned().ok_or(CoreError::EmptyQueue)?;
-                if self.state.status == PlaybackStatus::Stopped || self.state.current_track.as_ref() != Some(&track.id) {
+                if matches!(self.state.status, PlaybackStatus::Stopped | PlaybackStatus::Completed | PlaybackStatus::Error) || self.state.current_track.as_ref() != Some(&track.id) {
                     self.select_track(track, true, &mut out);
                 } else {
                     self.state.status = PlaybackStatus::Playing;
@@ -225,19 +225,21 @@ impl PlayerCore {
                     self.select_track(track, false, &mut out);
                 } else {
                     self.state.status = PlaybackStatus::Completed;
+                    self.state.is_buffering = false;
                     self.state.position_ms = self.state.duration_ms.unwrap_or(self.state.position_ms);
                     out.events.push(PlayerEvent::PlaybackCompleted);
                 }
             }
             BackendEvent::Failed { track_id, message } if self.state.current_track.as_ref() == Some(&track_id) => {
                 self.state.status = PlaybackStatus::Error;
+                self.state.is_buffering = false;
                 let message: String = message.chars().take(4096).collect();
                 self.state.last_error = Some(message.clone());
                 out.events.push(PlayerEvent::PlaybackError(message));
             }
             _ => unreachable!("backend event track was validated above"),
         }
-        self.state.revision = self.state.revision.wrapping_add(1);
+        self.state.revision = self.state.revision.saturating_add(1);
         out.events.push(PlayerEvent::StateChanged(self.state.clone()));
         out
     }
