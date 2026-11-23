@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::model::{BackendAction, BackendEvent, PlaybackState, PlaybackStatus, PlayerCommand, PlayerEvent, Track, TrackId};
 use crate::queue::{PlaybackQueue, QueueError, QueueSnapshot};
 
@@ -5,10 +6,10 @@ use crate::queue::{PlaybackQueue, QueueError, QueueSnapshot};
 pub enum CoreError { Queue(QueueError), EmptyQueue, NoCurrentTrack }
 impl From<QueueError> for CoreError { fn from(value: QueueError) -> Self { Self::Queue(value) } }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CoreOutput { pub actions: Vec<BackendAction>, pub events: Vec<PlayerEvent> }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayerSnapshot { pub state: PlaybackState, pub queue: QueueSnapshot }
 
 #[derive(Debug, Default)]
