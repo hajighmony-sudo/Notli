@@ -20,6 +20,8 @@ package org.oxycblt.auxio.settings
 
 import android.os.Bundle
 import android.text.format.Formatter
+import android.text.format.DateFormat
+import java.util.Date
 import android.view.LayoutInflater
 import androidx.core.view.updatePadding
 import androidx.fragment.app.activityViewModels
@@ -78,10 +80,20 @@ class AboutFragment : ViewBindingFragment<FragmentAboutBinding>() {
         val stats = requireContext().getSharedPreferences("notli_listening_stats", 0)
         val listeningMs = stats.getLong("listening_time_ms", 0L)
         val tracksPlayed = stats.getLong("tracks_played", 0L)
+        val listeningSessions = stats.getLong("listening_sessions", 0L)
+        val todayListeningMs = stats.getLong("daily_listening_time_ms", 0L)
+        val lastPlayedAt = stats.getLong("last_played_at", 0L)
+        val lastPlayed = if (lastPlayedAt > 0L) DateFormat.getDateTimeInstance().format(Date(lastPlayedAt))
+            else getString(R.string.lbl_never_played)
         val binding = requireBinding()
         binding.aboutListeningTime.text =
             getString(R.string.fmt_listening_time, listeningMs.formatDurationMs(false))
         binding.aboutTracksPlayed.text = getString(R.string.fmt_tracks_played, tracksPlayed)
+        binding.aboutTodayListening.text =
+            getString(R.string.fmt_listening_today, todayListeningMs.formatDurationMs(false))
+        binding.aboutListeningSessions.text =
+            getString(R.string.fmt_listening_sessions, listeningSessions)
+        binding.aboutLastPlayed.text = getString(R.string.fmt_last_played, lastPlayed)
     }
 
     private fun updateStatistics(statistics: MusicViewModel.Statistics?) {
