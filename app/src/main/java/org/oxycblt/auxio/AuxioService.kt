@@ -124,9 +124,10 @@ class AuxioService :
         // A malformed or overly restrictive host hint must never make the root
         // browser tree throw while calculating the "More" category.
         return (browserRootHints?.getInt(
-            MediaConstants.BROWSER_ROOT_HINTS_KEY_ROOT_CHILDREN_LIMIT,
-            4,
-        ) ?: 4).coerceAtLeast(1)
+                MediaConstants.BROWSER_ROOT_HINTS_KEY_ROOT_CHILDREN_LIMIT,
+                4,
+            ) ?: 4)
+            .coerceAtLeast(1)
     }
 
     override fun updateForeground(change: ForegroundListener.Change) {
