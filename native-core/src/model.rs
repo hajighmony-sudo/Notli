@@ -25,10 +25,84 @@ pub struct Track {
 
 impl Track {
     pub fn is_valid(&self) -> bool {
-        !self.title.trim().is_empty() && self.title.len() <= 1024
-            && !self.source_uri.trim().is_empty() && self.source_uri.len() <= 8192
+        let id_valid = !self.id.0.trim().is_empty()
+            && self.id.0.len() <= 256
+            && !self.id.0.chars().any(char::is_control);
+        let source_valid = valid_source_uri(&self.source_uri);
+
+        id_valid
+            && !self.title.trim().is_empty()
+            && self.title.len() <= 1024
+            && source_valid
             && self.artist.as_ref().is_none_or(|v| v.len() <= 1024)
             && self.album.as_ref().is_none_or(|v| v.len() <= 1024)
+    }
+}
+
+fn valid_source_uri(uri: &str) -> bool {
+    if uri.is_empty() || uri.len() > 8192 || uri.chars().any(char::is_control) {
+        return false;
+    }
+
+    let Some((scheme, rest)) = uri.split_once("://") else {
+        return false;
+    };
+
+    if rest.is_empty() {
+        return false;
+    }
+
+    match scheme.to_ascii_lowercase().as_str() {
+        "content" | "https" => rest
+            .split('/')
+            .next()
+            .is_some_and(|authority| !authority.is_empty()),
+        "file" => rest.starts_with('/'),
+        _ => false,
+    }
+}
+
+#[cfg(test)]
+mod validation_tests {
+    use super::*;
+
+    fn track(id: &str, uri: &str) -> Track {
+        Track {
+            id: TrackId(id.to_owned()),
+            title: "A track".to_owned(),
+            artist: None,
+            album: None,
+            source_uri: uri.to_owned(),
+            duration_ms: None,
+        }
+    }
+
+    #[test]
+    fn accepts_android_media_and_approved_remote_uris() {
+        assert!(track("1", "content://media/external/audio/1").is_valid());
+        assert!(track("2", "file:///storage/music/song.mp3").is_valid());
+        assert!(track("3", "https://cdn.example/song.mp3").is_valid());
+    }
+
+    #[test]
+    fn rejects_unsupported_or_malformed_source_uris() {
+        for uri in [
+            "",
+            "javascript://alert(1)",
+            "http://insecure.example/song.mp3",
+            "https://",
+            "content://",
+            "file://relative/path.mp3",
+            "https://example.com/song.mp3\\n",
+        ] {
+            assert!(!track("1", uri).is_valid(), "URI should be rejected: {uri:?}");
+        }
+    }
+
+    #[test]
+    fn rejects_invalid_deserialized_track_ids() {
+        assert!(!track("  ", "content://media/audio/1").is_valid());
+        assert!(!track("bad\\nid", "content://media/audio/1").is_valid());
     }
 }
 
