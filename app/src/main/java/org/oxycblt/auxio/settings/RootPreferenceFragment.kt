@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
+
 package org.oxycblt.auxio.settings
 
 import android.os.Bundle
@@ -64,10 +64,6 @@ class RootPreferenceFragment : BasePreferenceFragment(R.xml.preferences_root) {
         // TODO: These seem like good things to put into a side navigation view, if I choose to
         //  do one.
         when (preference.key) {
-            getString(R.string.set_key_ui) -> {
-                L.d("Navigating to UI preferences")
-                findNavController().navigateSafe(RootPreferenceFragmentDirections.uiPreferences())
-            }
             getString(R.string.set_key_personalize) -> {
                 L.d("Navigating to personalization preferences")
                 findNavController()
