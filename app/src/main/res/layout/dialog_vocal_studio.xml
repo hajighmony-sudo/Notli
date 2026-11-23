@@ -60,6 +60,14 @@
             android:text="@string/vocal_download_model" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/vocal_remove_model_button"
+            style="@style/Widget.Material3Expressive.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/vocal_remove_model"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/vocal_process_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
