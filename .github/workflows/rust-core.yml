@@ -6,11 +6,12 @@ concurrency:
 
 on:
   push:
-    branches: [Noti-rust-core]
+    branches: [Noti-rust-core, noti-core-hardening]
     paths:
       - 'native-core/**'
       - '.github/workflows/rust-core.yml'
   pull_request:
+    branches: [Noti]
     paths:
       - 'native-core/**'
       - '.github/workflows/rust-core.yml'
