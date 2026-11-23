@@ -27,8 +27,10 @@ import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
 import javax.inject.Inject
 import kotlin.math.pow
+import org.oxycblt.auxio.playback.AdaptiveHapticsEngine
 import org.oxycblt.auxio.playback.PlaybackSettings
 import org.oxycblt.auxio.playback.state.PlaybackStateManager
+import org.oxycblt.auxio.playback.state.Progression
 import org.oxycblt.auxio.playback.state.QueueChange
 import org.oxycblt.musikr.Album
 import org.oxycblt.musikr.MusicParent
@@ -51,7 +53,11 @@ class ReplayGainAudioProcessor
 constructor(
     private val playbackManager: PlaybackStateManager,
     private val playbackSettings: PlaybackSettings,
+    private val adaptiveHaptics: AdaptiveHapticsEngine,
 ) : BaseAudioProcessor(), PlaybackStateManager.Listener, PlaybackSettings.Listener {
+    private var sampleRate = 0
+    private var channelCount = 0
+
     private var volume = 1f
         set(value) {
             field = value
@@ -82,6 +88,10 @@ constructor(
         if (change.type == QueueChange.Type.SONG) {
             applyReplayGain(playbackManager.currentSong)
         }
+    }
+
+    override fun onProgressionChanged(progression: Progression) {
+        if (!progression.isPlaying) adaptiveHaptics.stop()
     }
 
     override fun onNewPlayback(
@@ -171,6 +181,8 @@ constructor(
         inputAudioFormat: AudioProcessor.AudioFormat,
     ): AudioProcessor.AudioFormat {
         if (inputAudioFormat.encoding == C.ENCODING_PCM_16BIT) {
+            sampleRate = inputAudioFormat.sampleRate
+            channelCount = inputAudioFormat.channelCount
             // AudioProcessor is only provided 16-bit PCM audio data, so that's the only
             // encoding we need to check for.
             // TODO: Convert to a low-level audio processor capable of handling any kind of
@@ -182,6 +194,7 @@ constructor(
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
+        adaptiveHaptics.process(inputBuffer, sampleRate, channelCount)
         val pos = inputBuffer.position()
         val limit = inputBuffer.limit()
         val buffer = replaceOutputBuffer(limit - pos)
