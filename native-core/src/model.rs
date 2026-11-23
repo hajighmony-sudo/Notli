@@ -128,7 +128,7 @@ pub struct PlaybackState {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PlayerCommand {
     SetQueue { tracks: Vec<Track>, start_index: usize, autoplay: bool },
-    Play, Pause, Resume, Stop, Seek { position_ms: u64 }, Next, Previous,
+    Play, Pause, Resume, Stop, Seek { position_ms: u64 }, Next, Previous,\n    PreviousWithRewind { rewind_if_late: bool },
     PlayTrack(TrackId), PlayQueueIndex(usize), AddToQueue(Track), PlayNext(Track),
     RemoveFromQueue(TrackId), RemoveQueueItem(usize),
     MoveInQueue { track_id: TrackId, new_index: usize },
