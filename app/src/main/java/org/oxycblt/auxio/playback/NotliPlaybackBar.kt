@@ -66,6 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.oxycblt.auxio.playback.state.RepeatMode
+import org.oxycblt.auxio.ui.notliPressScale
 import org.oxycblt.musikr.Song
 
 /**
@@ -197,6 +198,7 @@ internal fun NotliPlaybackBar(
                 }
 
                 IconButton(
+                    modifier = Modifier.notliPressScale(),
                     onClick = {
                         when (actionMode) {
                             ActionMode.NEXT -> onNext()
@@ -224,7 +226,10 @@ internal fun NotliPlaybackBar(
                     }
                 }
 
-                IconButton(onClick = onTogglePlaying) {
+                IconButton(
+                    onClick = onTogglePlaying,
+                    modifier = Modifier.notliPressScale(pressedScale = 0.88f),
+                ) {
                     AnimatedContent(
                         targetState = isPlaying,
                         transitionSpec = {
