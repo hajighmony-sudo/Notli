@@ -206,13 +206,13 @@ internal class RustMedia3Bridge(
     private fun Song.toRustTrack(): JSONObject =
         JSONObject()
             .put("id", uid.toString())
-            .put("title", name.toString().ifBlank { uri.lastPathSegment ?: uid.toString() })
+            .put("title", name.raw.take(1024).ifBlank { uri.lastPathSegment ?: uid.toString() })
             .put(
                 "artist",
-                artists.joinToString(", ") { it.name.toString() }.takeIf { it.isNotBlank() }
+                artists.joinToString(", ") { it.name.asText() }.take(1024).takeIf { it.isNotBlank() }
                     ?: JSONObject.NULL,
             )
-            .put("album", album.name.toString().takeIf { it.isNotBlank() } ?: JSONObject.NULL)
+            .put("album", album.name.asText().take(1024).takeIf { it.isNotBlank() } ?: JSONObject.NULL)
             .put("source_uri", uri.toString())
             .put("duration_ms", if (durationMs > 0L) durationMs else JSONObject.NULL)
 
