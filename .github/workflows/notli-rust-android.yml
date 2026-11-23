@@ -6,13 +6,14 @@ concurrency:
 
 on:
   push:
-    branches: [Noti-rust-core]
+    branches: [Noti-rust-core, noti-core-hardening]
     paths:
       - 'native-core/**'
       - 'app/src/main/java/org/oxycblt/auxio/playback/nativecore/**'
       - 'app/build.gradle'
       - '.github/workflows/notli-rust-android.yml'
   pull_request:
+    branches: [Noti]
     paths:
       - 'native-core/**'
       - 'app/src/main/java/org/oxycblt/auxio/playback/nativecore/**'
