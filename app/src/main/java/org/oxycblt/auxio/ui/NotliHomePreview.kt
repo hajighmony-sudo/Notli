@@ -20,17 +20,21 @@ package org.oxycblt.auxio.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 
 private val previewLabels =
     NotliHomeLabels(
@@ -77,7 +81,9 @@ private fun PreviewHome(dark: Boolean) {
     var playing by remember { mutableStateOf(true) }
     var position by remember { mutableStateOf(84_000L) }
     var chip by remember { mutableIntStateOf(0) }
+    var tab by remember { mutableIntStateOf(0) }
     NotliThemeHost(darkTheme = dark) {
+      Box(Modifier.fillMaxSize()) {
         NotliHomeDashboard(
             labels = previewLabels,
             nowPlaying =
@@ -112,6 +118,26 @@ private fun PreviewHome(dark: Boolean) {
             nowPlayingArtwork = { PreviewArt(0) },
             recentArtwork = { item -> PreviewArt(item.key.toInt()) },
         )
+        Column(Modifier.align(Alignment.BottomCenter)) {
+            NotliMiniPlayer(
+                title = "Midnight Signals",
+                artist = "Nova Drift",
+                isPlaying = playing,
+                progress = position / 232_000f,
+                onOpen = {},
+                onPrevious = {},
+                onTogglePlaying = { playing = !playing },
+                onNext = {},
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                artwork = { PreviewArt(0) },
+            )
+            NotliBottomNav(
+                items = notliDefaultNavItems(),
+                selectedIndex = tab,
+                onSelect = { tab = it },
+            )
+        }
+      }
     }
 }
 
