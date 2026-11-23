@@ -50,6 +50,48 @@
             app:title="@string/set_pitch_effect"
             app:summary="@string/set_pitch_effect_desc" />
 
+        <PreferenceCategory android:title="@string/set_manual_equalizer">
+            <SeekBarPreference
+                app:defaultValue="12"
+                app:key="@string/set_key_eq_60"
+                app:min="0"
+                android:max="24"
+                app:seekBarIncrement="1"
+                app:showSeekBarValue="true"
+                app:title="@string/set_eq_60" />
+            <SeekBarPreference
+                app:defaultValue="12"
+                app:key="@string/set_key_eq_230"
+                app:min="0"
+                android:max="24"
+                app:seekBarIncrement="1"
+                app:showSeekBarValue="true"
+                app:title="@string/set_eq_230" />
+            <SeekBarPreference
+                app:defaultValue="12"
+                app:key="@string/set_key_eq_910"
+                app:min="0"
+                android:max="24"
+                app:seekBarIncrement="1"
+                app:showSeekBarValue="true"
+                app:title="@string/set_eq_910" />
+            <SeekBarPreference
+                app:defaultValue="12"
+                app:key="@string/set_key_eq_3600"
+                app:min="0"
+                android:max="24"
+                app:seekBarIncrement="1"
+                app:showSeekBarValue="true"
+                app:title="@string/set_eq_3600" />
+            <SeekBarPreference
+                app:defaultValue="12"
+                app:key="@string/set_key_eq_14000"
+                app:min="0"
+                android:max="24"
+                app:seekBarIncrement="1"
+                app:showSeekBarValue="true"
+                app:title="@string/set_eq_14000" />
+        </PreferenceCategory>
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/set_playback">
