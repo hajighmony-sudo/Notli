@@ -25,44 +25,83 @@ import kotlin.coroutines.coroutineContext
 internal class VocalModelStore(context: Context) {
     private val directory = File(context.filesDir, "vocal-studio/models").apply { mkdirs() }
     val modelFile = File(directory, MODEL_NAME)
-    val isReady: Boolean get() = modelFile.isFile && modelFile.length() in MIN_MODEL_BYTES..MAX_MODEL_BYTES
+
+    @Volatile
+    private var verified = false
+
+    /** True only after the complete pinned SHA-256 has been checked in this process. */
+    val isReady: Boolean get() = verified
 
     suspend fun verifyInstalled(): Boolean = withContext(Dispatchers.IO) {
-        modelFile.isFile && modelFile.length() in MIN_MODEL_BYTES..MAX_MODEL_BYTES && sha256(modelFile) == MODEL_SHA256
+        val valid = modelFile.isFile &&
+            modelFile.length() in MIN_MODEL_BYTES..MAX_MODEL_BYTES &&
+            sha256(modelFile) == MODEL_SHA256
+        verified = valid
+        valid
+    }
+
+    fun markInvalid() {
+        verified = false
     }
 
     suspend fun download(onProgress: (Int) -> Unit) = withContext(Dispatchers.IO) {
-        if (isReady && sha256(modelFile) == MODEL_SHA256) return@withContext
-        if (modelFile.exists()) modelFile.delete()
+        if (verifyInstalled()) return@withContext
+        verified = false
+
         val temporary = File(directory, "$MODEL_NAME.download")
+        if (temporary.exists()) temporary.delete()
+
         val connection = (URL(MODEL_URL).openConnection() as HttpURLConnection).apply {
             connectTimeout = 20_000
             readTimeout = 30_000
             instanceFollowRedirects = true
             requestMethod = "GET"
         }
+
         try {
             connection.connect()
-            check(connection.responseCode in 200..299) { "Model download failed: HTTP ${connection.responseCode}" }
+            check(connection.responseCode in 200..299) {
+                "Model download failed: HTTP ${connection.responseCode}"
+            }
+            val expectedLength = connection.contentLengthLong
+            if (expectedLength > 0) {
+                check(expectedLength in MIN_MODEL_BYTES..MAX_MODEL_BYTES) {
+                    "The model server returned an unexpected file size."
+                }
+            }
+
             connection.inputStream.use { input ->
-                FileOutputStream(temporary).use { output ->
+                FileOutputStream(temporary, false).use { output ->
                     val buffer = ByteArray(64 * 1024)
                     var total = 0L
                     while (true) {
                         coroutineContext.ensureActive()
                         val count = input.read(buffer)
                         if (count < 0) break
-                        output.write(buffer, 0, count)
                         total += count
+                        check(total <= MAX_MODEL_BYTES) {
+                            "The model download exceeded the expected size."
+                        }
+                        output.write(buffer, 0, count)
                         onProgress(((total * 100) / MODEL_BYTES).toInt().coerceIn(0, 99))
                     }
                     output.fd.sync()
                 }
             }
-            check(temporary.length() in MIN_MODEL_BYTES..MAX_MODEL_BYTES) { "Downloaded model has an unexpected size." }
-            check(sha256(temporary) == MODEL_SHA256) { "Model checksum mismatch. The file was rejected." }
-            if (modelFile.exists()) modelFile.delete()
-            check(temporary.renameTo(modelFile)) { "Could not install the verified model." }
+
+            check(temporary.length() in MIN_MODEL_BYTES..MAX_MODEL_BYTES) {
+                "Downloaded model has an unexpected size."
+            }
+            check(sha256(temporary) == MODEL_SHA256) {
+                "Model checksum mismatch. The file was rejected."
+            }
+            if (modelFile.exists()) check(modelFile.delete()) {
+                "Could not replace the previous model."
+            }
+            check(temporary.renameTo(modelFile)) {
+                "Could not install the verified model."
+            }
+            verified = true
             onProgress(100)
         } finally {
             connection.disconnect()
