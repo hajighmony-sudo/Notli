@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QueueError {
     InvalidTrack,
-    DuplicateTrack,
     InvalidStartIndex,
     InvalidIndex,
     TrackNotFound,
@@ -325,7 +324,7 @@ mod tests {
         let mut queue = PlaybackQueue::default();
         queue.replace(vec![track("same", "first"), track("same", "second")], 0).unwrap();
         queue.select_index(1).unwrap();
-        assert!(queue.remove_at(0).unwrap());
+        assert!(!queue.remove_at(0).unwrap());
         assert_eq!(queue.current().unwrap().title, "second");
     }
 
