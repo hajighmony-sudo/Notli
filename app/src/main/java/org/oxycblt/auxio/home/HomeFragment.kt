@@ -455,8 +455,9 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
                 Manifest.permission.READ_EXTERNAL_STORAGE
             }
 
-        if (ContextCompat.checkSelfPermission(requireContext(), permission) ==
-            PackageManager.PERMISSION_GRANTED
+        if (
+            ContextCompat.checkSelfPermission(requireContext(), permission) ==
+                PackageManager.PERMISSION_GRANTED
         ) {
             musicModel.refresh()
             return
