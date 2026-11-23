@@ -25,7 +25,11 @@ import kotlin.coroutines.coroutineContext
 internal class VocalModelStore(context: Context) {
     private val directory = File(context.filesDir, "vocal-studio/models").apply { mkdirs() }
     val modelFile = File(directory, MODEL_NAME)
-    val isReady: Boolean get() = modelFile.isFile && modelFile.length() == MODEL_BYTES && sha256(modelFile) == MODEL_SHA256
+    val isReady: Boolean get() = modelFile.isFile && modelFile.length() in MIN_MODEL_BYTES..MAX_MODEL_BYTES
+
+    suspend fun verifyInstalled(): Boolean = withContext(Dispatchers.IO) {
+        modelFile.isFile && modelFile.length() in MIN_MODEL_BYTES..MAX_MODEL_BYTES && sha256(modelFile) == MODEL_SHA256
+    }
 
     suspend fun download(onProgress: (Int) -> Unit) = withContext(Dispatchers.IO) {
         if (isReady) return@withContext
@@ -54,7 +58,7 @@ internal class VocalModelStore(context: Context) {
                     output.fd.sync()
                 }
             }
-            check(temporary.length() == MODEL_BYTES) { "Downloaded model has an unexpected size." }
+            check(temporary.length() in MIN_MODEL_BYTES..MAX_MODEL_BYTES) { "Downloaded model has an unexpected size." }
             check(sha256(temporary) == MODEL_SHA256) { "Model checksum mismatch. The file was rejected." }
             check(temporary.renameTo(modelFile)) { "Could not install the verified model." }
             onProgress(100)
@@ -79,6 +83,8 @@ internal class VocalModelStore(context: Context) {
 
     companion object {
         const val MODEL_NAME = "htdemucs_6s.safetensors"
+        const val MIN_MODEL_BYTES = 50_000_000L
+        const val MAX_MODEL_BYTES = 60_000_000L
         const val MODEL_BYTES = 55_000_000L
         const val MODEL_SHA256 = "d2a1745f0744721f6b8ca5bf469b67c651ea5ed1b52998cab033b2158609d411"
         const val MODEL_URL = "https://huggingface.co/adefossez/HTDemucs-6s/resolve/3c5ee475be622df764938de97e4281a7b07ffa58/5c90dfd2.safetensors"
