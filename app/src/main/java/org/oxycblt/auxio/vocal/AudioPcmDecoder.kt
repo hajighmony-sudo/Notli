@@ -55,6 +55,7 @@ internal object AudioPcmDecoder {
                         val inputIndex = decoder.dequeueInputBuffer(10_000)
                         if (inputIndex >= 0) {
                             val inputBuffer = decoder.getInputBuffer(inputIndex)!!
+                            inputBuffer.clear()
                             val size = extractor.readSampleData(inputBuffer, 0)
                             if (size < 0) {
                                 decoder.queueInputBuffer(inputIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
