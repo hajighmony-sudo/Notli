@@ -9,13 +9,18 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.CancellationException
 
 /** Mixes the non-vocal Demucs stems into one stereo PCM16 WAV without loading the song into RAM. */
 internal object InstrumentalMixer {
     private const val WAV_HEADER_BYTES = 44
     private const val CHUNK_BYTES = 16 * 1024
 
-    fun mix(stemsDirectory: File, destination: File) {
+    fun mix(
+        stemsDirectory: File,
+        destination: File,
+        shouldContinue: () -> Boolean = { true },
+    ) {
         val required = listOf("drums.wav", "bass.wav", "other.wav")
         val optional = listOf("guitar.wav", "piano.wav")
         val files = (required + optional)
@@ -52,7 +57,7 @@ internal object InstrumentalMixer {
 
         // First pass finds the peak of the summed stems. A single global gain prevents
         // hard clipping while preserving the relative dynamics of the instrumental mix.
-        val peak = scanPeak(files, dataBytes)
+        val peak = scanPeak(files, dataBytes, shouldContinue)
         val gain = if (peak > Short.MAX_VALUE) Short.MAX_VALUE.toDouble() / peak else 1.0
 
         val outputHeader = first.copyOf()
@@ -63,17 +68,22 @@ internal object InstrumentalMixer {
         openInputs(files).use { inputs ->
             FileOutputStream(destination).use { output ->
                 output.write(outputHeader)
-                mixPass(inputs, output, dataBytes, gain)
+                mixPass(inputs, output, dataBytes, gain, shouldContinue)
             }
         }
     }
 
-    private fun scanPeak(files: List<File>, dataBytes: Int): Double {
+    private fun scanPeak(
+        files: List<File>,
+        dataBytes: Int,
+        shouldContinue: () -> Boolean,
+    ): Double {
         var peak = 0.0
         openInputs(files).use { inputs ->
             val buffers = inputs.map { ByteArray(CHUNK_BYTES) }
             var remaining = dataBytes
             while (remaining > 0) {
+                if (!shouldContinue()) throw CancellationException("Instrumental mixing cancelled.")
                 val count = minOf(CHUNK_BYTES, remaining)
                 buffers.forEachIndexed { index, bytes -> readFully(inputs[index], bytes, count) }
                 val sources = buffers.map { ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN) }
@@ -93,11 +103,13 @@ internal object InstrumentalMixer {
         output: FileOutputStream,
         dataBytes: Int,
         gain: Double,
+        shouldContinue: () -> Boolean,
     ) {
         val buffers = inputs.map { ByteArray(CHUNK_BYTES) }
         val mixed = ByteArray(CHUNK_BYTES)
         var remaining = dataBytes
         while (remaining > 0) {
+            if (!shouldContinue()) throw CancellationException("Instrumental mixing cancelled.")
             val count = minOf(CHUNK_BYTES, remaining)
             buffers.forEachIndexed { index, bytes -> readFully(inputs[index], bytes, count) }
             val sources = buffers.map { ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN) }
