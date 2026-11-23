@@ -132,9 +132,19 @@ internal class PlaybackAudioEffects(
                             }
                         else -> 0
                     }
+                val manualDb =
+                    when {
+                        frequencyHz < 120 -> preferences.getInt(KEY_EQ_BAND_60, 12) - 12
+                        frequencyHz < 500 -> preferences.getInt(KEY_EQ_BAND_230, 12) - 12
+                        frequencyHz < 2_000 -> preferences.getInt(KEY_EQ_BAND_910, 12) - 12
+                        frequencyHz < 8_000 -> preferences.getInt(KEY_EQ_BAND_3600, 12) - 12
+                        else -> preferences.getInt(KEY_EQ_BAND_14000, 12) - 12
+                    }
                 effect.setBandLevel(
                     band,
-                    target.coerceIn(range[0].toInt(), range[1].toInt()).toShort(),
+                    (target + manualDb * 100)
+                        .coerceIn(range[0].toInt(), range[1].toInt())
+                        .toShort(),
                 )
             }
             effect.enabled = true
@@ -216,6 +226,11 @@ internal class PlaybackAudioEffects(
 
     private companion object {
         const val KEY_EQ_PRESET = "auxio_audio_eq_preset"
+        const val KEY_EQ_BAND_60 = "auxio_audio_eq_60"
+        const val KEY_EQ_BAND_230 = "auxio_audio_eq_230"
+        const val KEY_EQ_BAND_910 = "auxio_audio_eq_910"
+        const val KEY_EQ_BAND_3600 = "auxio_audio_eq_3600"
+        const val KEY_EQ_BAND_14000 = "auxio_audio_eq_14000"
         const val KEY_BASS_BOOST = "auxio_audio_bass_boost"
         const val KEY_BASS_STRENGTH = "auxio_audio_bass_strength"
         const val KEY_SPATIAL_AUDIO = "auxio_audio_spatial"
