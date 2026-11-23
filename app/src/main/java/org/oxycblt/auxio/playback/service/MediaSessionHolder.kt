@@ -106,7 +106,8 @@ private constructor(
             // head units, and steering-wheel media keys are routed to this session.
             setFlags(
                 MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
-                    MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS,
+                    MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS or
+                    MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS,
             )
             // Give Android Auto and Bluetooth/steering-wheel hosts an explicit media-button
             // receiver PendingIntent in addition to the exported manifest receiver.
