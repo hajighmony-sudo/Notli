@@ -6,9 +6,9 @@ concurrency:
 
 on:
   push:
-    branches: []
+    branches: [noti-core-hardening]
   pull_request:
-    branches: []
+    branches: [Noti]
 
 permissions:
   contents: write
