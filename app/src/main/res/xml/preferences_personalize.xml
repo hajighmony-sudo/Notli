@@ -4,7 +4,6 @@
     app:title="@string/set_personalize">
 
     <PreferenceCategory app:title="@string/set_display">
-
         <org.oxycblt.auxio.settings.ui.WrappedDialogPreference
             app:key="@string/set_key_home_tabs"
             app:summary="@string/set_lib_tabs_desc"
@@ -16,11 +15,9 @@
             app:entryValues="@array/values_bar_action"
             app:key="@string/set_key_bar_action"
             app:title="@string/set_bar_action" />
-
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/set_behavior">
-
+    <PreferenceCategory app:title="@string/set_behavior">
         <org.oxycblt.auxio.settings.ui.IntListPreference
             app:defaultValue="@integer/play_song_from_all"
             app:entries="@array/entries_play_in_list_with"
@@ -48,8 +45,6 @@
             app:key="@string/set_key_task_exit"
             app:summary="@string/set_task_exit_desc"
             app:title="@string/set_task_exit" />
-
     </PreferenceCategory>
-
 
 </PreferenceScreen>
