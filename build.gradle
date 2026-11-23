@@ -61,8 +61,8 @@ ext.applyMedia3ProgressiveMediaSourcePatch = {
     }
 
     def source = sourceFile.getText("UTF-8")
-    def staleDeclaration = "      boolean enableHagcPlayback = experimentalEnableHagcPlayback;\\n"
-    def staleArgument = "                  enableHagcPlayback,\\n"
+    def staleDeclaration = "      boolean enableHagcPlayback = experimentalEnableHagcPlayback;\n"
+    def staleArgument = "                  enableHagcPlayback,\n"
 
     if (source.contains(staleDeclaration) && source.contains(staleArgument)) {
         source = source.replace(staleDeclaration, "").replace(staleArgument, "")
