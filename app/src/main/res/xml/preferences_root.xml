@@ -5,12 +5,6 @@
 
     <PreferenceCategory app:title="@string/set_display">
         <Preference
-            app:icon="@drawable/ic_accent_24"
-            app:key="@string/set_key_ui"
-            app:summary="@string/set_ui_desc"
-            app:title="@string/set_ui" />
-
-        <Preference
             app:icon="@drawable/ic_config_24"
             app:key="@string/set_key_personalize"
             app:summary="@string/set_personalize_desc"
