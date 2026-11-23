@@ -106,10 +106,29 @@ constructor(
         musicBrowser.getItem(mediaId)
     }
 
-    fun getChildren(mediaId: String, maxTabs: Int, result: Result<MutableList<MediaItem>>) =
-        result.dispatch {
-            musicBrowser.getChildren(mediaId, maxTabs)?.toMutableList()
+    fun getChildren(
+        mediaId: String,
+        maxTabs: Int,
+        options: Bundle?,
+        result: Result<MutableList<MediaItem>>,
+    ) = result.dispatch {
+        val children = musicBrowser.getChildren(mediaId, maxTabs) ?: return@dispatch null
+        val page = options?.getInt(android.support.v4.media.MediaBrowserCompat.EXTRA_PAGE, -1) ?: -1
+        val pageSize =
+            options?.getInt(android.support.v4.media.MediaBrowserCompat.EXTRA_PAGE_SIZE, -1) ?: -1
+
+        // Android Auto and other MediaBrowser clients may request paged children.
+        // Keep the existing full-list behavior when valid paging values are absent.
+        if (page < 0 || pageSize <= 0) {
+            children.toMutableList()
+        } else {
+            val start =
+                (page.toLong() * pageSize.toLong()).coerceAtMost(children.size.toLong()).toInt()
+            val end =
+                (start.toLong() + pageSize.toLong()).coerceAtMost(children.size.toLong()).toInt()
+            children.subList(start, end).toMutableList()
         }
+    }
 
     fun search(query: String, result: Result<MutableList<MediaItem>>) = result.dispatchAsync {
         musicBrowser.search(query)
