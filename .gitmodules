@@ -6,3 +6,7 @@
 	path = musikr/src/main/cpp/taglib
 	url = https://github.com/taglib/taglib.git
 	tag = ee1931b
+
+[submodule "third_party/demucs-android"]
+	path = third_party/demucs-android
+	url = https://github.com/jPaauwe/demucs-android.git
