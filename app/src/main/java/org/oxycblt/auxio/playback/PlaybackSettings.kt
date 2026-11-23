@@ -37,7 +37,6 @@ import timber.log.Timber as L
 interface PlaybackSettings : Settings<PlaybackSettings.Listener> {
     /** The action to display on the playback bar. */
     val barAction: ActionMode
-    /** Whether to start playback when a headset is plugged in. */
     /** Whether music rhythm should drive short device haptic pulses. */
     val adaptiveHapticsEnabled: Boolean
     /** Whether to start playback when a headset is plugged in. */
