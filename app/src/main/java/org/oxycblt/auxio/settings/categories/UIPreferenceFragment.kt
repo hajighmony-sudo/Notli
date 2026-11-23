@@ -18,7 +18,6 @@
  
 package org.oxycblt.auxio.settings.categories
 
-import androidx.navigation.fragment.findNavController
 import android.graphics.Color
 import android.text.InputType
 import android.view.View
@@ -27,6 +26,7 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
@@ -74,35 +74,41 @@ class UIPreferenceFragment : BasePreferenceFragment(R.xml.preferences_ui) {
             UISettings.AURORA_SECONDARY,
             UISettings.AURORA_SURFACE,
             UISettings.AURORA_BACKGROUND -> {
-                preference.summary = uiSettings.auroraColorHex(preference.key) ?: getString(R.string.aurora_pick_color)
+                preference.summary =
+                    uiSettings.auroraColorHex(preference.key)
+                        ?: getString(R.string.aurora_pick_color)
                 preference.onPreferenceClickListener = Preference.OnPreferenceClickListener {
                     showAuroraColorPicker(preference.key, preference.title)
                     true
                 }
             }
-            "aurora_reset_colors" -> preference.onPreferenceClickListener =
-                Preference.OnPreferenceClickListener {
-                    uiSettings.resetAuroraColors()
-                    listOf(
-                        UISettings.AURORA_PRIMARY,
-                        UISettings.AURORA_SECONDARY,
-                        UISettings.AURORA_SURFACE,
-                        UISettings.AURORA_BACKGROUND,
-                    ).forEach { key ->
-                        findPreference<Preference>(key)?.summary = getString(R.string.aurora_pick_color)
+            "aurora_reset_colors" ->
+                preference.onPreferenceClickListener =
+                    Preference.OnPreferenceClickListener {
+                        uiSettings.resetAuroraColors()
+                        listOf(
+                            UISettings.AURORA_PRIMARY,
+                            UISettings.AURORA_SECONDARY,
+                            UISettings.AURORA_SURFACE,
+                            UISettings.AURORA_BACKGROUND,
+                        ).forEach { key ->
+                            findPreference<Preference>(key)?.summary =
+                                getString(R.string.aurora_pick_color)
+                        }
+                        true
                     }
-                    true
-                }
-            "aurora_reset_layout" -> preference.onPreferenceClickListener =
-                Preference.OnPreferenceClickListener {
-                    uiSettings.resetAuroraLayout()
-                    true
-                }
-            "aurora_reset_motion" -> preference.onPreferenceClickListener =
-                Preference.OnPreferenceClickListener {
-                    uiSettings.resetAuroraMotion()
-                    true
-                }
+            "aurora_reset_layout" ->
+                preference.onPreferenceClickListener =
+                    Preference.OnPreferenceClickListener {
+                        uiSettings.resetAuroraLayout()
+                        true
+                    }
+            "aurora_reset_motion" ->
+                preference.onPreferenceClickListener =
+                    Preference.OnPreferenceClickListener {
+                        uiSettings.resetAuroraMotion()
+                        true
+                    }
             getString(R.string.set_key_black_theme) -> {
                 L.d("Configuring black theme setting")
                 preference.onPreferenceChangeListener =

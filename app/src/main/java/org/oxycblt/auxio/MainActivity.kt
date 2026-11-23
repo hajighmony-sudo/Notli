@@ -25,10 +25,10 @@ import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.core.view.WindowCompat
 import androidx.core.view.updatePadding
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
