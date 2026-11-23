@@ -77,31 +77,35 @@ import androidx.compose.ui.unit.dp
 @Composable
 internal fun Modifier.notliGlass(shape: Shape): Modifier {
     val dark = isSystemInDarkTheme()
+    val palette = MaterialTheme.colorScheme
     val fill =
         Brush.verticalGradient(
             if (dark) {
                 listOf(
-                    Color(0xFF111827).copy(alpha = 0.90f),
-                    Color(0xFF17152A).copy(alpha = 0.76f),
-                    Color(0xFF10212B).copy(alpha = 0.82f),
+                    palette.surface.copy(alpha = 0.92f),
+                    palette.surfaceVariant.copy(alpha = 0.78f),
+                    palette.surfaceContainerHigh.copy(alpha = 0.84f),
                 )
             } else {
-                listOf(Color.White.copy(alpha = 0.80f), Color.White.copy(alpha = 0.50f))
+                listOf(
+                    palette.surface.copy(alpha = 0.84f),
+                    palette.surfaceVariant.copy(alpha = 0.58f),
+                )
             },
         )
     val rim =
         Brush.linearGradient(
             if (dark) {
                 listOf(
-                    Color(0xFF63E6F2).copy(alpha = 0.54f),
-                    Color(0xFF9A7BFF).copy(alpha = 0.14f),
-                    Color(0xFFF0C978).copy(alpha = 0.34f),
+                    palette.primary.copy(alpha = 0.54f),
+                    palette.secondary.copy(alpha = 0.24f),
+                    palette.tertiary.copy(alpha = 0.34f),
                 )
             } else {
                 listOf(
-                    Color(0xFF4D9EAA).copy(alpha = 0.42f),
-                    Color(0xFF7453B8).copy(alpha = 0.18f),
-                    Color(0xFFC69D55).copy(alpha = 0.28f),
+                    palette.primary.copy(alpha = 0.42f),
+                    palette.secondary.copy(alpha = 0.20f),
+                    palette.tertiary.copy(alpha = 0.28f),
                 )
             },
         )
@@ -173,8 +177,8 @@ internal fun NotliGlassTabBar(
                     Brush.linearGradient(
                         listOf(
                             colors.primary,
-                            Color(0xFF42CDE0),
-                            Color(0xFF8068D9),
+                            colors.secondary,
+                            colors.tertiary,
                         ),
                     )
                 val content by
@@ -209,8 +213,8 @@ internal fun NotliGlassTabBar(
                                             Brush.linearGradient(
                                                 listOf(
                                                     Color.White.copy(alpha = 0.60f),
-                                                    Color(0xFF63E6F2).copy(alpha = 0.48f),
-                                                    Color(0xFFB49AFF).copy(alpha = 0.42f),
+                                                    colors.secondary.copy(alpha = 0.48f),
+                                                    colors.tertiary.copy(alpha = 0.42f),
                                                 ),
                                             ),
                                             CircleShape,

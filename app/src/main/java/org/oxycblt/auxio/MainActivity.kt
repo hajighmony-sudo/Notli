@@ -22,6 +22,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.WindowCompat
@@ -31,6 +33,7 @@ import javax.inject.Inject
 import org.oxycblt.auxio.databinding.ActivityMainBinding
 import org.oxycblt.auxio.playback.PlaybackViewModel
 import org.oxycblt.auxio.playback.state.DeferredPlayback
+import org.oxycblt.auxio.ui.AuroraAppearance
 import org.oxycblt.auxio.ui.UISettings
 import org.oxycblt.auxio.util.isNight
 import org.oxycblt.auxio.util.systemBarInsetsCompat
@@ -59,15 +62,29 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setupTheme()
         // Inflate the views after setting up the theme so that the theme attributes are applied.
+        supportFragmentManager.registerFragmentLifecycleCallbacks(
+            object : FragmentManager.FragmentLifecycleCallbacks() {
+                override fun onFragmentViewCreated(
+                    fm: FragmentManager,
+                    fragment: Fragment,
+                    view: View,
+                    savedInstanceState: Bundle?,
+                ) {
+                    AuroraAppearance.apply(view, uiSettings)
+                }
+            },
+            true,
+        )
         val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setupEdgeToEdge(binding.root)
+        AuroraAppearance.apply(binding.root, uiSettings)
+        binding.root.post { AuroraAppearance.apply(binding.root, uiSettings) }
         L.d("Activity created")
     }
 
     override fun onResume() {
         super.onResume()
-
         startService(
             Intent(this, AuxioService::class.java)
                 .setAction(AuxioService.ACTION_START)

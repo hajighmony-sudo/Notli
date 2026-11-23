@@ -276,4 +276,31 @@
     <integer name="cover_mode_balanced">0xA11D</integer>
     <integer name="cover_mode_high_quality">0xA11E</integer>
     <integer name="cover_mode_as_is">0xA126</integer>
+
+    <string name="set_key_aurora_primary" translatable="false">notli_aurora_primary</string>
+    <string name="set_key_aurora_secondary" translatable="false">notli_aurora_secondary</string>
+    <string name="set_key_aurora_surface" translatable="false">notli_aurora_surface</string>
+    <string name="set_key_aurora_background" translatable="false">notli_aurora_background</string>
+    <string name="set_key_aurora_font_scale" translatable="false">notli_aurora_font_scale</string>
+    <string name="set_key_aurora_icon_scale" translatable="false">notli_aurora_icon_scale</string>
+    <string name="set_key_aurora_density" translatable="false">notli_aurora_density</string>
+    <string name="set_key_aurora_motion" translatable="false">notli_aurora_motion</string>
+    <string name="set_key_aurora_motion_speed" translatable="false">notli_aurora_motion_speed</string>
+
+    <string-array name="entries_aurora_density">
+        <item>@string/aurora_density_compact</item>
+        <item>@string/aurora_density_balanced</item>
+        <item>@string/aurora_density_spacious</item>
+    </string-array>
+    <string-array name="values_aurora_density">
+        <item>0</item><item>1</item><item>2</item>
+    </string-array>
+    <string-array name="entries_aurora_motion">
+        <item>@string/aurora_motion_off</item>
+        <item>@string/aurora_motion_soft</item>
+        <item>@string/aurora_motion_expressive</item>
+    </string-array>
+    <string-array name="values_aurora_motion">
+        <item>0</item><item>1</item><item>2</item>
+    </string-array>
 </resources>

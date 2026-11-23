@@ -570,4 +570,33 @@
         <item quantity="other">%d seconds</item>
     </plurals>
 
+
+    <string name="aurora_identity">NOTLI AURORA</string>
+    <string name="aurora_identity_desc">One unified design language for your music player.</string>
+    <string name="aurora_colors">Color system</string>
+    <string name="aurora_primary">Primary color</string>
+    <string name="aurora_secondary">Secondary color</string>
+    <string name="aurora_surface">Card and surface color</string>
+    <string name="aurora_background">Page background</string>
+    <string name="aurora_pick_color">Tap to open the RGB color picker</string>
+    <string name="aurora_reset_colors">Reset colors</string>
+    <string name="aurora_layout">Typography and layout</string>
+    <string name="aurora_font_size">Font size</string>
+    <string name="aurora_font_size_desc">Scale text across native app screens (80–140%).</string>
+    <string name="aurora_icon_size">Icon size</string>
+    <string name="aurora_icon_size_desc">Scale action icons across native app screens (75–150%).</string>
+    <string name="aurora_density">Interface density</string>
+    <string name="aurora_density_compact">Compact</string>
+    <string name="aurora_density_balanced">Balanced</string>
+    <string name="aurora_density_spacious">Spacious</string>
+    <string name="aurora_reset_layout">Reset typography and layout</string>
+    <string name="aurora_motion">Motion and animation</string>
+    <string name="aurora_motion_profile">Animation profile</string>
+    <string name="aurora_motion_off">Off</string>
+    <string name="aurora_motion_soft">Soft</string>
+    <string name="aurora_motion_expressive">Expressive</string>
+    <string name="aurora_motion_speed">Animation speed</string>
+    <string name="aurora_motion_speed_desc">50% slower to 150% faster.</string>
+    <string name="aurora_reset_motion">Reset motion</string>
+    <string name="aurora_color_invalid">Enter a valid color such as #63E6F2.</string>
 </resources>

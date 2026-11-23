@@ -22,8 +22,65 @@
     <PreferenceCategory app:title="NOTLI AURORA">
         <Preference
             app:selectable="false"
-            app:title="NOTLI AURORA"
-            app:summary="The single default Notli design system." />
+            app:title="@string/aurora_identity"
+            app:summary="@string/aurora_identity_desc" />
+
+        <PreferenceCategory app:title="@string/aurora_colors">
+            <Preference app:key="notli_aurora_primary" app:title="@string/aurora_primary" app:summary="@string/aurora_pick_color" />
+            <Preference app:key="notli_aurora_secondary" app:title="@string/aurora_secondary" app:summary="@string/aurora_pick_color" />
+            <Preference app:key="notli_aurora_surface" app:title="@string/aurora_surface" app:summary="@string/aurora_pick_color" />
+            <Preference app:key="notli_aurora_background" app:title="@string/aurora_background" app:summary="@string/aurora_pick_color" />
+            <Preference app:key="aurora_reset_colors" app:title="@string/aurora_reset_colors" />
+        </PreferenceCategory>
+
+        <PreferenceCategory app:title="@string/aurora_layout">
+            <SeekBarPreference
+                app:key="notli_aurora_font_scale"
+                app:title="@string/aurora_font_size"
+                app:summary="@string/aurora_font_size_desc"
+                app:defaultValue="100"
+                app:min="80"
+                app:max="140"
+                app:seekBarIncrement="5"
+                app:showSeekBarValue="true" />
+            <SeekBarPreference
+                app:key="notli_aurora_icon_scale"
+                app:title="@string/aurora_icon_size"
+                app:summary="@string/aurora_icon_size_desc"
+                app:defaultValue="100"
+                app:min="75"
+                app:max="150"
+                app:seekBarIncrement="5"
+                app:showSeekBarValue="true" />
+            <ListPreference
+                app:key="notli_aurora_density"
+                app:title="@string/aurora_density"
+                app:defaultValue="1"
+                app:entries="@array/entries_aurora_density"
+                app:entryValues="@array/values_aurora_density"
+                app:useSimpleSummaryProvider="true" />
+            <Preference app:key="aurora_reset_layout" app:title="@string/aurora_reset_layout" />
+        </PreferenceCategory>
+
+        <PreferenceCategory app:title="@string/aurora_motion">
+            <ListPreference
+                app:key="notli_aurora_motion"
+                app:title="@string/aurora_motion_profile"
+                app:defaultValue="2"
+                app:entries="@array/entries_aurora_motion"
+                app:entryValues="@array/values_aurora_motion"
+                app:useSimpleSummaryProvider="true" />
+            <SeekBarPreference
+                app:key="notli_aurora_motion_speed"
+                app:title="@string/aurora_motion_speed"
+                app:summary="@string/aurora_motion_speed_desc"
+                app:defaultValue="100"
+                app:min="50"
+                app:max="150"
+                app:seekBarIncrement="5"
+                app:showSeekBarValue="true" />
+            <Preference app:key="aurora_reset_motion" app:title="@string/aurora_reset_motion" />
+        </PreferenceCategory>
 
         <SwitchPreferenceCompat
             app:defaultValue="false"
@@ -31,5 +88,4 @@
             app:summary="@string/set_black_mode_desc"
             app:title="@string/set_black_mode" />
     </PreferenceCategory>
-
 </PreferenceScreen>
