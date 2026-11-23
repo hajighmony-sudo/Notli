@@ -33,10 +33,11 @@ import kotlin.math.max
 import kotlin.math.sqrt
 
 /**
- * Converts the low-frequency envelope of Notli's decoded PCM stream into restrained haptic pulses.
+ * Converts decoded PCM into restrained, tempo-aware haptic pulses.
  *
- * It never captures microphone input and does not modify audio samples. A refractory window and
- * adaptive noise floor keep the motor from buzzing continuously on sustained bass.
+ * Analysis runs on Notli's existing Media3 PCM path: no microphone, audio capture, network access,
+ * or changes to the samples sent to the speaker. The three profiles use the same bounded detector
+ * with different trigger rules so sustained bass cannot turn into continuous vibration.
  */
 class AdaptiveHapticsEngine
 @Inject
@@ -53,8 +54,10 @@ constructor(
         }
 
     private var lowPass = 0f
-    private var noiseFloor = 0.012f
+    private var noiseFloor = 0.010f
+    private var slowEnvelope = 0f
     private var lastPulseAt = 0L
+    private var estimatedBeatMs = DEFAULT_BEAT_MS
 
     fun process(input: ByteBuffer, sampleRate: Int, channelCount: Int) {
         val motor = vibrator ?: return
@@ -62,50 +65,133 @@ constructor(
         if (sampleRate <= 0 || channelCount <= 0) return
 
         val samples = input.duplicate().order(ByteOrder.LITTLE_ENDIAN)
-        val frameSize = channelCount * 2
+        val frameSize = channelCount * BYTES_PER_SAMPLE
         val frames = samples.remaining() / frameSize
         if (frames <= 0) return
 
-        val alpha = (1.0 - exp(-2.0 * Math.PI * 125.0 / sampleRate)).toFloat()
-        var energy = 0.0
+        val bassAlpha = lowPassAlpha(BASS_CUTOFF_HZ, sampleRate)
+        var bassEnergy = 0.0
+        var fullEnergy = 0.0
         repeat(frames) {
             var mono = 0f
             repeat(channelCount) {
-                mono += samples.getShort().toFloat() / 32768f
+                mono += samples.getShort().toFloat() / PCM_SCALE
             }
             mono /= channelCount
-            lowPass += alpha * (mono - lowPass)
-            energy += lowPass * lowPass
+            lowPass += bassAlpha * (mono - lowPass)
+            bassEnergy += lowPass * lowPass
+            fullEnergy += mono * mono
         }
 
-        val bassLevel = sqrt(energy / frames).toFloat()
-        val threshold = max(0.026f, noiseFloor * 1.75f)
-        noiseFloor = (noiseFloor * 0.94f + bassLevel * 0.06f).coerceIn(0.008f, 0.18f)
-
+        val bassLevel = sqrt(bassEnergy / frames).toFloat()
+        val fullLevel = sqrt(fullEnergy / frames).toFloat()
         val now = SystemClock.elapsedRealtime()
-        if (bassLevel <= threshold || now - lastPulseAt < MIN_PULSE_INTERVAL_MS) return
+        val sensitivity = playbackSettings.adaptiveHapticsSensitivity.coerceIn(1, 5)
+        val sensitivityScale = 1.65f - ((sensitivity - 1) * 0.225f)
+        val threshold = max(MIN_NOISE_THRESHOLD, noiseFloor * sensitivityScale)
+        val onset = fullLevel > max(MIN_ONSET_LEVEL, slowEnvelope * ONSET_RATIO)
+        val bassHit = bassLevel > threshold
+        val mode = playbackSettings.adaptiveHapticsMode
 
-        val strength = ((bassLevel - threshold) / (threshold * 2.6f)).coerceIn(0f, 1f)
-        val duration = MIN_PULSE_DURATION_MS + (strength * 18f).toLong()
-        val amplitude = (72 + strength * 150f).toInt().coerceIn(1, 222)
+        // A slow envelope follows overall loudness and adapts the trigger floor to quiet/loud tracks.
+        slowEnvelope += ENVELOPE_ALPHA * (fullLevel - slowEnvelope)
+        noiseFloor = (noiseFloor * NOISE_FLOOR_DECAY + bassLevel * NOISE_FLOOR_ATTACK)
+            .coerceIn(MIN_NOISE_FLOOR, MAX_NOISE_FLOOR)
+
+        val minimumInterval = when (mode) {
+            MODE_BASS -> BASS_REFRACTORY_MS
+            MODE_RHYTHM -> RHYTHM_REFRACTORY_MS
+            else -> max(SMART_MIN_INTERVAL_MS, (estimatedBeatMs * 0.42f).toLong())
+        }
+        if (now - lastPulseAt < minimumInterval) return
+
+        val shouldPulse = when (mode) {
+            MODE_BASS -> bassHit
+            MODE_RHYTHM -> onset && fullLevel > max(MIN_RHYTHM_LEVEL, threshold * RHYTHM_LEVEL_FACTOR)
+            else -> bassHit && (onset || fullLevel > slowEnvelope * SMART_SUSTAINED_RATIO)
+        }
+        if (!shouldPulse) return
+
+        if (lastPulseAt != 0L) {
+            val interval = now - lastPulseAt
+            if (interval in MIN_BEAT_MS..MAX_BEAT_MS) {
+                estimatedBeatMs = (estimatedBeatMs * 0.72f + interval * 0.28f)
+                    .coerceIn(MIN_BEAT_MS.toFloat(), MAX_BEAT_MS.toFloat())
+            }
+        }
+
+        val signal = when (mode) {
+            MODE_RHYTHM -> fullLevel
+            else -> bassLevel
+        }
+        val strength = ((signal - threshold) / (threshold * STRENGTH_RANGE))
+            .coerceIn(MIN_STRENGTH, MAX_STRENGTH)
+        val intensity = playbackSettings.adaptiveHapticsIntensity.coerceIn(1, 5)
+        val userScale = intensity / 5f
+        val duration = (MIN_PULSE_MS + strength * MAX_EXTRA_PULSE_MS * userScale)
+            .toLong().coerceIn(MIN_PULSE_MS, MAX_PULSE_MS)
+        val amplitude = (MIN_AMPLITUDE + strength * AMPLITUDE_RANGE * userScale)
+            .toInt().coerceIn(MIN_AMPLITUDE.toInt(), MAX_AMPLITUDE)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            motor.vibrate(VibrationEffect.createOneShot(duration, amplitude))
+            val resolvedAmplitude =
+                if (motor.hasAmplitudeControl()) amplitude else VibrationEffect.DEFAULT_AMPLITUDE
+            motor.vibrate(VibrationEffect.createOneShot(duration, resolvedAmplitude))
         } else {
-            @Suppress("DEPRECATION") motor.vibrate(duration)
+            @Suppress("DEPRECATION")
+            motor.vibrate(duration)
         }
         lastPulseAt = now
     }
 
     fun stop() {
         vibrator?.cancel()
-        lowPass = 0f
-        noiseFloor = 0.012f
-        lastPulseAt = 0L
+        resetDetector()
     }
 
+    private fun resetDetector() {
+        lowPass = 0f
+        noiseFloor = 0.010f
+        slowEnvelope = 0f
+        lastPulseAt = 0L
+        estimatedBeatMs = DEFAULT_BEAT_MS
+    }
+
+    private fun lowPassAlpha(cutoffHz: Float, sampleRate: Int): Float =
+        (1.0 - exp(-2.0 * Math.PI * cutoffHz / sampleRate)).toFloat()
+
     private companion object {
-        const val MIN_PULSE_INTERVAL_MS = 115L
-        const val MIN_PULSE_DURATION_MS = 12L
+        const val BYTES_PER_SAMPLE = 2
+        const val PCM_SCALE = 32768f
+        const val BASS_CUTOFF_HZ = 125f
+        const val MODE_BASS = 0
+        const val MODE_RHYTHM = 1
+        const val MODE_SMART = 2
+        const val DEFAULT_BEAT_MS = 500f
+        const val MIN_BEAT_MS = 280L
+        const val MAX_BEAT_MS = 1100L
+        const val BASS_REFRACTORY_MS = 145L
+        const val RHYTHM_REFRACTORY_MS = 105L
+        const val SMART_MIN_INTERVAL_MS = 110L
+        const val MIN_PULSE_MS = 10L
+        const val MAX_PULSE_MS = 34L
+        const val MAX_EXTRA_PULSE_MS = 22f
+        const val MIN_AMPLITUDE = 34f
+        const val AMPLITUDE_RANGE = 150f
+        const val MAX_AMPLITUDE = 184
+        const val MIN_NOISE_THRESHOLD = 0.018f
+        const val MIN_NOISE_FLOOR = 0.006f
+        const val MAX_NOISE_FLOOR = 0.14f
+        const val NOISE_FLOOR_DECAY = 0.965f
+        const val NOISE_FLOOR_ATTACK = 0.035f
+        const val ENVELOPE_ALPHA = 0.12f
+        const val ONSET_RATIO = 1.24f
+        const val MIN_ONSET_LEVEL = 0.018f
+        const val MIN_RHYTHM_LEVEL = 0.025f
+        const val RHYTHM_LEVEL_FACTOR = 1.25f
+        const val SMART_SUSTAINED_RATIO = 1.12f
+        const val STRENGTH_RANGE = 3.0f
+        const val MIN_STRENGTH = 0.12f
+        const val MAX_STRENGTH = 1f
     }
 }
