@@ -23,6 +23,9 @@ import android.content.Intent
 import android.media.audiofx.AudioEffect
 import android.os.SystemClock
 import android.provider.OpenableColumns
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -512,6 +515,10 @@ class ExoPlaybackStateHolder(
                 audioEffects = PlaybackAudioEffects(context, player)
             }
             if (listeningStartedAtElapsedMs == null) {
+                val stats = context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
+                stats.edit()
+                    .putLong(KEY_LISTENING_SESSIONS, stats.getLong(KEY_LISTENING_SESSIONS, 0L) + 1L)
+                    .apply()
                 listeningStartedAtElapsedMs = SystemClock.elapsedRealtime()
             }
         } else {
@@ -533,6 +540,7 @@ class ExoPlaybackStateHolder(
             stats
                 .edit()
                 .putLong(KEY_TRACKS_PLAYED, stats.getLong(KEY_TRACKS_PLAYED, 0L) + 1L)
+                .putLong(KEY_LAST_PLAYED_AT, System.currentTimeMillis())
                 .apply()
         }
 
@@ -582,9 +590,13 @@ class ExoPlaybackStateHolder(
         if (elapsed < 1_000L || (!force && elapsed < LISTENING_SAVE_INTERVAL_MS)) return
 
         val stats = context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
-        stats
-            .edit()
+        val today = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
+        val storedDay = stats.getString(KEY_DAILY_LISTENING_DATE, null)
+        val todayTotal = if (storedDay == today) stats.getLong(KEY_DAILY_LISTENING_TIME_MS, 0L) else 0L
+        stats.edit()
             .putLong(KEY_LISTENING_TIME_MS, stats.getLong(KEY_LISTENING_TIME_MS, 0L) + elapsed)
+            .putLong(KEY_DAILY_LISTENING_TIME_MS, todayTotal + elapsed)
+            .putString(KEY_DAILY_LISTENING_DATE, today)
             .apply()
         listeningStartedAtElapsedMs = now
     }
@@ -765,6 +777,10 @@ class ExoPlaybackStateHolder(
         const val LISTENING_STATS_PREFS = "notli_listening_stats"
         const val KEY_LISTENING_TIME_MS = "listening_time_ms"
         const val KEY_TRACKS_PLAYED = "tracks_played"
+        const val KEY_LISTENING_SESSIONS = "listening_sessions"
+        const val KEY_DAILY_LISTENING_TIME_MS = "daily_listening_time_ms"
+        const val KEY_DAILY_LISTENING_DATE = "daily_listening_date"
+        const val KEY_LAST_PLAYED_AT = "last_played_at"
         const val LISTENING_SAVE_INTERVAL_MS = 15_000L
     }
 }
