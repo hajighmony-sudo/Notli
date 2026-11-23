@@ -348,4 +348,27 @@
     <string name="err_share_too_large">این فایل برای ارسال خیلی بزرگ است</string>
     <string name="err_share_failed">ارسال فایل ناموفق بود</string>
     <string name="fmt_lib_total_size">مجموع اندازه: %s</string>
+    <string name="set_adaptive_haptics">لرزش تطبیقی</string>
+    <string name="set_adaptive_haptics_desc">هماهنگ‌کردن لرزش گوشی با ضرب‌آهنگ موسیقی؛ بدون استفاده از میکروفون.</string>
+    <string name="set_haptics_test">آزمایش لرزش</string>
+    <string name="set_haptics_test_desc">اجرای یک لرزش کوتاه برای آزمایش موتور لرزش گوشی.</string>
+    <string name="set_haptics_mode">الگوی لرزش</string>
+    <string name="set_haptics_mode_desc">مشخص کنید لرزش بر اساس کدام بخش موسیقی تنظیم شود.</string>
+    <string name="set_haptics_mode_bass">بیس</string>
+    <string name="set_haptics_mode_rhythm">ریتم</string>
+    <string name="set_haptics_mode_smart">هوشمند</string>
+    <string name="set_haptics_intensity">شدت لرزش</string>
+    <string name="set_haptics_intensity_desc">قدرت پالس‌های لرزش را تنظیم کنید.</string>
+    <string name="set_haptics_sensitivity">حساسیت تشخیص ضرب</string>
+    <string name="set_haptics_sensitivity_desc">حساسیت بیشتر، ضرب‌آهنگ‌ها و صداهای ظریف‌تر را نیز تشخیص می‌دهد.</string>
+    <string name="set_haptics_level_1">۱ — بسیار ملایم</string>
+    <string name="set_haptics_level_2">۲ — ملایم</string>
+    <string name="set_haptics_level_3">۳ — متعادل</string>
+    <string name="set_haptics_level_4">۴ — قوی</string>
+    <string name="set_haptics_level_5">۵ — بیشترین شدت</string>
+    <string name="set_haptics_sensitivity_1">۱ — کم</string>
+    <string name="set_haptics_sensitivity_2">۲ — نسبتاً کم</string>
+    <string name="set_haptics_sensitivity_3">۳ — عادی</string>
+    <string name="set_haptics_sensitivity_4">۴ — زیاد</string>
+    <string name="set_haptics_sensitivity_5">۵ — بسیار زیاد</string>
 </resources>
