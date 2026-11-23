@@ -523,6 +523,10 @@
     <string name="fmt_lib_total_size">Total size: %s</string>
     <string name="fmt_listening_time">Listening time: %s</string>
     <string name="fmt_tracks_played">Tracks played: %d</string>
+    <string name="fmt_listening_today">Listened today: %s</string>
+    <string name="fmt_listening_sessions">Listening sessions: %d</string>
+    <string name="fmt_last_played">Last played: %s</string>
+    <string name="lbl_never_played">Not played yet</string>
 
     <plurals name="fmt_song_count">
         <item quantity="one">%d song</item>
