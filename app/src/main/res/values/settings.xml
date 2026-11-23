@@ -223,11 +223,11 @@
 
     <string-array name="entries_pitch_effect">
         <item>@string/set_pitch_normal</item>
-        <item>@string/set_pitch_zombie</item>
         <item>@string/set_pitch_child</item>
+        <item>@string/set_pitch_deep</item>
+        <item>@string/set_pitch_zombie</item>
         <item>@string/set_pitch_girl</item>
         <item>@string/set_pitch_echo</item>
-        <item>@string/set_pitch_deep</item>
         <item>@string/set_pitch_dazed</item>
         <item>@string/set_pitch_alien</item>
     </string-array>
