@@ -25,6 +25,8 @@ pub enum DownloadCommand {
     Progress { id: String, received_bytes: u64, expected_bytes: Option<u64> },
     Complete { id: String },
     Fail { id: String, message: String },
+    Cancel { id: String },
+    Retry { id: String },
 }
 
 impl DownloadManager {
@@ -44,7 +46,8 @@ impl DownloadManager {
             DownloadCommand::Enqueue { request } => request.id.clone(),
             DownloadCommand::Start { id } | DownloadCommand::Pause { id }
             | DownloadCommand::Progress { id, .. } | DownloadCommand::Complete { id }
-            | DownloadCommand::Fail { id, .. } => id.clone(),
+            | DownloadCommand::Fail { id, .. } | DownloadCommand::Cancel { id }
+            | DownloadCommand::Retry { id } => id.clone(),
         };
         match command {
             DownloadCommand::Enqueue { request } => self.enqueue(request)?,
@@ -55,6 +58,8 @@ impl DownloadManager {
             }
             DownloadCommand::Complete { id } => self.complete(&id)?,
             DownloadCommand::Fail { id, message } => self.fail(&id, message)?,
+            DownloadCommand::Cancel { id } => self.cancel(&id)?,
+            DownloadCommand::Retry { id } => self.retry(&id)?,
         }
         self.get(&id).cloned().ok_or(DownloadError::NotFound)
     }
@@ -86,6 +91,27 @@ impl DownloadManager {
         if !matches!(task.status, DownloadStatus::Queued | DownloadStatus::Downloading | DownloadStatus::Paused) { return Err(DownloadError::InvalidTransition); }
         task.status = DownloadStatus::Failed; task.error = Some(message.into().chars().take(512).collect()); Ok(())
     }
+
+    pub fn cancel(&mut self, id: &str) -> Result<(), DownloadError> {
+        let task = self.tasks.get_mut(id).ok_or(DownloadError::NotFound)?;
+        if !matches!(task.status, DownloadStatus::Queued | DownloadStatus::Downloading | DownloadStatus::Paused) {
+            return Err(DownloadError::InvalidTransition);
+        }
+        task.status = DownloadStatus::Cancelled;
+        Ok(())
+    }
+
+    pub fn retry(&mut self, id: &str) -> Result<(), DownloadError> {
+        let task = self.tasks.get_mut(id).ok_or(DownloadError::NotFound)?;
+        if !matches!(task.status, DownloadStatus::Failed | DownloadStatus::Cancelled) {
+            return Err(DownloadError::InvalidTransition);
+        }
+        task.status = DownloadStatus::Queued;
+        task.received_bytes = 0;
+        task.expected_bytes = None;
+        task.error = None;
+        Ok(())
+    }
 }
 fn valid_http_url(url: &str) -> bool {
     let lower = url.to_ascii_lowercase();
@@ -105,6 +131,26 @@ mod tests {
         let mut manager = DownloadManager::default();
         assert_eq!(manager.enqueue(DownloadRequest { id: "x".into(), url: "file:///private/file".into(), file_name: None }), Err(DownloadError::InvalidRequest));
     }
+    #[test]
+    fn download_can_be_cancelled_and_retried_without_stale_progress() {
+        let mut manager = DownloadManager::default();
+        manager.enqueue(DownloadRequest {
+            id: "retry".into(),
+            url: "https://example.com/audio.mp3".into(),
+            file_name: None,
+        }).unwrap();
+        manager.start("retry").unwrap();
+        manager.update_progress("retry", 128, Some(1024)).unwrap();
+        manager.cancel("retry").unwrap();
+        manager.retry("retry").unwrap();
+
+        let task = manager.get("retry").unwrap();
+        assert_eq!(task.status, DownloadStatus::Queued);
+        assert_eq!(task.received_bytes, 0);
+        assert_eq!(task.expected_bytes, None);
+        assert_eq!(task.error, None);
+    }
+
     #[test]
     fn download_progress_is_monotonic() {
         let mut manager = DownloadManager::default();
