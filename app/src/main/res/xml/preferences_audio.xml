@@ -15,6 +15,12 @@
             app:summary="@string/set_adaptive_haptics_desc"
             app:title="@string/set_adaptive_haptics" />
 
+        <Preference
+            app:key="adaptive_haptics_test"
+            app:dependency="@string/set_key_adaptive_haptics"
+            app:title="@string/set_haptics_test"
+            app:summary="@string/set_haptics_test_desc" />
+
         <org.oxycblt.auxio.settings.ui.IntListPreference
             app:defaultValue="2"
             app:dependency="@string/set_key_adaptive_haptics"
