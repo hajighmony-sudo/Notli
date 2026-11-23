@@ -416,11 +416,12 @@
     <string name="vocal_studio_title">استودیوی بی‌کلام‌سازی</string>
     <string name="vocal_song_unavailable">آهنگ انتخاب‌شده دیگر در دسترس نیست.</string>
     <string name="vocal_unsupported_device">پردازش روی دستگاه به اندروید ۱۰ یا بالاتر و پردازنده ARM64 نیاز دارد.</string>
-    <string name="vocal_model_ready">مدل هوش مصنوعی نصب است؛ پردازش کاملاً آفلاین انجام می‌شود.</string>
+    <string name="vocal_model_ready">مدل هوش مصنوعی نصب و صحت‌سنجی شده است؛ پردازش کاملاً آفلاین انجام می‌شود.</string>
+    <string name="vocal_model_checking">در حال بررسی صحت مدل نصب‌شده…</string>
     <string name="vocal_model_missing">مدل هوش مصنوعی نصب نیست. یک‌بار آن را دانلود کنید تا بعداً آفلاین استفاده کنید.</string>
     <string name="vocal_privacy_notice">فایل صوتی شما روی همین گوشی پردازش می‌شود. اینترنت فقط برای دانلود اختیاری مدل است؛ آهنگ شما آپلود نمی‌شود.</string>
     <string name="vocal_model_license_title">نکته مجوز استفاده از مدل</string>
-    <string name="vocal_model_license_notice">کد موتور مجوز MIT دارد، اما سازنده اصلی وزن‌های مدل Demucs استفاده از آن‌ها را صرفاً پژوهشی اعلام کرده است. فقط در صورت پذیرش این محدودیت دانلود کنید. بدون دریافت مجوز جداگانه، استفاده تجاری نکنید. دانلود اختیاری است و مدل داخل NOTLI قرار ندارد.</string>
+    <string name="vocal_model_license_notice">کد موتور Demucs مجوز MIT دارد، اما وزن‌های مدل دارایی جداگانه‌ای هستند. سازنده اصلی Demucs اعلام کرده وزن‌های ازپیش‌آموزش‌دیده فقط برای اهداف علمی ارائه شده‌اند. این مدل صرفاً پژوهشی است و بدون دریافت مجوز کتبی جداگانه نباید در محصول تجاری استفاده شود. دانلود اختیاری حدود ۵۵ مگابایت است و از اینترنت خود گوشی استفاده می‌کند؛ ممکن است هزینه اینترنت همراه داشته باشد. هیچ فایل صوتی آپلود نمی‌شود و مدل داخل NOTLI قرار ندارد.</string>
     <string name="vocal_download_model">دانلود مدل هوش مصنوعی (حدود ۵۵ مگابایت)</string>
     <string name="vocal_downloading">در حال دانلود مدل…</string>
     <string name="vocal_download_percent">در حال دانلود مدل… %1$d٪</string>
