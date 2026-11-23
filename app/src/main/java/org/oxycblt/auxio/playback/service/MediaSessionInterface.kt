@@ -110,7 +110,10 @@ constructor(
 
     override fun onRemoveQueueItem(description: MediaDescriptionCompat) {
         super.onRemoveQueueItem(description)
-        val at = description.extras?.getInt(KEY_QUEUE_POS)
+        val at =
+            description.extras
+                ?.takeIf { it.containsKey(KEY_QUEUE_POS) }
+                ?.getInt(KEY_QUEUE_POS)
         if (at != null) {
             // Ignore stale or malformed positions supplied by external media hosts.
             if (at in playbackManager.queue.indices) {
