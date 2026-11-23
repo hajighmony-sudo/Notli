@@ -20,9 +20,11 @@ package org.oxycblt.auxio
 
 import android.app.Application
 import android.content.Intent
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
+import androidx.core.os.LocaleListCompat
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import org.oxycblt.auxio.home.HomeSettings
@@ -46,6 +48,10 @@ class Auxio : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Use the included Persian localization consistently throughout the app.
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("fa"))
+
         @Suppress("KotlinConstantConditions")
         if (
             BuildConfig.APPLICATION_ID != "org.oxycblt.auxio" &&
