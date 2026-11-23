@@ -211,33 +211,6 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
                 showQuickActions()
                 true
             }
-            R.id.action_search -> {
-                L.d("Navigating to search")
-                findNavController().navigateSafe(HomeFragmentDirections.search())
-                true
-            }
-            R.id.action_settings -> {
-                L.d("Navigating to preferences")
-                homeModel.showSettings()
-                true
-            }
-            R.id.action_about -> {
-                L.d("Navigating to about")
-                homeModel.showAbout()
-                true
-            }
-
-            // Handle sort menu
-            R.id.action_sort -> {
-                // Junk click event when opening the menu
-                val directions =
-                    when (homeModel.currentTabType.value) {
-                        MusicType.SONGS -> HomeFragmentDirections.sortSongs()
-                        MusicType.ALBUMS -> HomeFragmentDirections.sortAlbums()
-                        MusicType.ARTISTS -> HomeFragmentDirections.sortArtists()
-                        MusicType.GENRES -> HomeFragmentDirections.sortGenres()
-                        MusicType.PLAYLISTS -> HomeFragmentDirections.sortPlaylists()
-                    }
                 findNavController().navigateSafe(directions)
                 true
             }
@@ -255,7 +228,7 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
         requireContext()
             .theme
             .resolveAttribute(
-                com.google.android.material.R.attr.colorPrimary,
+                android.R.attr.colorAccent,
                 themeValue,
                 true,
             )
