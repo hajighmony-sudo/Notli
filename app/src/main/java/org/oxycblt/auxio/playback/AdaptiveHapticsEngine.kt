@@ -71,7 +71,7 @@ constructor(
         repeat(frames) {
             var mono = 0f
             repeat(channelCount) {
-                mono += samples.short.toFloat() / 32768f
+                mono += samples.getShort().toFloat() / 32768f
             }
             mono /= channelCount
             lowPass += alpha * (mono - lowPass)
