@@ -132,7 +132,8 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
             return
         }
         processingJob = viewLifecycleOwner.lifecycleScope.launch {
-            val work = File(requireContext().cacheDir, "vocal-studio/${System.currentTimeMillis()}").apply { mkdirs() }
+            val appContext = requireContext().applicationContext
+            val work = File(appContext.cacheDir, "vocal-studio/" + System.currentTimeMillis()).apply { mkdirs() }
             val raw = File(work, "input.f32")
             val prepared = File(work, "prepared.f32")
             val stems = File(work, "stems").apply { mkdirs() }
@@ -144,7 +145,8 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
             binding.vocalCancelButton.isEnabled = true
             try {
                 withContext(Dispatchers.IO) {
-                    val pcm = AudioPcmDecoder.decode(requireContext(), song.uri, raw)
+                    check(modelStore.verifyInstalled()) { "The local AI model failed its integrity check. Download it again." }
+                    val pcm = AudioPcmDecoder.decode(appContext, song.uri, raw)
                     NativeEngine.loadModel(model.absolutePath)
                     NativeEngine.prepareInput(raw.absolutePath, pcm.sampleRate, pcm.channels, prepared.absolutePath)
                     NativeEngine.separate(
@@ -183,7 +185,7 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
     }
 
     private fun cancelProcessing() {
-        runCatching { NativeEngine.cancel() }
+        if (processingJob?.isActive == true) runCatching { NativeEngine.cancel() }
         processingJob?.cancel()
         binding?.vocalProgressLabel?.text = getString(R.string.vocal_cancelled)
     }
