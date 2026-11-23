@@ -8,6 +8,8 @@ package org.oxycblt.auxio.playback
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,11 +35,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import org.oxycblt.auxio.image.CoverView
 import org.oxycblt.auxio.playback.state.RepeatMode
 import org.oxycblt.musikr.Song
 
@@ -92,13 +93,21 @@ internal fun NotliPlaybackBar(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Box(
-                    modifier = Modifier.size(52.dp),
+                    modifier = Modifier
+                        .size(52.dp)
+                        .background(
+                            brush = Brush.linearGradient(
+                                listOf(Color(0xFF3A246A), Color(0xFFB7D94A)),
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                        ),
                     contentAlignment = Alignment.Center,
                 ) {
-                    AndroidView(
-                        factory = { context -> CoverView(context) },
-                        update = { view -> if (song != null) view.bind(song) },
-                        modifier = Modifier.size(52.dp),
+                    Text(
+                        text = "♫",
+                        color = Color.White,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
 
@@ -134,7 +143,7 @@ internal fun NotliPlaybackBar(
                     when (actionMode) {
                         ActionMode.NEXT -> Icon(Icons.Default.SkipNext, contentDescription = "بعدی")
                         ActionMode.REPEAT -> Text(
-                            text = if (repeatMode == RepeatMode.ONE) "1" else "↻",
+                            text = if (repeatMode == RepeatMode.TRACK) "1" else "↻",
                             color = if (repeatMode != RepeatMode.NONE) colors.primary else colors.onSurfaceVariant,
                             style = MaterialTheme.typography.titleMedium,
                         )
