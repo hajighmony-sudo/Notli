@@ -194,7 +194,9 @@ constructor(
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
-        adaptiveHaptics.process(inputBuffer, sampleRate, channelCount)
+        if (playbackManager.progression.isPlaying) {
+            adaptiveHaptics.process(inputBuffer, sampleRate, channelCount)
+        }
         val pos = inputBuffer.position()
         val limit = inputBuffer.limit()
         val buffer = replaceOutputBuffer(limit - pos)
