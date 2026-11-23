@@ -398,4 +398,13 @@
     <string name="fmt_listening_sessions">تعداد نوبت‌های گوش‌دادن: %d</string>
     <string name="fmt_last_played">آخرین پخش: %s</string>
     <string name="lbl_never_played">هنوز پخشی انجام نشده</string>
+    <string name="set_bass_strength">قدرت تقویت صدای بم</string>
+    <string name="set_bass_strength_desc">میزان تقویت فرکانس‌های پایین صدا را انتخاب کنید.</string>
+    <string name="set_spatial_strength">شدت صدای فراگیر</string>
+    <string name="set_spatial_strength_desc">در دستگاه‌های پشتیبانی‌شده شدت مجازی‌ساز بلوتوث را تنظیم می‌کند؛ صدای فراگیر اندرویدهای جدیدتر توسط سیستم کنترل می‌شود.</string>
+    <string name="set_effect_strength_20">۲۰٪</string>
+    <string name="set_effect_strength_40">۴۰٪</string>
+    <string name="set_effect_strength_60">۶۰٪</string>
+    <string name="set_effect_strength_80">۸۰٪</string>
+    <string name="set_effect_strength_100">۱۰۰٪</string>
 </resources>
