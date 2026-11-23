@@ -23,8 +23,8 @@ import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.audiofx.BassBoost
-import android.media.audiofx.Equalizer
 import android.media.audiofx.EnvironmentalReverb
+import android.media.audiofx.Equalizer
 import android.media.audiofx.Virtualizer
 import android.os.Build
 import android.os.Handler
@@ -92,7 +92,15 @@ internal class PlaybackAudioEffects(
 
     private fun ensureEffects() {
         val sessionId = player.audioSessionId
-        if (sessionId <= 0 || equalizer != null || bassBoost != null || virtualizer != null || environmentalReverb != null) return
+        if (
+            sessionId <= 0 ||
+                equalizer != null ||
+                bassBoost != null ||
+                virtualizer != null ||
+                environmentalReverb != null
+        ) {
+            return
+        }
 
         equalizer = runCatching { Equalizer(0, sessionId) }.getOrNull()
         bassBoost = runCatching { BassBoost(0, sessionId) }.getOrNull()
@@ -218,8 +226,8 @@ internal class PlaybackAudioEffects(
                 val settings = effect.properties
                 settings.decayTime = 500 + strength * 45
                 settings.decayHFRatio = (500 + strength * 5).toShort()
-                settings.reflectionsDelay = (10 + strength).toShort()
-                settings.reverbDelay = (20 + strength / 2).toShort()
+                settings.reflectionsDelay = 10 + strength
+                settings.reverbDelay = 20 + strength / 2
                 settings.reflectionsLevel = (-9000 + strength * 55).toShort()
                 settings.reverbLevel = (-9000 + strength * 70).toShort()
                 settings.roomLevel = (-9000 + strength * 70).toShort()
