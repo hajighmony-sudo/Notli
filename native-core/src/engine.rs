@@ -69,6 +69,7 @@ impl PlayerCore {
             || (snapshot.state.is_buffering && !matches!(snapshot.state.status, PlaybackStatus::Loading | PlaybackStatus::Playing | PlaybackStatus::Paused))
             || (!has_track && snapshot.state.duration_ms.is_some())
             || (snapshot.state.status == PlaybackStatus::Error && snapshot.state.last_error.is_none())
+            || (snapshot.state.status != PlaybackStatus::Error && snapshot.state.last_error.is_some())
         {
             return Err(CoreError::InvalidSnapshot);
         }
@@ -106,6 +107,7 @@ impl PlayerCore {
             PlayerCommand::Stop => if self.state.current_track.is_some() {
                 self.state.status = PlaybackStatus::Stopped;
                 self.state.position_ms = 0;
+                self.state.is_buffering = false;
                 out.actions.push(BackendAction::Stop);
                 out.events.push(PlayerEvent::PlaybackStopped);
             },
