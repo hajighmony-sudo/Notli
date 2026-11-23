@@ -371,8 +371,6 @@
     <string name="fmt_lib_total_size">مجموع اندازه: %s</string>
     <string name="fmt_listening_time">مدت زمان گوش‌دادن: %s</string>
     <string name="fmt_tracks_played">تعداد دفعات شروع آهنگ: %d</string>
-    <string name="set_adaptive_haptics">لرزش تطبیقی</string>
-    <string name="set_adaptive_haptics_desc">هماهنگ‌کردن لرزش گوشی با ضرب‌آهنگ موسیقی؛ بدون استفاده از میکروفون.</string>
     <string name="set_haptics_test">آزمایش لرزش</string>
     <string name="set_haptics_test_desc">اجرای یک لرزش کوتاه برای آزمایش موتور لرزش گوشی.</string>
     <string name="set_haptics_mode">الگوی لرزش</string>
