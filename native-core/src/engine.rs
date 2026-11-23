@@ -37,7 +37,7 @@ impl PlayerCore {
 
         if snapshot.state.shuffle_enabled != queue.shuffle_enabled()
             || snapshot.state.duration_ms.is_some_and(|duration| snapshot.state.position_ms > duration)
-            || snapshot.state.last_error.is_some_and(|ref message| message.len() > 4096)
+            || snapshot.state.last_error.as_ref().is_some_and(|message| message.len() > 4096)
         {
             return Err(CoreError::InvalidSnapshot);
         }
