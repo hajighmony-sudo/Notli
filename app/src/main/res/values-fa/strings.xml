@@ -394,4 +394,8 @@
     <string name="set_haptics_sensitivity_3">۳ — عادی</string>
     <string name="set_haptics_sensitivity_4">۴ — زیاد</string>
     <string name="set_haptics_sensitivity_5">۵ — بسیار زیاد</string>
+    <string name="fmt_listening_today">مدت گوش‌دادن امروز: %s</string>
+    <string name="fmt_listening_sessions">تعداد نوبت‌های گوش‌دادن: %d</string>
+    <string name="fmt_last_played">آخرین پخش: %s</string>
+    <string name="lbl_never_played">هنوز پخشی انجام نشده</string>
 </resources>
