@@ -245,47 +245,52 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
     }
 
     private fun showQuickActions() {
-        val dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.lbl_more_actions)
-            .create()
+        val dialog =
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.lbl_more_actions)
+                .create()
         val density = resources.displayMetrics.density
         fun dp(value: Int) = (value * density).toInt()
-        val grid = GridLayout(requireContext()).apply {
-            columnCount = 2
-            setPadding(dp(6), dp(6), dp(6), dp(6))
-        }
+        val grid =
+            GridLayout(requireContext()).apply {
+                columnCount = 2
+                setPadding(dp(6), dp(6), dp(6), dp(6))
+            }
         val actions =
             listOf(
-                R.string.lbl_search to {
-                    findNavController().navigateSafe(HomeFragmentDirections.search())
-                },
-                R.string.lbl_sort to {
-                    val directions =
-                        when (homeModel.currentTabType.value) {
-                            MusicType.SONGS -> HomeFragmentDirections.sortSongs()
-                            MusicType.ALBUMS -> HomeFragmentDirections.sortAlbums()
-                            MusicType.ARTISTS -> HomeFragmentDirections.sortArtists()
-                            MusicType.GENRES -> HomeFragmentDirections.sortGenres()
-                            MusicType.PLAYLISTS -> HomeFragmentDirections.sortPlaylists()
-                        }
-                    findNavController().navigateSafe(directions)
-                },
+                R.string.lbl_search to
+                    {
+                        findNavController().navigateSafe(HomeFragmentDirections.search())
+                    },
+                R.string.lbl_sort to
+                    {
+                        val directions =
+                            when (homeModel.currentTabType.value) {
+                                MusicType.SONGS -> HomeFragmentDirections.sortSongs()
+                                MusicType.ALBUMS -> HomeFragmentDirections.sortAlbums()
+                                MusicType.ARTISTS -> HomeFragmentDirections.sortArtists()
+                                MusicType.GENRES -> HomeFragmentDirections.sortGenres()
+                                MusicType.PLAYLISTS -> HomeFragmentDirections.sortPlaylists()
+                            }
+                        findNavController().navigateSafe(directions)
+                    },
                 R.string.lbl_queue to { playbackModel.openQueue() },
                 R.string.set_root_title to { homeModel.showSettings() },
                 R.string.lbl_about to { homeModel.showAbout() },
             )
 
         actions.forEach { (labelRes, action) ->
-            val tile = MaterialCardView(requireContext()).apply {
-                radius = dp(20).toFloat()
-                cardElevation = dp(1).toFloat()
-                isClickable = true
-                isFocusable = true
-                setOnClickListener {
-                    dialog.dismiss()
-                    action()
+            val tile =
+                MaterialCardView(requireContext()).apply {
+                    radius = dp(20).toFloat()
+                    cardElevation = dp(1).toFloat()
+                    isClickable = true
+                    isFocusable = true
+                    setOnClickListener {
+                        dialog.dismiss()
+                        action()
+                    }
                 }
-            }
             val label =
                 TextView(requireContext()).apply {
                     text = getString(labelRes)
@@ -329,7 +334,9 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
                         selectedIndex = 0,
                         onSelect = { index ->
                             when (index) {
-                                1 -> findNavController().navigateSafe(HomeFragmentDirections.search())
+                                1 ->
+                                    findNavController()
+                                        .navigateSafe(HomeFragmentDirections.search())
                                 2 -> homeModel.showSettings()
                             }
                         },

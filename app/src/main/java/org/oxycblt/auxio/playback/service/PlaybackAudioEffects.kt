@@ -1,7 +1,21 @@
 /*
- * Copyright (c) 2026 Notli Project
- * Licensed under the GNU General Public License v3.0 or later.
+ * Copyright (c) 2026 Auxio Project
+ * PlaybackAudioEffects.kt is part of Auxio.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+ 
 package org.oxycblt.auxio.playback.service
 
 import android.content.Context
@@ -92,28 +106,32 @@ internal class PlaybackAudioEffects(
             for (index in 0 until effect.numberOfBands.toInt()) {
                 val band = index.toShort()
                 val frequencyHz = effect.getCenterFreq(band) / 1_000
-                val target = when (preset) {
-                    1 -> when {
-                        frequencyHz < 180 -> 650
-                        frequencyHz < 1_000 -> 250
-                        frequencyHz > 8_000 -> 150
+                val target =
+                    when (preset) {
+                        1 ->
+                            when {
+                                frequencyHz < 180 -> 650
+                                frequencyHz < 1_000 -> 250
+                                frequencyHz > 8_000 -> 150
+                                else -> 0
+                            }
+                        2 ->
+                            when (frequencyHz) {
+                                in 250..4_000 -> 400
+                                in 0..180 -> -200
+                                else -> 0
+                            }
+                        3 -> if (frequencyHz > 3_000) 450 else if (frequencyHz < 180) -150 else 0
+                        4 ->
+                            when {
+                                frequencyHz < 180 -> 500
+                                frequencyHz < 400 -> 250
+                                frequencyHz in 1_000..4_000 -> 180
+                                frequencyHz > 8_000 -> 300
+                                else -> 0
+                            }
                         else -> 0
                     }
-                    2 -> when (frequencyHz) {
-                        in 250..4_000 -> 400
-                        in 0..180 -> -200
-                        else -> 0
-                    }
-                    3 -> if (frequencyHz > 3_000) 450 else if (frequencyHz < 180) -150 else 0
-                    4 -> when {
-                        frequencyHz < 180 -> 500
-                        frequencyHz < 400 -> 250
-                        frequencyHz in 1_000..4_000 -> 180
-                        frequencyHz > 8_000 -> 300
-                        else -> 0
-                    }
-                    else -> 0
-                }
                 effect.setBandLevel(
                     band,
                     target.coerceIn(range[0].toInt(), range[1].toInt()).toShort(),
@@ -126,7 +144,9 @@ internal class PlaybackAudioEffects(
     private fun applyBassBoost() {
         val effect = bassBoost ?: return
         runCatching {
-            effect.setStrength(if (preferences.getBoolean(KEY_BASS_BOOST, false)) 600.toShort() else 0.toShort())
+            effect.setStrength(
+                if (preferences.getBoolean(KEY_BASS_BOOST, false)) 600.toShort() else 0.toShort(),
+            )
             effect.enabled = preferences.getBoolean(KEY_BASS_BOOST, false)
         }
     }

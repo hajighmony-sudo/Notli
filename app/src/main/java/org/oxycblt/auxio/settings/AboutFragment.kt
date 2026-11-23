@@ -105,5 +105,4 @@ class AboutFragment : ViewBindingFragment<FragmentAboutBinding>() {
                 Formatter.formatFileSize(context, statistics?.totalSizeBytes ?: 0L),
             )
     }
-
 }

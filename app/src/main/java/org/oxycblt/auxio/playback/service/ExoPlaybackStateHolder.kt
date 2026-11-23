@@ -530,7 +530,10 @@ class ExoPlaybackStateHolder(
         rustBridge.onMediaItemTransition(reason)
         if (mediaItem != null && player.playWhenReady) {
             val stats = context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
-            stats.edit().putLong(KEY_TRACKS_PLAYED, stats.getLong(KEY_TRACKS_PLAYED, 0L) + 1L).apply()
+            stats
+                .edit()
+                .putLong(KEY_TRACKS_PLAYED, stats.getLong(KEY_TRACKS_PLAYED, 0L) + 1L)
+                .apply()
         }
 
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
@@ -579,7 +582,10 @@ class ExoPlaybackStateHolder(
         if (elapsed < 1_000L || (!force && elapsed < LISTENING_SAVE_INTERVAL_MS)) return
 
         val stats = context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
-        stats.edit().putLong(KEY_LISTENING_TIME_MS, stats.getLong(KEY_LISTENING_TIME_MS, 0L) + elapsed).apply()
+        stats
+            .edit()
+            .putLong(KEY_LISTENING_TIME_MS, stats.getLong(KEY_LISTENING_TIME_MS, 0L) + elapsed)
+            .apply()
         listeningStartedAtElapsedMs = now
     }
 
