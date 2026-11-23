@@ -158,7 +158,7 @@ impl PlaybackQueue {
         }
         if cursor + 1 < self.order.len() {
             self.cursor = Some(cursor + 1);
-        } else if !self.order.is_empty() {
+        } else if repeat == RepeatMode::All && !self.order.is_empty() {
             self.cursor = Some(0);
         } else {
             return None;
