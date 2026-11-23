@@ -104,6 +104,18 @@ private fun style(style: Int): Sugar = {
     putInt(MediaConstants.DESCRIPTION_EXTRAS_KEY_CONTENT_STYLE_SINGLE_ITEM, style)
 }
 
+/**
+ * Tell Android Auto how to render the children of a browsable item. Root
+ * navigation uses category rows; actual library contents use compact list rows.
+ */
+private fun parentStyle(browsableStyle: Int): Sugar = {
+    putInt(MediaConstants.DESCRIPTION_EXTRAS_KEY_CONTENT_STYLE_BROWSABLE, browsableStyle)
+    putInt(
+        MediaConstants.DESCRIPTION_EXTRAS_KEY_CONTENT_STYLE_PLAYABLE,
+        MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_LIST_ITEM,
+    )
+}
+
 private fun makeExtras(context: Context, vararg sugars: Sugar): Bundle {
     return Bundle().apply { sugars.forEach { this.it(context) } }
 }
@@ -117,6 +129,13 @@ fun TabNode.toMediaItem(context: Context): MediaItem {
                     MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_GRID_ITEM
                 } else {
                     MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_LIST_ITEM
+                },
+            ),
+            parentStyle(
+                if (this is TabNode.Root || this is TabNode.More) {
+                    MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_LIST_ITEM
+                } else {
+                    MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_LIST_ITEM
                 },
             ),
         )
@@ -160,7 +179,13 @@ fun Song.toMediaItem(context: Context, vararg sugar: Sugar): MediaItem {
 
 fun Album.toMediaItem(context: Context, vararg sugar: Sugar): MediaItem {
     val mediaSessionUID = MediaSessionUID.SingleItem(uid)
-    val extras = makeExtras(context, *sugar)
+    val extras =
+        makeExtras(
+            context,
+            style(MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_LIST_ITEM),
+            parentStyle(MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_LIST_ITEM),
+            *sugar,
+        )
     val counts = context.getPlural(R.plurals.fmt_song_count, songs.size)
     val description =
         MediaDescriptionCompat.Builder()
@@ -194,7 +219,13 @@ fun Artist.toMediaItem(context: Context, vararg sugar: Sugar): MediaItem {
                 context.getString(R.string.def_song_count)
             },
         )
-    val extras = makeExtras(context, *sugar)
+    val extras =
+        makeExtras(
+            context,
+            style(MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_LIST_ITEM),
+            parentStyle(MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_LIST_ITEM),
+            *sugar,
+        )
     val description =
         MediaDescriptionCompat.Builder()
             .setMediaId(mediaSessionUID.toString())
@@ -219,7 +250,13 @@ fun Genre.toMediaItem(context: Context, vararg sugar: Sugar): MediaItem {
         } else {
             context.getString(R.string.def_song_count)
         }
-    val extras = makeExtras(context, *sugar)
+    val extras =
+        makeExtras(
+            context,
+            style(MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_LIST_ITEM),
+            parentStyle(MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_LIST_ITEM),
+            *sugar,
+        )
     val description =
         MediaDescriptionCompat.Builder()
             .setMediaId(mediaSessionUID.toString())
@@ -243,7 +280,13 @@ fun Playlist.toMediaItem(context: Context, vararg sugar: Sugar): MediaItem {
         } else {
             context.getString(R.string.def_song_count)
         }
-    val extras = makeExtras(context, *sugar)
+    val extras =
+        makeExtras(
+            context,
+            style(MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_LIST_ITEM),
+            parentStyle(MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_LIST_ITEM),
+            *sugar,
+        )
     val description =
         MediaDescriptionCompat.Builder()
             .setMediaId(mediaSessionUID.toString())
