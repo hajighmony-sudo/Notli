@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::model::{BackendAction, BackendEvent, PlaybackState, PlaybackStatus, PlayerCommand, PlayerEvent, Track, TrackId};
+use crate::model::{BackendAction, BackendEvent, PlaybackState, PlaybackStatus, PlayerCommand, PlayerEvent, Track};
 use crate::queue::{PlaybackQueue, QueueError, QueueSnapshot};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -189,6 +189,8 @@ impl PlayerCore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::{RepeatMode, TrackId};
+
     fn track(id: &str) -> Track {
         Track { id: TrackId::new(id).unwrap(), title: format!("Track {id}"), artist: None, album: None, source_uri: format!("content://music/{id}"), duration_ms: Some(60_000) }
     }
