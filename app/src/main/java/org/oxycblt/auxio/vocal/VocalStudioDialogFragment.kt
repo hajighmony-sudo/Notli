@@ -5,7 +5,6 @@
 package org.oxycblt.auxio.vocal
 
 import android.app.AlertDialog
-import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Build
 import android.view.LayoutInflater
@@ -183,6 +182,7 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
                 prepared.delete()
                 binding.vocalCancelButton.isEnabled = false
                 binding.vocalProcessButton.isEnabled = modelStore.isReady
+                refreshModelState(binding)
             }
         }
     }
@@ -233,6 +233,8 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
         downloadJob?.cancel()
         player?.release()
         player = null
+        instrumentalFile?.parentFile?.deleteRecursively()
+        instrumentalFile = null
         super.onDestroyBinding(binding)
     }
 }
