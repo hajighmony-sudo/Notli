@@ -50,6 +50,16 @@
             app:title="@string/set_pitch_effect"
             app:summary="@string/set_pitch_effect_desc" />
 
+        <SeekBarPreference
+            app:defaultValue="0"
+            app:key="@string/set_key_echo_strength"
+            app:min="0"
+            android:max="100"
+            app:seekBarIncrement="1"
+            app:showSeekBarValue="true"
+            app:title="@string/set_echo_strength"
+            app:summary="@string/set_echo_strength_desc" />
+
         <PreferenceCategory android:title="@string/set_manual_equalizer">
             <SeekBarPreference
                 app:defaultValue="12"
