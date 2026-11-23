@@ -120,12 +120,32 @@ fn valid_http_url(url: &str) -> bool {
         && url.split_once("://").is_some_and(|(_, rest)| !rest.is_empty() && rest.split('/').next().is_some_and(|host| !host.is_empty()))
 }
 fn valid_file_name(name: &str) -> bool {
-    !name.trim().is_empty() && name.len() <= 255 && !name.chars().any(|c| c.is_control() || matches!(c, '/' | '\\' | ':'))
+    let trimmed = name.trim();
+    !trimmed.is_empty()
+        && trimmed != "."
+        && trimmed != ".."
+        && name.len() <= 255
+        && !name.chars().any(|c| c.is_control() || matches!(c, '/' | '\\' | ':'))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn rejects_path_traversal_file_names() {
+        let mut manager = DownloadManager::default();
+        for file_name in [".", "..", "../outside.mp3", "folder\\\\song.mp3"] {
+            assert_eq!(
+                manager.enqueue(DownloadRequest {
+                    id: format!("id-{file_name}"),
+                    url: "https://example.com/audio.mp3".into(),
+                    file_name: Some(file_name.into()),
+                }),
+                Err(DownloadError::InvalidRequest)
+            );
+        }
+    }
+
     #[test]
     fn rejects_non_http_sources() {
         let mut manager = DownloadManager::default();
