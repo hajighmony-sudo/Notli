@@ -82,29 +82,27 @@ class UIPreferenceFragment : BasePreferenceFragment(R.xml.preferences_ui) {
                     true
                 }
             }
-            "aurora_reset_colors" ->
-                preference.onPreferenceClickListener =
+            "aurora_reset_colors" -> preference.onPreferenceClickListener =
                     Preference.OnPreferenceClickListener {
                         uiSettings.resetAuroraColors()
                         listOf(
-                            UISettings.AURORA_PRIMARY,
-                            UISettings.AURORA_SECONDARY,
-                            UISettings.AURORA_SURFACE,
-                            UISettings.AURORA_BACKGROUND,
-                        ).forEach { key ->
-                            findPreference<Preference>(key)?.summary =
-                                getString(R.string.aurora_pick_color)
-                        }
+                                UISettings.AURORA_PRIMARY,
+                                UISettings.AURORA_SECONDARY,
+                                UISettings.AURORA_SURFACE,
+                                UISettings.AURORA_BACKGROUND,
+                            )
+                            .forEach { key ->
+                                findPreference<Preference>(key)?.summary =
+                                    getString(R.string.aurora_pick_color)
+                            }
                         true
                     }
-            "aurora_reset_layout" ->
-                preference.onPreferenceClickListener =
+            "aurora_reset_layout" -> preference.onPreferenceClickListener =
                     Preference.OnPreferenceClickListener {
                         uiSettings.resetAuroraLayout()
                         true
                     }
-            "aurora_reset_motion" ->
-                preference.onPreferenceClickListener =
+            "aurora_reset_motion" -> preference.onPreferenceClickListener =
                     Preference.OnPreferenceClickListener {
                         uiSettings.resetAuroraMotion()
                         true
@@ -127,38 +125,52 @@ class UIPreferenceFragment : BasePreferenceFragment(R.xml.preferences_ui) {
 
     private fun showAuroraColorPicker(key: String, title: CharSequence) {
         val night = requireActivity().isNight
-        val fallback = when (key) {
-            UISettings.AURORA_PRIMARY -> if (night) "#6AD7E3" else "#006B76"
-            UISettings.AURORA_SECONDARY -> if (night) "#C2C1EA" else "#5B5D7B"
-            UISettings.AURORA_SURFACE -> if (night) "#0F1720" else "#F4FAFB"
-            else -> if (night) "#0B1117" else "#F4FAFB"
-        }
+        val fallback =
+            when (key) {
+                UISettings.AURORA_PRIMARY -> if (night) "#6AD7E3" else "#006B76"
+                UISettings.AURORA_SECONDARY -> if (night) "#C2C1EA" else "#5B5D7B"
+                UISettings.AURORA_SURFACE -> if (night) "#0F1720" else "#F4FAFB"
+                else -> if (night) "#0B1117" else "#F4FAFB"
+            }
         val initial = uiSettings.auroraColor(key) ?: Color.parseColor(fallback)
         val context = requireContext()
         val density = resources.displayMetrics.density
         fun dp(value: Int) = (value * density).toInt()
-        val content = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(8), dp(20), dp(4))
-        }
-        val preview = View(context).apply {
-            background = android.graphics.drawable.GradientDrawable().apply {
-                cornerRadius = dp(14).toFloat()
-                setColor(initial)
+        val content =
+            LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(20), dp(8), dp(20), dp(4))
             }
-        }
-        content.addView(preview, LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, dp(48)
-        ))
-        val hex = EditText(context).apply {
-            setSingleLine(true)
-            inputType = InputType.TYPE_CLASS_TEXT
-            hint = "#63E6F2"
-            setText(String.format("#%06X", 0xFFFFFF and initial))
-        }
-        content.addView(hex, LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-        ).apply { topMargin = dp(12) })
+        val preview =
+            View(context).apply {
+                background =
+                    android.graphics.drawable.GradientDrawable().apply {
+                        cornerRadius = dp(14).toFloat()
+                        setColor(initial)
+                    }
+            }
+        content.addView(
+            preview,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(48),
+            ),
+        )
+        val hex =
+            EditText(context).apply {
+                setSingleLine(true)
+                inputType = InputType.TYPE_CLASS_TEXT
+                hint = "#63E6F2"
+                setText(String.format("#%06X", 0xFFFFFF and initial))
+            }
+        content.addView(
+            hex,
+            LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                )
+                .apply { topMargin = dp(12) },
+        )
 
         val channels = intArrayOf(Color.red(initial), Color.green(initial), Color.blue(initial))
         val sliders = ArrayList<SeekBar>()
@@ -171,37 +183,50 @@ class UIPreferenceFragment : BasePreferenceFragment(R.xml.preferences_ui) {
             hex.setSelection(value.length)
         }
         names.forEachIndexed { index, name ->
-            content.addView(TextView(context).apply {
-                text = "$name · ${channels[index]}"
-                textSize = 13f
-            })
-            val slider = SeekBar(context).apply {
-                max = 255
-                progress = channels[index]
-                setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(seekBar: SeekBar?, value: Int, fromUser: Boolean) {
-                        channels[index] = value
-                        refreshColor()
-                    }
-                    override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-                    override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-                })
-            }
+            content.addView(
+                TextView(context).apply {
+                    text = "$name · ${channels[index]}"
+                    textSize = 13f
+                },
+            )
+            val slider =
+                SeekBar(context).apply {
+                    max = 255
+                    progress = channels[index]
+                    setOnSeekBarChangeListener(
+                        object : SeekBar.OnSeekBarChangeListener {
+                            override fun onProgressChanged(
+                                seekBar: SeekBar?,
+                                value: Int,
+                                fromUser: Boolean,
+                            ) {
+                                channels[index] = value
+                                refreshColor()
+                            }
+
+                            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+
+                            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+                        },
+                    )
+                }
             sliders.add(slider)
             content.addView(slider)
         }
 
-        val dialog = MaterialAlertDialogBuilder(context)
-            .setTitle(title)
-            .setView(content)
-            .setNegativeButton(android.R.string.cancel, null)
-            .setPositiveButton(android.R.string.ok, null)
-            .create()
+        val dialog =
+            MaterialAlertDialogBuilder(context)
+                .setTitle(title)
+                .setView(content)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(android.R.string.ok, null)
+                .create()
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val normalized = hex.text.toString().trim().let {
-                    if (it.startsWith("#")) it else "#$it"
-                }
+                val normalized =
+                    hex.text.toString().trim().let {
+                        if (it.startsWith("#")) it else "#$it"
+                    }
                 val valid = normalized.matches(Regex("#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})"))
                 if (!valid) {
                     hex.error = getString(R.string.aurora_color_invalid)

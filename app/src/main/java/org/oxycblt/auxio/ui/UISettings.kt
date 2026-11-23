@@ -46,19 +46,24 @@ interface UISettings : Settings<UISettings.Listener> {
 
     /** User-defined Aurora palette overrides. Null means use the theme default. */
     fun auroraColor(key: String): Int?
+
     fun auroraColorHex(key: String): String?
+
     fun setAuroraColor(key: String, hex: String)
+
     fun resetAuroraColors()
 
     /** Global layout controls. */
     val auroraFontScale: Float
     val auroraIconScale: Float
     val auroraDensity: Int
+
     fun resetAuroraLayout()
 
     /** Motion profile: 0 = off, 1 = soft, 2 = expressive. */
     val auroraMotion: Int
     val auroraMotionSpeed: Int
+
     fun resetAuroraMotion()
 
     companion object {
@@ -107,7 +112,9 @@ class UISettingsImpl @Inject constructor(@ApplicationContext context: Context) :
         get() = sharedPreferences.getBoolean(getString(R.string.set_key_round_mode), true)
 
     override fun auroraColor(key: String): Int? =
-        auroraColorHex(key)?.let { runCatching { android.graphics.Color.parseColor(it) }.getOrNull() }
+        auroraColorHex(key)?.let {
+            runCatching { android.graphics.Color.parseColor(it) }.getOrNull()
+        }
 
     override fun auroraColorHex(key: String): String? =
         if (key in AURORA_COLOR_KEYS) sharedPreferences.getString(key, null) else null
@@ -130,7 +137,9 @@ class UISettingsImpl @Inject constructor(@ApplicationContext context: Context) :
         get() = sharedPreferences.getInt(UISettings.AURORA_ICON_SCALE, 100).coerceIn(75, 150) / 100f
 
     override val auroraDensity: Int
-        get() = (sharedPreferences.getString(UISettings.AURORA_DENSITY, "1")?.toIntOrNull() ?: 1).coerceIn(0, 2)
+        get() =
+            (sharedPreferences.getString(UISettings.AURORA_DENSITY, "1")?.toIntOrNull() ?: 1)
+                .coerceIn(0, 2)
 
     override fun resetAuroraLayout() {
         sharedPreferences.edit {
@@ -141,7 +150,9 @@ class UISettingsImpl @Inject constructor(@ApplicationContext context: Context) :
     }
 
     override val auroraMotion: Int
-        get() = (sharedPreferences.getString(UISettings.AURORA_MOTION, "2")?.toIntOrNull() ?: 2).coerceIn(0, 2)
+        get() =
+            (sharedPreferences.getString(UISettings.AURORA_MOTION, "2")?.toIntOrNull() ?: 2)
+                .coerceIn(0, 2)
 
     override val auroraMotionSpeed: Int
         get() = sharedPreferences.getInt(UISettings.AURORA_MOTION_SPEED, 100).coerceIn(50, 150)
@@ -183,6 +194,11 @@ class UISettingsImpl @Inject constructor(@ApplicationContext context: Context) :
     private companion object {
         const val OLD_KEY_ACCENT3 = "auxio_accent"
         val AURORA_COLOR_KEYS =
-            setOf(UISettings.AURORA_PRIMARY, UISettings.AURORA_SECONDARY, UISettings.AURORA_SURFACE, UISettings.AURORA_BACKGROUND)
+            setOf(
+                UISettings.AURORA_PRIMARY,
+                UISettings.AURORA_SECONDARY,
+                UISettings.AURORA_SURFACE,
+                UISettings.AURORA_BACKGROUND,
+            )
     }
 }

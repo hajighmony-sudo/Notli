@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+ 
 package org.oxycblt.auxio.ui
 
 import android.content.Context
@@ -27,10 +27,10 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.dynamicanimation.animation.SpringForce
 import androidx.fragment.app.FragmentContainerView
+import androidx.preference.PreferenceManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.R as MR
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
@@ -120,11 +120,12 @@ object AuroraAppearance {
             val basePadding =
                 (root.getTag(R.id.aurora_base_padding) as? IntArray)
                     ?: intArrayOf(
-                        root.paddingLeft,
-                        root.paddingTop,
-                        root.paddingRight,
-                        root.paddingBottom,
-                    ).also { root.setTag(R.id.aurora_base_padding, it) }
+                            root.paddingLeft,
+                            root.paddingTop,
+                            root.paddingRight,
+                            root.paddingBottom,
+                        )
+                        .also { root.setTag(R.id.aurora_base_padding, it) }
             val padding =
                 intArrayOf(
                     (basePadding[0] * density).toInt(),
@@ -146,11 +147,12 @@ object AuroraAppearance {
                 val baseMargins =
                     (root.getTag(R.id.aurora_base_margins) as? IntArray)
                         ?: intArrayOf(
-                            params.leftMargin,
-                            params.topMargin,
-                            params.rightMargin,
-                            params.bottomMargin,
-                        ).also { root.setTag(R.id.aurora_base_margins, it) }
+                                params.leftMargin,
+                                params.topMargin,
+                                params.rightMargin,
+                                params.bottomMargin,
+                            )
+                            .also { root.setTag(R.id.aurora_base_margins, it) }
                 val margins =
                     intArrayOf(
                         (baseMargins[0] * density).toInt(),
@@ -245,7 +247,8 @@ object AuroraMotion {
         return when (mode) {
             0 -> force.setStiffness(10000f).setDampingRatio(1f)
             1 ->
-                force.setStiffness((force.stiffness * 1.5f * speed).coerceIn(50f, 10000f))
+                force
+                    .setStiffness((force.stiffness * 1.5f * speed).coerceIn(50f, 10000f))
                     .setDampingRatio(0.95f)
             else -> force.setStiffness((force.stiffness * speed).coerceIn(50f, 10000f))
         }
