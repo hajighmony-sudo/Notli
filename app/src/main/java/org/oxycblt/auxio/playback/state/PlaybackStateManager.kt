@@ -45,6 +45,14 @@ import timber.log.Timber as L
  * @author Alexander Capehart (OxygenCobalt)
  */
 interface PlaybackStateManager {
+    /**
+     * Returns one immutable, internally consistent view of the current playback state.
+     *
+     * Consumers that need more than one state field should prefer this snapshot over
+     * reading several independent properties, which could straddle a concurrent update.
+     */
+    fun snapshot(): PlaybackSnapshot
+
     /** The current [Progression] of the audio player */
     val progression: Progression
 
@@ -361,6 +369,23 @@ class PlaybackStateManagerImpl @Inject constructor() : PlaybackStateManager {
     @Volatile private var stateHolder: PlaybackStateHolder? = null
     @Volatile private var pendingDeferredPlayback: DeferredPlayback? = null
     @Volatile private var isInitialized = false
+
+    override fun snapshot(): PlaybackSnapshot {
+        // StateMirror is replaced atomically; capture its reference once so all fields
+        // in this snapshot describe the same logical playback revision.
+        val current = stateMirror
+        val queue = current.queue.toList()
+        return PlaybackSnapshot(
+            currentSong = queue.getOrNull(current.index),
+            parent = current.parent,
+            queue = queue,
+            index = current.index,
+            positionMs = current.progression.calculateElapsedPositionMs().coerceAtLeast(0L),
+            isPlaying = current.progression.isPlaying,
+            repeatMode = current.repeatMode,
+            isShuffled = current.isShuffled,
+        )
+    }
 
     override val progression
         get() = stateMirror.progression
