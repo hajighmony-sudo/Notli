@@ -155,7 +155,7 @@ internal class PlaybackAudioEffects(
         // session virtualizer only as a fallback, and only for Bluetooth output.
         virtualizer?.let { effect ->
             runCatching {
-                effect.setStrength(if (requested) 450 else 0)
+                effect.setStrength(if (requested) 450.toShort() else 0.toShort())
                 effect.enabled = requested
             }
         }
