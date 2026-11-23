@@ -45,6 +45,14 @@ import timber.log.Timber as L
  * @author Alexander Capehart (OxygenCobalt)
  */
 interface PlaybackStateManager {
+    /**
+     * Returns one immutable, internally consistent view of the current playback state.
+     *
+     * Consumers that need more than one state field should prefer this snapshot over
+     * reading several independent properties, which could straddle a concurrent update.
+     */
+    fun snapshot(): PlaybackSnapshot
+
     /** The current [Progression] of the audio player */
     val progression: Progression
 
