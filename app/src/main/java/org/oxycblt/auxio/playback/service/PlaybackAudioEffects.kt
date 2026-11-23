@@ -234,17 +234,19 @@ internal class PlaybackAudioEffects(
 
     private fun applyPitch() {
         val preset = preferences.getInt(KEY_PITCH_EFFECT, 0).coerceIn(0, 7)
-        val (speed, pitch) =
+        val pitch =
             when (preset) {
-                1 -> 1.0f to 1.35f
-                2 -> 0.92f to 0.85f
-                3 -> 0.88f to 0.68f
-                4 -> 1.0f to 1.28f
-                6 -> 0.78f to 0.82f
-                7 -> 1.08f to 1.42f
-                else -> 1.0f to 1.0f
+                1 -> 1.35f
+                2 -> 0.85f
+                3 -> 0.68f
+                4 -> 1.28f
+                6 -> 0.82f
+                7 -> 1.42f
+                else -> 1.0f
             }
-        runCatching { player.setPlaybackParameters(PlaybackParameters(speed, pitch)) }
+        runCatching {
+            player.setPlaybackParameters(PlaybackParameters(player.playbackParameters.speed, pitch))
+        }
     }
 
     private fun releaseEffects() {
