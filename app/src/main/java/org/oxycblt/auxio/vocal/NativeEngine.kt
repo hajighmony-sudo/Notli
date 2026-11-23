@@ -42,7 +42,11 @@ internal object NativeEngine {
         listener: ProgressListener? = null,
     ) {
         val write = BooleanArray(sources.size) { sources[it] in selected }
-        nativeSeparate(prepared, outputDirectory, write, threads, 0, gpu, listener)
+        require(write.any { it }) { "Select at least one output stem." }
+        val rms = nativeSeparate(prepared, outputDirectory, write, threads, 0, gpu, listener)
+        check(rms.size == sources.size && rms.all { it.isFinite() }) {
+            "The on-device separation engine returned invalid output statistics."
+        }
     }
 
     fun cancel() = nativeCancel()
