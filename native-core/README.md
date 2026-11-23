@@ -17,7 +17,9 @@ Kotlin is the Android adapter and UI language. New UI screens should use Jetpack
 - Rust panics are caught at the JNI boundary and reported as `ok: false` errors instead of aborting the process.
 - Limits: `MAX_QUEUE_LEN` (100,000 queue entries) and `MAX_DOWNLOAD_TASKS` (1,000 tracked downloads; finished ones can be removed with `Remove` / `nativeDownloadClearFinished`).
 
-`RustMedia3Bridge` is wired into `ExoPlaybackStateHolder`. Playback commands (queue replacement/navigation, play/pause, seek, repeat, queue edits) are dispatched to Rust; returned backend actions are applied to the live ExoPlayer instance. Media3 callbacks (prepared, buffering, position, automatic transitions, and errors) are forwarded to Rust as typed backend events. Android supplies the resolved visible queue order, including its shuffle mapping, so Rust navigation and the actual Media3 playlist stay aligned.\n\nThe app-facing `PlaybackStateManager` and existing saved-state format remain in place. Restores rebuild the Rust queue from the restored Media3 queue; persisting the Rust snapshot as a separate durable source and full device-level regression tests remain follow-up migration gates. Do not remove the existing Kotlin state manager until those gates pass.
+`RustMedia3Bridge` is wired into `ExoPlaybackStateHolder`. Playback commands (queue replacement/navigation, play/pause, seek, repeat, queue edits) are dispatched to Rust; returned backend actions are applied to the live ExoPlayer instance. Media3 callbacks (prepared, buffering, position, automatic transitions, and errors) are forwarded to Rust as typed backend events. Android supplies the resolved visible queue order, including its shuffle mapping, so Rust navigation and the actual Media3 playlist stay aligned.
+
+The app-facing `PlaybackStateManager` and existing saved-state format remain in place. Restores rebuild the Rust queue from the restored Media3 queue; persisting the Rust snapshot as a separate durable source and full device-level regression tests remain follow-up migration gates. Do not remove the existing Kotlin state manager until those gates pass.
 
 ## Build
 
