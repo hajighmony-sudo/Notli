@@ -223,3 +223,39 @@ dependencies {
     // Fuzzy search
     implementation 'org.apache.commons:commons-text:1.15.0'
 }
+
+
+// The pinned Media3 submodule contains a stale experimental-HAGC argument in
+// ProgressiveMediaSource.createSourceDescriptor(). Its constructor no longer accepts
+// that argument. Apply a narrow, idempotent compatibility patch before any Java
+// compilation so both local builds and CI compile the exact same source.
+def patchMedia3ProgressiveSource = tasks.register("patchMedia3ProgressiveSource") {
+    def sourceFile = rootProject.file("media/libraries/exoplayer/src/main/java/androidx/media3/exoplayer/source/ProgressiveMediaSource.java")
+    inputs.file(sourceFile)
+    outputs.file(sourceFile)
+    doLast {
+        if (!sourceFile.isFile()) {
+            throw new GradleException("Vendored Media3 source is missing: ${sourceFile}")
+        }
+        def source = sourceFile.getText("UTF-8")
+        def staleDeclaration = "      boolean enableHagcPlayback = experimentalEnableHagcPlayback;\\n"
+        def staleArgument = "                  enableHagcPlayback,\\n"
+        if (source.contains(staleDeclaration) && source.contains(staleArgument)) {
+            source = source.replace(staleDeclaration, "").replace(staleArgument, "")
+            sourceFile.setText(source, "UTF-8")
+            logger.lifecycle("Applied Media3 ProgressiveMediaSource constructor compatibility patch.")
+        } else if (source.contains("experimentalEnableHagcPlayback")) {
+            throw new GradleException("Media3 ProgressiveMediaSource changed; refusing to apply an unsafe compatibility patch.")
+        } else {
+            logger.lifecycle("Media3 ProgressiveMediaSource compatibility patch is already present.")
+        }
+    }
+}
+
+gradle.projectsEvaluated {
+    rootProject.allprojects.each { project ->
+        project.tasks.matching { it.name.contains("JavaWithJavac") }.configureEach {
+            dependsOn(patchMedia3ProgressiveSource)
+        }
+    }
+}
