@@ -312,8 +312,17 @@
     <string name="set_audio_preset_pop">Pop</string>
     <string name="set_bass_boost">Bass boost</string>
     <string name="set_bass_boost_desc">Boost low frequencies on the active playback session when supported.</string>
+    <string name="set_bass_strength">Bass boost strength</string>
+    <string name="set_bass_strength_desc">Choose how strongly the low frequencies are enhanced.</string>
     <string name="set_spatial_audio">Auto spatial audio on Bluetooth</string>
     <string name="set_spatial_audio_desc">Let Android spatialize audio when a compatible Bluetooth output is connected. This is device-managed spatial audio, not a Dolby Atmos certification.</string>
+    <string name="set_spatial_strength">Surround intensity</string>
+    <string name="set_spatial_strength_desc">Adjust the legacy Bluetooth virtualizer where the device supports it; newer Android spatial audio is controlled by the system.</string>
+    <string name="set_effect_strength_20">20%</string>
+    <string name="set_effect_strength_40">40%</string>
+    <string name="set_effect_strength_60">60%</string>
+    <string name="set_effect_strength_80">80%</string>
+    <string name="set_effect_strength_100">100%</string>
     <string name="set_pitch_effect">Pitch character</string>
     <string name="set_pitch_effect_desc">Change the musical pitch without changing the playback speed.</string>
     <string name="set_pitch_normal">Normal</string>
