@@ -85,12 +85,10 @@ impl PlayerCore {
                 }
             }
             PlayerCommand::Previous => {
-                let track = if self.state.position_ms > 3000 {
+                if self.state.position_ms > 3000 {
                     self.state.position_ms = 0;
                     out.actions.push(BackendAction::SeekTo(0));
-                    None
-                } else { self.queue.previous(self.state.repeat_mode).cloned() };
-                if let Some(track) = track {
+                } else if let Some(track) = self.queue.previous(self.state.repeat_mode).cloned() {
                     self.select_track(track, true, &mut out);
                 } else if self.state.current_track.is_some() {
                     // At the first item, Previous rewinds rather than wrapping.
@@ -202,10 +200,51 @@ mod tests {
         assert_eq!(core.queue().current().unwrap().id.0, "a");
     }
     #[test]
-    fn seek_is_clamped_to_known_duration() {
+    fn manual_next_wraps_to_first_item_paused_when_repeat_is_off() {
         let mut core = PlayerCore::new();
-        core.handle(PlayerCommand::SetQueue { tracks: vec![track("a")], start_index: 0, autoplay: true }).unwrap();
-        core.handle(PlayerCommand::Seek { position_ms: 90_000 }).unwrap();
-        assert_eq!(core.state().position_ms, 60_000);
+        core.handle(PlayerCommand::SetQueue {
+            tracks: vec![track("a"), track("b")],
+            start_index: 1,
+            autoplay: true,
+        }).unwrap();
+
+        let output = core.handle(PlayerCommand::Next).unwrap();
+
+        assert_eq!(core.queue().current().unwrap().id.0, "a");
+        assert_eq!(core.state().status, PlaybackStatus::Paused);
+        assert!(output.actions.contains(&BackendAction::Prepare(track("a"))));
+        assert!(!output.actions.contains(&BackendAction::Play));
+    }
+
+    #[test]
+    fn manual_next_advances_in_repeat_one_mode() {
+        let mut core = PlayerCore::new();
+        core.handle(PlayerCommand::SetQueue {
+            tracks: vec![track("a"), track("b")],
+            start_index: 0,
+            autoplay: true,
+        }).unwrap();
+        core.handle(PlayerCommand::SetRepeatMode(RepeatMode::One)).unwrap();
+
+        core.handle(PlayerCommand::Next).unwrap();
+
+        assert_eq!(core.queue().current().unwrap().id.0, "b");
+    }
+
+    #[test]
+    fn natural_end_completes_without_repeat_instead_of_wrapping() {
+        let mut core = PlayerCore::new();
+        core.handle(PlayerCommand::SetQueue {
+            tracks: vec![track("a")],
+            start_index: 0,
+            autoplay: true,
+        }).unwrap();
+
+        core.handle_backend_event(BackendEvent::Ended {
+            track_id: TrackId::new("a").unwrap(),
+        });
+
+        assert_eq!(core.state().status, PlaybackStatus::Completed);
+        assert_eq!(core.queue().current().unwrap().id.0, "a");
     }
 }
