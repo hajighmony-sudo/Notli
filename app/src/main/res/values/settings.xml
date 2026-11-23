@@ -31,6 +31,9 @@
 
     <string name="set_key_headset_autoplay" translatable="false">auxio_headset_autoplay</string>
     <string name="set_key_adaptive_haptics" translatable="false">auxio_adaptive_haptics</string>
+    <string name="set_key_adaptive_haptics_mode" translatable="false">auxio_adaptive_haptics_mode</string>
+    <string name="set_key_adaptive_haptics_intensity" translatable="false">auxio_adaptive_haptics_intensity</string>
+    <string name="set_key_adaptive_haptics_sensitivity" translatable="false">auxio_adaptive_haptics_sensitivity</string>
     <string name="set_key_replay_gain" translatable="false">auxio_replay_gain</string>
     <string name="set_key_pre_amp" translatable="false">auxio_pre_amp</string>
     <string name="set_key_pre_amp_with" translatable="false">auxio_pre_amp_with</string>
@@ -144,6 +147,42 @@
         <item>@integer/play_song_from_artist</item>
         <item>@integer/play_song_from_genre</item>
         <item>@integer/play_song_by_itself</item>
+    </integer-array>
+
+    <string-array name="entries_adaptive_haptics_mode">
+        <item>@string/set_haptics_mode_bass</item>
+        <item>@string/set_haptics_mode_rhythm</item>
+        <item>@string/set_haptics_mode_smart</item>
+    </string-array>
+
+    <integer-array name="values_adaptive_haptics_mode">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </integer-array>
+
+    <string-array name="entries_adaptive_haptics_intensity">
+        <item>@string/set_haptics_level_1</item>
+        <item>@string/set_haptics_level_2</item>
+        <item>@string/set_haptics_level_3</item>
+        <item>@string/set_haptics_level_4</item>
+        <item>@string/set_haptics_level_5</item>
+    </string-array>
+
+    <integer-array name="values_adaptive_haptics_intensity">
+        <item>1</item><item>2</item><item>3</item><item>4</item><item>5</item>
+    </integer-array>
+
+    <string-array name="entries_adaptive_haptics_sensitivity">
+        <item>@string/set_haptics_sensitivity_1</item>
+        <item>@string/set_haptics_sensitivity_2</item>
+        <item>@string/set_haptics_sensitivity_3</item>
+        <item>@string/set_haptics_sensitivity_4</item>
+        <item>@string/set_haptics_sensitivity_5</item>
+    </string-array>
+
+    <integer-array name="values_adaptive_haptics_sensitivity">
+        <item>1</item><item>2</item><item>3</item><item>4</item><item>5</item>
     </integer-array>
 
     <string-array name="entries_replay_gain">
