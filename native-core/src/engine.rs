@@ -148,6 +148,17 @@ impl PlayerCore {
                     out.actions.push(BackendAction::SeekTo(0));
                 }
             }
+            PlayerCommand::PreviousWithRewind { rewind_if_late } => {
+                if rewind_if_late && self.state.position_ms > 3000 {
+                    self.state.position_ms = 0;
+                    out.actions.push(BackendAction::SeekTo(0));
+                } else if let Some(track) = self.queue.previous(self.state.repeat_mode).cloned() {
+                    self.select_track(track, true, &mut out);
+                } else if self.state.current_track.is_some() {
+                    self.state.position_ms = 0;
+                    out.actions.push(BackendAction::SeekTo(0));
+                }
+            }
             PlayerCommand::PlayTrack(id) => {
                 let track = self.queue.select(&id)?.clone();
                 self.select_track(track, true, &mut out);
