@@ -30,6 +30,7 @@ android {
         externalNativeBuild {
             cmake {
                 arguments "-DANDROID_PLATFORM=android-29"
+                abiFilters "arm64-v8a"
             }
         }
     }
