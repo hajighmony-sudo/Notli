@@ -15,12 +15,18 @@ import java.io.File
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.CancellationException
 
 internal data class DecodedPcm(val sampleRate: Int, val channels: Int)
 
 /** Decodes the selected local track to interleaved float32 PCM for the native engine. */
 internal object AudioPcmDecoder {
-    fun decode(context: Context, uri: Uri, destination: File): DecodedPcm {
+    fun decode(
+        context: Context,
+        uri: Uri,
+        destination: File,
+        shouldContinue: () -> Boolean = { true },
+    ): DecodedPcm {
         val extractor = MediaExtractor()
         var codec: MediaCodec? = null
         try {
@@ -51,6 +57,7 @@ internal object AudioPcmDecoder {
 
             BufferedOutputStream(FileOutputStream(destination), 256 * 1024).use { output ->
                 while (!outputDone) {
+                    if (!shouldContinue()) throw CancellationException("Audio decoding cancelled.")
                     if (!inputDone) {
                         val inputIndex = decoder.dequeueInputBuffer(10_000)
                         if (inputIndex >= 0) {
