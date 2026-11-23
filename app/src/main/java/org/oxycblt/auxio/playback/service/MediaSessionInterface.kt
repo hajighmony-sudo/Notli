@@ -80,7 +80,7 @@ constructor(
         val parentUid =
             extras?.getString(MusicBrowser.KEY_CHILD_OF)?.let { MediaSessionUID.fromString(it) }
         val command = expandUidIntoCommand(uid, parentUid)
-        playbackManager.play(requireNotNull(command) { "Invalid playback configuration" })
+        command?.let(playbackManager::play)
     }
 
     //    override fun onPrepareFromSearch(query: String?, extras: Bundle?) {
@@ -91,8 +91,8 @@ constructor(
     override fun onPlayFromSearch(query: String, extras: Bundle) {
         super.onPlayFromSearch(query, extras)
         val library = musicRepository.library ?: return
-        val command = expandSearchInfoCommand(query.ifBlank { null }, extras, library)
-        playbackManager.play(requireNotNull(command) { "Invalid playback configuration" })
+        val command = expandSearchInfoCommand(query, extras, library) ?: return
+        playbackManager.play(command)
     }
 
     override fun onAddQueueItem(description: MediaDescriptionCompat) {
@@ -152,7 +152,10 @@ constructor(
     }
 
     override fun onSkipToQueueItem(id: Long) {
-        playbackManager.goto(id.toInt())
+        // Queue IDs originate outside the app and can be stale or out of range.
+        if (id in 0..Int.MAX_VALUE.toLong() && id.toInt() in playbackManager.queue.indices) {
+            playbackManager.goto(id.toInt())
+        }
     }
 
     override fun onSeekTo(position: Long) {
@@ -243,7 +246,7 @@ constructor(
                 val best =
                     library.albums.maxByOrNull {
                         fuzzy(it.name, albumQuery) +
-                            it.artists.maxOf { artist -> fuzzy(artist.name, artistQuery) }
+                            (it.artists.maxOfOrNull { artist -> fuzzy(artist.name, artistQuery) } ?: 0.0)
                     }
                 if (best != null) {
                     return commandFactory.album(best, ShuffleMode.OFF)
@@ -276,9 +279,10 @@ constructor(
         val bestMusic =
             (library.songs + library.albums + library.artists + library.genres + library.playlists)
                 .maxByOrNull { fuzzy(it.name, normalizedQuery) }
-        // TODO: Error out when we can't correctly resolve the query
-        return bestMusic?.let { expandMusicIntoCommand(it, null) }
-            ?: commandFactory.all(ShuffleMode.ON)
+        // Do not start unrelated music when the voice query has no meaningful match.
+        return bestMusic
+            ?.takeIf { fuzzy(it.name, normalizedQuery) > 0.0 }
+            ?.let { expandMusicIntoCommand(it, null) }
     }
 
     private fun fuzzy(name: Name, query: String?): Double =
