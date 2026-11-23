@@ -28,7 +28,6 @@ import com.google.android.material.transition.MaterialSharedAxis
 import dagger.hilt.android.AndroidEntryPoint
 import org.oxycblt.auxio.R
 import org.oxycblt.auxio.music.MusicViewModel
-import org.oxycblt.auxio.settings.ui.WrappedDialogPreference
 import org.oxycblt.auxio.util.navigateSafe
 import timber.log.Timber as L
 
@@ -48,15 +47,6 @@ class RootPreferenceFragment : BasePreferenceFragment(R.xml.preferences_root) {
         returnTransition = MaterialFadeThrough()
         exitTransition = MaterialFadeThrough()
         reenterTransition = MaterialSharedAxis(MaterialSharedAxis.X, false)
-    }
-
-    override fun onOpenDialogPreference(preference: WrappedDialogPreference) {
-        when (preference.key) {
-            getString(R.string.set_key_music_dirs) -> {
-                findNavController()
-                    .navigateSafe(RootPreferenceFragmentDirections.musicLocationsSettings())
-            }
-        }
     }
 
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
