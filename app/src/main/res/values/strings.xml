@@ -305,6 +305,12 @@
     <string name="set_sound_effects">Sound lab</string>
     <string name="set_equalizer_preset">Equalizer preset</string>
     <string name="set_equalizer_preset_desc">Apply a real audio-session EQ curve. Availability depends on the device audio engine.</string>
+    <string name="set_manual_equalizer">Manual equalizer · −12 to +12 dB</string>
+    <string name="set_eq_60">60 Hz · Sub-bass</string>
+    <string name="set_eq_230">230 Hz · Bass</string>
+    <string name="set_eq_910">910 Hz · Midrange</string>
+    <string name="set_eq_3600">3.6 kHz · Presence</string>
+    <string name="set_eq_14000">14 kHz · Treble</string>
     <string name="set_audio_preset_flat">Flat</string>
     <string name="set_audio_preset_bass">Bass</string>
     <string name="set_audio_preset_vocal">Vocal</string>
