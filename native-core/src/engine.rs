@@ -177,7 +177,7 @@ mod tests {
     fn invalid_queue_does_not_destroy_current_queue() {
         let mut core = PlayerCore::new();
         core.handle(PlayerCommand::SetQueue { tracks: vec![track("a")], start_index: 0, autoplay: false }).unwrap();
-        assert!(core.handle(PlayerCommand::SetQueue { tracks: vec![track("x"), track("x")], start_index: 0, autoplay: true }).is_err());
+        assert!(core.handle(PlayerCommand::SetQueue { tracks: vec![track("x")], start_index: 4, autoplay: true }).is_err());
         assert_eq!(core.queue().current().unwrap().id.0, "a");
     }
     #[test]
