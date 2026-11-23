@@ -21,7 +21,9 @@ package org.oxycblt.auxio.list.menu
 import android.view.MenuItem
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import androidx.core.os.bundleOf
 import dagger.hilt.android.AndroidEntryPoint
 import org.oxycblt.auxio.R
 import org.oxycblt.auxio.databinding.DialogMenuBinding
@@ -85,6 +87,12 @@ class SongMenuDialogFragment : MenuDialogFragment<Menu.ForSong>() {
             R.id.action_album_details -> detailModel.showAlbum(menu.song.album)
             R.id.action_share -> requireContext().share(menu.song)
             R.id.action_detail -> detailModel.showSong(menu.song)
+            R.id.action_vocal_studio -> {
+                findNavController().navigate(
+                    R.id.vocal_studio_dialog,
+                    bundleOf("songUid" to menu.song.uid),
+                )
+            }
             else -> error("Unexpected menu item selected $item")
         }
     }
