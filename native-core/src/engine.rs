@@ -3,7 +3,7 @@ use crate::model::{BackendAction, BackendEvent, PlaybackState, PlaybackStatus, P
 use crate::queue::{PlaybackQueue, QueueError, QueueSnapshot};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum CoreError { Queue(QueueError), EmptyQueue, NoCurrentTrack }
+pub enum CoreError { Queue(QueueError), EmptyQueue, NoCurrentTrack, InvalidSnapshot }
 impl From<QueueError> for CoreError { fn from(value: QueueError) -> Self { Self::Queue(value) } }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -25,11 +25,23 @@ impl PlayerCore {
         let queue = PlaybackQueue::restore(snapshot.queue)?;
         if let Some(id) = &snapshot.state.current_track {
             if queue.current().map(|track| &track.id) != Some(id) {
-                return Err(CoreError::NoCurrentTrack);
+                return Err(CoreError::InvalidSnapshot);
             }
-        } else if !queue.is_empty() {
-            return Err(CoreError::NoCurrentTrack);
+        } else if !queue.is_empty()
+            || snapshot.state.position_ms != 0
+            || snapshot.state.is_buffering
+            || snapshot.state.status != PlaybackStatus::Idle
+        {
+            return Err(CoreError::InvalidSnapshot);
         }
+
+        if snapshot.state.shuffle_enabled != queue.shuffle_enabled()
+            || snapshot.state.duration_ms.is_some_and(|duration| snapshot.state.position_ms > duration)
+            || snapshot.state.last_error.is_some_and(|ref message| message.len() > 4096)
+        {
+            return Err(CoreError::InvalidSnapshot);
+        }
+
         Ok(Self { state: snapshot.state, queue })
     }
 
@@ -145,6 +157,19 @@ impl PlayerCore {
     }
 
     pub fn handle_backend_event(&mut self, event: BackendEvent) -> CoreOutput {
+        let event_track_id = match &event {
+            BackendEvent::Prepared { track_id, .. }
+            | BackendEvent::Position { track_id, .. }
+            | BackendEvent::Buffering { track_id, .. }
+            | BackendEvent::Ended { track_id }
+            | BackendEvent::Failed { track_id, .. } => track_id,
+        };
+        // Media3 callbacks can arrive after a newer track has already been selected.
+        // Ignore stale callbacks completely, including revision changes and notifications.
+        if self.state.current_track.as_ref() != Some(event_track_id) {
+            return CoreOutput::default();
+        }
+
         let mut out = CoreOutput::default();
         match event {
             BackendEvent::Prepared { track_id, duration_ms } if self.state.current_track.as_ref() == Some(&track_id) => {
@@ -175,7 +200,7 @@ impl PlayerCore {
                 self.state.last_error = Some(message.clone());
                 out.events.push(PlayerEvent::PlaybackError(message));
             }
-            _ => {}
+            _ => unreachable!("backend event track was validated above"),
         }
         self.state.revision = self.state.revision.wrapping_add(1);
         out.events.push(PlayerEvent::StateChanged(self.state.clone()));
@@ -208,6 +233,43 @@ mod tests {
     fn track(id: &str) -> Track {
         Track { id: TrackId::new(id).unwrap(), title: format!("Track {id}"), artist: None, album: None, source_uri: format!("content://music/{id}"), duration_ms: Some(60_000) }
     }
+    #[test]
+    fn stale_backend_events_do_not_change_state_or_revision() {
+        let mut core = PlayerCore::new();
+        core.handle(PlayerCommand::SetQueue {
+            tracks: vec![track("a"), track("b")],
+            start_index: 1,
+            autoplay: true,
+        }).unwrap();
+        let revision = core.state().revision;
+
+        let output = core.handle_backend_event(BackendEvent::Position {
+            track_id: TrackId::new("a").unwrap(),
+            position_ms: 45_000,
+        });
+
+        assert!(output.events.is_empty());
+        assert_eq!(core.state().revision, revision);
+        assert_eq!(core.state().position_ms, 0);
+    }
+
+    #[test]
+    fn restore_rejects_inconsistent_shuffle_and_position_state() {
+        let mut core = PlayerCore::new();
+        core.handle(PlayerCommand::SetQueue {
+            tracks: vec![track("a")],
+            start_index: 0,
+            autoplay: false,
+        }).unwrap();
+        let mut snapshot = core.snapshot();
+        snapshot.state.position_ms = 70_000;
+        assert_eq!(PlayerCore::restore(snapshot).err(), Some(CoreError::InvalidSnapshot));
+
+        let mut snapshot = core.snapshot();
+        snapshot.state.shuffle_enabled = true;
+        assert_eq!(PlayerCore::restore(snapshot).err(), Some(CoreError::InvalidSnapshot));
+    }
+
     #[test]
     fn invalid_queue_does_not_destroy_current_queue() {
         let mut core = PlayerCore::new();
