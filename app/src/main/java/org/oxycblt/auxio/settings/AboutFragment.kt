@@ -18,12 +18,9 @@
  
 package org.oxycblt.auxio.settings
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.text.format.Formatter
 import android.view.LayoutInflater
-import androidx.core.net.toUri
 import androidx.core.view.updatePadding
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -37,7 +34,6 @@ import org.oxycblt.auxio.playback.formatDurationMs
 import org.oxycblt.auxio.ui.ViewBindingFragment
 import org.oxycblt.auxio.util.collectImmediately
 import org.oxycblt.auxio.util.openInBrowser
-import org.oxycblt.auxio.util.startIntent
 import org.oxycblt.auxio.util.systemBarInsetsCompat
 
 /**
@@ -67,31 +63,25 @@ class AboutFragment : ViewBindingFragment<FragmentAboutBinding>() {
             insets
         }
         binding.aboutVersion.text = BuildConfig.VERSION_NAME
-        binding.aboutCode.setOnClickListener { requireContext().openInBrowser(LINK_SOURCE) }
         binding.aboutWiki.setOnClickListener { requireContext().openInBrowser(LINK_WIKI) }
-        binding.aboutLicenses.setOnClickListener { requireContext().openInBrowser(LINK_LICENSES) }
-        binding.aboutProfile.setOnClickListener { requireContext().openInBrowser(LINK_PROFILE) }
-        binding.aboutDonate.setOnClickListener { requireContext().openInBrowser(LINK_DONATE) }
-        binding.aboutFeedbackGithub.setOnClickListener {
-            requireContext().openInBrowser(LINK_NEW_ISSUE)
-        }
-        binding.aboutFeedbackEmail.setOnClickListener {
-            requireContext().sendEmail("feedback@auxio.app")
-        }
-
-        binding.aboutSupportersBkkellyh.setOnClickListener {
-            requireContext().openInBrowser(LINK_BKKELLYH)
-        }
-        binding.aboutSupportersGruntstumper.setOnClickListener {
-            requireContext().openInBrowser(LINK_GRUNTSTUMPER)
-        }
-
-        binding.aboutSupportersPromo.setOnClickListener {
-            requireContext().openInBrowser(LINK_DONATE)
-        }
-
         // VIEWMODEL SETUP
         collectImmediately(musicModel.statistics, ::updateStatistics)
+        updateListeningStatistics()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateListeningStatistics()
+    }
+
+    private fun updateListeningStatistics() {
+        val stats = requireContext().getSharedPreferences("notli_listening_stats", 0)
+        val listeningMs = stats.getLong("listening_time_ms", 0L)
+        val tracksPlayed = stats.getLong("tracks_played", 0L)
+        val binding = requireBinding()
+        binding.aboutListeningTime.text =
+            getString(R.string.fmt_listening_time, listeningMs.formatDurationMs(false))
+        binding.aboutTracksPlayed.text = getString(R.string.fmt_tracks_played, tracksPlayed)
     }
 
     private fun updateStatistics(statistics: MusicViewModel.Statistics?) {
@@ -116,19 +106,4 @@ class AboutFragment : ViewBindingFragment<FragmentAboutBinding>() {
             )
     }
 
-    private fun Context.sendEmail(recipient: String) {
-        val intent = Intent(Intent.ACTION_SENDTO).apply { data = "mailto:$recipient".toUri() }
-        startIntent(intent)
-    }
-
-    private companion object {
-        const val LINK_SOURCE = "https://github.com/OxygenCobalt/Auxio"
-        const val LINK_WIKI = "$LINK_SOURCE/wiki"
-        const val LINK_LICENSES = "$LINK_WIKI/Licenses"
-        const val LINK_NEW_ISSUE = "$LINK_SOURCE/issues/new"
-        const val LINK_PROFILE = "https://github.com/OxygenCobalt"
-        const val LINK_BKKELLYH = "https://github.com/bkkellyh"
-        const val LINK_GRUNTSTUMPER = "https://github.com/gruntstumper"
-        const val LINK_DONATE = "https://github.com/sponsors/OxygenCobalt"
-    }
 }
