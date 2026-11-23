@@ -206,12 +206,8 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
         }
 
         return when (item.itemId) {
-            // Handle main actions (Search, Settings, About)
             R.id.action_more -> {
                 showQuickActions()
-                true
-            }
-                findNavController().navigateSafe(directions)
                 true
             }
             else -> {
@@ -256,6 +252,7 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
                             MusicType.ARTISTS -> HomeFragmentDirections.sortArtists()
                             MusicType.GENRES -> HomeFragmentDirections.sortGenres()
                             MusicType.PLAYLISTS -> HomeFragmentDirections.sortPlaylists()
+                            else -> HomeFragmentDirections.sortSongs()
                         }
                     findNavController().navigateSafe(directions)
                 },
