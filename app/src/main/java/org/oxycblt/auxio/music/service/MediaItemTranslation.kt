@@ -105,8 +105,8 @@ private fun style(style: Int): Sugar = {
 }
 
 /**
- * Tell Android Auto how to render the children of a browsable item. Root
- * navigation uses category rows; actual library contents use compact list rows.
+ * Tell Android Auto how to render the children of a browsable item. Root navigation uses category
+ * rows; actual library contents use compact list rows.
  */
 private fun parentStyle(browsableStyle: Int): Sugar = {
     putInt(MediaConstants.DESCRIPTION_EXTRAS_KEY_CONTENT_STYLE_BROWSABLE, browsableStyle)
