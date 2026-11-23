@@ -19,12 +19,15 @@
 package org.oxycblt.auxio.playback
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -103,6 +106,13 @@ internal fun NotliPlaybackBar(
         } else {
             0f
         }
+    // Position arrives in coarse ticks; a short linear tween turns them into a smooth sweep.
+    val smoothProgress by
+        animateFloatAsState(
+            targetValue = progress,
+            animationSpec = tween(durationMillis = 140, easing = LinearEasing),
+            label = "bar-progress",
+        )
 
     Surface(
         modifier =
@@ -158,24 +168,32 @@ internal fun NotliPlaybackBar(
                     )
                 }
 
-                Column(
+                // Title and artist glide in when the track changes.
+                AnimatedContent(
+                    targetState = title to artist,
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(3.dp),
-                ) {
-                    Text(
-                        text = title.ifBlank { "Notli" },
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = artist.ifBlank { "آمادهٔ پخش موسیقی" },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    transitionSpec = {
+                        (fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 3 }) togetherWith
+                            (fadeOut(tween(120)) + slideOutVertically(tween(120)) { -it / 3 })
+                    },
+                    label = "bar-track-text",
+                ) { (currentTitle, currentArtist) ->
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(
+                            text = currentTitle.ifBlank { "Notli" },
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = currentArtist.ifBlank { "آمادهٔ پخش موسیقی" },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
 
                 IconButton(
@@ -227,7 +245,7 @@ internal fun NotliPlaybackBar(
             }
 
             LinearProgressIndicator(
-                progress = progress,
+                progress = smoothProgress,
                 modifier = Modifier.fillMaxWidth().height(3.dp),
                 color = colors.primary,
                 trackColor = Color.Transparent,
