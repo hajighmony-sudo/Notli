@@ -44,6 +44,16 @@ internal class VocalModelStore(context: Context) {
         verified = false
     }
 
+    /** Removes only the optional model weights; the feature code and user music are untouched. */
+    suspend fun deleteInstalledModel() = withContext(Dispatchers.IO) {
+        verified = false
+        val temporary = File(directory, "$MODEL_NAME.download")
+        if (temporary.exists()) temporary.delete()
+        if (modelFile.exists()) {
+            check(modelFile.delete()) { "Could not delete the downloaded AI model." }
+        }
+    }
+
     suspend fun download(onProgress: (Int) -> Unit) = withContext(Dispatchers.IO) {
         if (verifyInstalled()) return@withContext
         verified = false
