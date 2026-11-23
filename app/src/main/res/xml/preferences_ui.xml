@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     app:title="@string/set_ui">
 
     <PreferenceCategory app:title="@string/set_display">
@@ -40,7 +41,7 @@
                 app:summary="@string/aurora_font_size_desc"
                 app:defaultValue="100"
                 app:min="80"
-                app:max="140"
+                android:max="140"
                 app:seekBarIncrement="5"
                 app:showSeekBarValue="true" />
             <SeekBarPreference
@@ -49,7 +50,7 @@
                 app:summary="@string/aurora_icon_size_desc"
                 app:defaultValue="100"
                 app:min="75"
-                app:max="150"
+                android:max="150"
                 app:seekBarIncrement="5"
                 app:showSeekBarValue="true" />
             <ListPreference
@@ -76,7 +77,7 @@
                 app:summary="@string/aurora_motion_speed_desc"
                 app:defaultValue="100"
                 app:min="50"
-                app:max="150"
+                android:max="150"
                 app:seekBarIncrement="5"
                 app:showSeekBarValue="true" />
             <Preference app:key="aurora_reset_motion" app:title="@string/aurora_reset_motion" />
