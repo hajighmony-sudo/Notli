@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+ 
 package org.oxycblt.auxio.playback.car
 
 import androidx.compose.animation.AnimatedContent
@@ -379,11 +379,9 @@ private fun CarWatchList(
                                 val info = layout.visibleItemsInfo.firstOrNull { it.index == index }
                                 if (info != null) {
                                     val half =
-                                        (layout.viewportEndOffset - layout.viewportStartOffset) /
-                                            2f
+                                        (layout.viewportEndOffset - layout.viewportStartOffset) / 2f
                                     val viewportCenter =
-                                        (layout.viewportStartOffset + layout.viewportEndOffset) /
-                                            2f
+                                        (layout.viewportStartOffset + layout.viewportEndOffset) / 2f
                                     val rowCenter = info.offset + info.size / 2f
                                     val distance =
                                         if (half > 0f) {
@@ -431,8 +429,8 @@ private fun CarWatchList(
 }
 
 /**
- * An arc with one hanging bar per nearby queue entry (up to [DOME_WINDOW]). The current entry is lit
- * and the bars sway gently while music plays. The sway is decoration, not audio analysis.
+ * An arc with one hanging bar per nearby queue entry (up to [DOME_WINDOW]). The current entry is
+ * lit and the bars sway gently while music plays. The sway is decoration, not audio analysis.
  */
 @Composable
 private fun CarSongDome(
@@ -505,7 +503,10 @@ private fun CarSongDome(
             val current = songIndex == currentIndex
             val color =
                 if (current) activeColor
-                else barColor.copy(alpha = 0.28f - 0.10f * abs(songIndex - currentIndex).coerceAtMost(2))
+                else
+                    barColor.copy(
+                        alpha = 0.28f - 0.10f * abs(songIndex - currentIndex).coerceAtMost(2),
+                    )
 
             drawLine(
                 color = color,

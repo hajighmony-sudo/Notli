@@ -83,61 +83,61 @@ private fun PreviewHome(dark: Boolean) {
     var chip by remember { mutableIntStateOf(0) }
     var tab by remember { mutableIntStateOf(0) }
     NotliThemeHost(darkTheme = dark) {
-      Box(Modifier.fillMaxSize()) {
-        NotliHomeDashboard(
-            labels = previewLabels,
-            nowPlaying =
-                NotliNowPlaying(
+        Box(Modifier.fillMaxSize()) {
+            NotliHomeDashboard(
+                labels = previewLabels,
+                nowPlaying =
+                    NotliNowPlaying(
+                        title = "Midnight Signals",
+                        artist = "Nova Drift",
+                        positionMs = position,
+                        durationMs = 232_000L,
+                        isPlaying = playing,
+                        shuffle = true,
+                        repeat = false,
+                    ),
+                actions =
+                    NotliPlayerActions(
+                        onTogglePlaying = { playing = !playing },
+                        onPrevious = {},
+                        onNext = {},
+                        onShuffle = {},
+                        onRepeat = {},
+                        onSeekTo = { position = it },
+                    ),
+                recent = previewRecent,
+                selectedChip = chip,
+                onChipSelected = { chip = it },
+                onSearch = {},
+                onSettings = {},
+                onSeeAllLibrary = {},
+                onSeeAllRecent = {},
+                onRecentClick = {},
+                onRecentMore = {},
+                onPlayMix = {},
+                nowPlayingArtwork = { PreviewArt(0) },
+                recentArtwork = { item -> PreviewArt(item.key.toInt()) },
+            )
+            Column(Modifier.align(Alignment.BottomCenter)) {
+                NotliMiniPlayer(
                     title = "Midnight Signals",
                     artist = "Nova Drift",
-                    positionMs = position,
-                    durationMs = 232_000L,
                     isPlaying = playing,
-                    shuffle = true,
-                    repeat = false,
-                ),
-            actions =
-                NotliPlayerActions(
-                    onTogglePlaying = { playing = !playing },
+                    progress = position / 232_000f,
+                    onOpen = {},
                     onPrevious = {},
+                    onTogglePlaying = { playing = !playing },
                     onNext = {},
-                    onShuffle = {},
-                    onRepeat = {},
-                    onSeekTo = { position = it },
-                ),
-            recent = previewRecent,
-            selectedChip = chip,
-            onChipSelected = { chip = it },
-            onSearch = {},
-            onSettings = {},
-            onSeeAllLibrary = {},
-            onSeeAllRecent = {},
-            onRecentClick = {},
-            onRecentMore = {},
-            onPlayMix = {},
-            nowPlayingArtwork = { PreviewArt(0) },
-            recentArtwork = { item -> PreviewArt(item.key.toInt()) },
-        )
-        Column(Modifier.align(Alignment.BottomCenter)) {
-            NotliMiniPlayer(
-                title = "Midnight Signals",
-                artist = "Nova Drift",
-                isPlaying = playing,
-                progress = position / 232_000f,
-                onOpen = {},
-                onPrevious = {},
-                onTogglePlaying = { playing = !playing },
-                onNext = {},
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                artwork = { PreviewArt(0) },
-            )
-            NotliBottomNav(
-                items = notliDefaultNavItems(),
-                selectedIndex = tab,
-                onSelect = { tab = it },
-            )
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    artwork = { PreviewArt(0) },
+                )
+                NotliBottomNav(
+                    items = notliDefaultNavItems(),
+                    selectedIndex = tab,
+                    onSelect = { tab = it },
+                )
+            }
         }
-      }
     }
 }
 

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+ 
 package org.oxycblt.auxio.ui
 
 import androidx.compose.animation.AnimatedContent
@@ -242,11 +242,7 @@ internal fun NotliBottomNav(
     val shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     Row(
         modifier =
-            modifier
-                .fillMaxWidth()
-                .notliCard(shape)
-                .navigationBarsPadding()
-                .selectableGroup(),
+            modifier.fillMaxWidth().notliCard(shape).navigationBarsPadding().selectableGroup(),
     ) {
         items.forEachIndexed { index, item ->
             val selected = index == selectedIndex
