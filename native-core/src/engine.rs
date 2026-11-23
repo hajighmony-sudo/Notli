@@ -81,6 +81,10 @@ impl PlayerCore {
                 let track = self.queue.select(&id)?.clone();
                 self.select_track(track, true, &mut out);
             }
+            PlayerCommand::PlayQueueIndex(index) => {
+                let track = self.queue.select_index(index)?.clone();
+                self.select_track(track, true, &mut out);
+            }
             PlayerCommand::AddToQueue(track) => { self.queue.enqueue(track)?; out.events.push(PlayerEvent::QueueChanged); }
             PlayerCommand::PlayNext(track) => { self.queue.enqueue_next(track)?; out.events.push(PlayerEvent::QueueChanged); }
             PlayerCommand::RemoveFromQueue(id) => {
@@ -91,7 +95,19 @@ impl PlayerCore {
                 }
                 out.events.push(PlayerEvent::QueueChanged);
             }
+            PlayerCommand::RemoveQueueItem(index) => {
+                let was_current = self.queue.remove_at(index)?;
+                if was_current {
+                    if let Some(track) = self.queue.current().cloned() { self.select_track(track, self.state.status == PlaybackStatus::Playing, &mut out); }
+                    else { self.reset(); out.actions.push(BackendAction::Stop); }
+                }
+                out.events.push(PlayerEvent::QueueChanged);
+            }
             PlayerCommand::MoveInQueue { track_id, new_index } => { self.queue.move_track(&track_id, new_index)?; out.events.push(PlayerEvent::QueueChanged); }
+            PlayerCommand::MoveQueueItem { from_index, to_index } => {
+                self.queue.move_at(from_index, to_index)?;
+                out.events.push(PlayerEvent::QueueChanged);
+            }
             PlayerCommand::ClearQueue => { self.queue = PlaybackQueue::default(); self.reset(); out.actions.push(BackendAction::Stop); out.events.push(PlayerEvent::QueueChanged); }
             PlayerCommand::SetRepeatMode(mode) => self.state.repeat_mode = mode,
             PlayerCommand::SetShuffle { enabled, seed } => {
