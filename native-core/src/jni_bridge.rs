@@ -38,11 +38,18 @@ fn json_error(message: impl Into<String>) -> String {
     serde_json::json!({"ok": false, "error": message.into()}).to_string()
 }
 
-unsafe fn runtime_from_handle<'a>(handle: jlong) -> Result<&'a Mutex<NativeRuntime>, String> {
+fn with_runtime<T>(
+    handle: jlong,
+    operation: impl FnOnce(&mut NativeRuntime) -> T,
+) -> Result<T, String> {
     if handle == 0 {
         return Err("native engine is closed".to_owned());
     }
-    Ok(&*(handle as *const Mutex<NativeRuntime>))
+    let runtime = unsafe { &*(handle as *const Mutex<NativeRuntime>) };
+    let mut runtime = runtime
+        .lock()
+        .map_err(|_| "native engine lock poisoned".to_owned())?;
+    Ok(operation(&mut runtime))
 }
 
 #[no_mangle]
@@ -80,9 +87,9 @@ pub extern "system" fn Java_org_oxycblt_auxio_playback_nativecore_RustMusicCore_
         Ok(value) => value,
         Err(error) => return java_string(&mut env, json_error(format!("invalid player command: {error}"))),
     };
-    let result = unsafe { runtime_from_handle(handle) }
-        .and_then(|runtime| runtime.lock().map_err(|_| "native engine lock poisoned".to_owned()))
-        .map(|mut runtime| runtime.player.handle(command).map_err(|error| format!("{error:?}")));
+    let result = with_runtime(handle, |runtime| {
+        runtime.player.handle(command).map_err(|error| format!("{error:?}"))
+    });
     let response = match result {
         Ok(Ok(output)) => json_success(&output),
         Ok(Err(error)) | Err(error) => json_error(error),
@@ -105,9 +112,7 @@ pub extern "system" fn Java_org_oxycblt_auxio_playback_nativecore_RustMusicCore_
         Ok(value) => value,
         Err(error) => return java_string(&mut env, json_error(format!("invalid backend event: {error}"))),
     };
-    let result = unsafe { runtime_from_handle(handle) }
-        .and_then(|runtime| runtime.lock().map_err(|_| "native engine lock poisoned".to_owned()))
-        .map(|mut runtime| runtime.player.handle_backend_event(event));
+    let result = with_runtime(handle, |runtime| runtime.player.handle_backend_event(event));
     let response = match result {
         Ok(output) => json_success(&output),
         Err(error) => json_error(error),
@@ -121,9 +126,7 @@ pub extern "system" fn Java_org_oxycblt_auxio_playback_nativecore_RustMusicCore_
     _this: JObject<'_>,
     handle: jlong,
 ) -> jstring {
-    let result = unsafe { runtime_from_handle(handle) }
-        .and_then(|runtime| runtime.lock().map_err(|_| "native engine lock poisoned".to_owned()))
-        .map(|runtime| runtime.player.snapshot());
+    let result = with_runtime(handle, |runtime| runtime.player.snapshot());
     let response = match result {
         Ok(snapshot) => json_success(&snapshot),
         Err(error) => json_error(error),
@@ -146,9 +149,9 @@ pub extern "system" fn Java_org_oxycblt_auxio_playback_nativecore_RustMusicCore_
         Ok(value) => value,
         Err(error) => return java_string(&mut env, json_error(format!("invalid download command: {error}"))),
     };
-    let result = unsafe { runtime_from_handle(handle) }
-        .and_then(|runtime| runtime.lock().map_err(|_| "native engine lock poisoned".to_owned()))
-        .map(|mut runtime| runtime.downloads.handle(command).map_err(|error| format!("{error:?}")));
+    let result = with_runtime(handle, |runtime| {
+        runtime.downloads.handle(command).map_err(|error| format!("{error:?}"))
+    });
     let response = match result {
         Ok(Ok(snapshot)) => json_success(&snapshot),
         Ok(Err(error)) | Err(error) => json_error(error),
@@ -162,9 +165,7 @@ pub extern "system" fn Java_org_oxycblt_auxio_playback_nativecore_RustMusicCore_
     _this: JObject<'_>,
     handle: jlong,
 ) -> jstring {
-    let result = unsafe { runtime_from_handle(handle) }
-        .and_then(|runtime| runtime.lock().map_err(|_| "native engine lock poisoned".to_owned()))
-        .map(|runtime| runtime.downloads.all());
+    let result = with_runtime(handle, |runtime| runtime.downloads.all());
     let response = match result {
         Ok(snapshot) => json_success(&snapshot),
         Err(error) => json_error(error),
