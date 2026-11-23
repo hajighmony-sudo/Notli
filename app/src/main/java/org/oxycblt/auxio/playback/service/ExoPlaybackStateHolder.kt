@@ -513,7 +513,7 @@ class ExoPlaybackStateHolder(
 
         // So many actions trigger progression changes that it becomes easier just to handle it
         // in an ExoPlayer callback anyway. This doesn't really cause issues anywhere.
-        if (events.contains(Player.EVENT_POSITION_DISCONTINUITY)) {
+        if (events.containsAny(\n                Player.EVENT_POSITION_DISCONTINUITY,\n                Player.EVENT_PLAYBACK_STATE_CHANGED,\n                Player.EVENT_IS_PLAYING_CHANGED,\n            )\n        ) {
             rustBridge.onPositionChanged()
         }
 
