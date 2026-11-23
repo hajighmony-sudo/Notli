@@ -19,7 +19,6 @@
 package org.oxycblt.auxio.settings
 
 import android.os.Bundle
-import java.text.DateFormat
 import android.text.format.Formatter
 import android.view.LayoutInflater
 import androidx.core.view.updatePadding
@@ -27,6 +26,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.transition.MaterialFadeThrough
 import dagger.hilt.android.AndroidEntryPoint
+import java.text.DateFormat
 import java.util.Date
 import org.oxycblt.auxio.BuildConfig
 import org.oxycblt.auxio.R
