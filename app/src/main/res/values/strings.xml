@@ -562,4 +562,33 @@
         <item quantity="one">%d second</item>
         <item quantity="other">%d seconds</item>
     </plurals>
+
+    <string name="vocal_menu_action">Make instrumental</string>
+    <string name="vocal_studio_title">Vocal Studio</string>
+    <string name="vocal_song_unavailable">The selected song is no longer available.</string>
+    <string name="vocal_unsupported_device">On-device separation requires Android 10 or later and a 64-bit ARM device.</string>
+    <string name="vocal_model_ready">AI model is installed. Processing works offline.</string>
+    <string name="vocal_model_missing">AI model is not installed. Download it once to use Vocal Studio offline.</string>
+    <string name="vocal_privacy_notice">Your audio stays on this device. Internet is used only to download the optional model; songs are never uploaded.</string>
+    <string name="vocal_model_license_title">Model usage notice</string>
+    <string name="vocal_model_license_notice">The engine code is MIT-licensed, but the upstream Demucs model weights have been described by their author as research-only. Download only if you accept that restriction. Do not use these weights commercially without obtaining separate permission. The download is optional and is not bundled in NOTLI.</string>
+    <string name="vocal_download_model">Download AI model (about 55 MB)</string>
+    <string name="vocal_downloading">Downloading model…</string>
+    <string name="vocal_download_percent">Downloading model… %1$d%%</string>
+    <string name="vocal_download_complete">Model downloaded and verified. You can now work offline.</string>
+    <string name="vocal_download_failed">Model download failed.</string>
+    <string name="vocal_make_instrumental">Create instrumental</string>
+    <string name="vocal_decoding">Decoding selected audio…</string>
+    <string name="vocal_ready">Instrumental is ready.</string>
+    <string name="vocal_process_failed">Could not separate this audio.</string>
+    <string name="vocal_cancel">Cancel processing</string>
+    <string name="vocal_cancelled">Processing cancelled.</string>
+    <string name="vocal_preview">Preview instrumental</string>
+    <string name="vocal_pause_preview">Pause preview</string>
+    <string name="vocal_preview_failed">Could not play the preview.</string>
+    <string name="vocal_save">Save instrumental</string>
+    <string name="vocal_saved">Instrumental saved.</string>
+    <string name="vocal_save_failed">Could not save instrumental.</string>
+    <string name="vocal_discard">Discard result</string>
+    <string name="vocal_result_discarded">Temporary result discarded.</string>
 </resources>
