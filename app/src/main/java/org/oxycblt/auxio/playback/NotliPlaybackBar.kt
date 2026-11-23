@@ -106,7 +106,8 @@ internal fun NotliPlaybackBar(
             label = "playing-artwork-scale",
         )
     // A soft ring around the artwork breathes while music plays and fades out when paused.
-    // The infinite transition only exists while playing, so a paused bar never recomposes per frame.
+    // The infinite transition only exists while playing, so a paused bar never recomposes per
+    // frame.
     val pulse =
         if (isPlaying) {
             val animatedPulse by
