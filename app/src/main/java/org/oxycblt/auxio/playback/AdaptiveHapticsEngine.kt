@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2026 Auxio Project
+ * AdaptiveHapticsEngine.kt is part of Auxio.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+ 
 package org.oxycblt.auxio.playback
 
 import android.content.Context
@@ -140,37 +158,44 @@ constructor(
             } ?: return
 
         if (now - lastPulseAt < GLOBAL_REFRACTORY_MS) return
-        val signal = when (event) {
-            Event.BASS -> bass
-            Event.SNARE -> mid
-            Event.HIHAT -> high
-        }
-        val floor = when (event) {
-            Event.BASS -> bassFloor
-            Event.SNARE -> midFloor
-            Event.HIHAT -> highFloor
-        }.coerceAtLeast(ENERGY_FLOOR)
+        val signal =
+            when (event) {
+                Event.BASS -> bass
+                Event.SNARE -> mid
+                Event.HIHAT -> high
+            }
+        val floor =
+            when (event) {
+                Event.BASS -> bassFloor
+                Event.SNARE -> midFloor
+                Event.HIHAT -> highFloor
+            }.coerceAtLeast(ENERGY_FLOOR)
         val strength = ((signal / floor - onsetRatio) / STRENGTH_RANGE).coerceIn(0.15f, 1f)
         val userScale = intensity / 5f
 
         // NAVAQ-inspired event envelopes: bass gets a fuller thump, transients stay crisp.
-        val baseDuration = when (event) {
-            Event.BASS -> BASS_DURATION_MS
-            Event.SNARE -> SNARE_DURATION_MS
-            Event.HIHAT -> HIHAT_DURATION_MS
-        }
-        val duration = (baseDuration * (0.55f + 0.45f * userScale) * (0.8f + 0.2f * strength))
-            .toLong().coerceIn(MIN_PULSE_MS, MAX_PULSE_MS)
-        val amplitude = (MIN_AMPLITUDE + (MAX_AMPLITUDE - MIN_AMPLITUDE) * strength * userScale)
-            .toInt().coerceIn(MIN_AMPLITUDE, MAX_AMPLITUDE)
+        val baseDuration =
+            when (event) {
+                Event.BASS -> BASS_DURATION_MS
+                Event.SNARE -> SNARE_DURATION_MS
+                Event.HIHAT -> HIHAT_DURATION_MS
+            }
+        val duration =
+            (baseDuration * (0.55f + 0.45f * userScale) * (0.8f + 0.2f * strength))
+                .toLong()
+                .coerceIn(MIN_PULSE_MS, MAX_PULSE_MS)
+        val amplitude =
+            (MIN_AMPLITUDE + (MAX_AMPLITUDE - MIN_AMPLITUDE) * strength * userScale)
+                .toInt()
+                .coerceIn(MIN_AMPLITUDE, MAX_AMPLITUDE)
 
         val motor = vibrator ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val resolved = if (motor.hasAmplitudeControl()) amplitude else VibrationEffect.DEFAULT_AMPLITUDE
+            val resolved =
+                if (motor.hasAmplitudeControl()) amplitude else VibrationEffect.DEFAULT_AMPLITUDE
             motor.vibrate(VibrationEffect.createOneShot(duration, resolved))
         } else {
-            @Suppress("DEPRECATION")
-            motor.vibrate(duration)
+            @Suppress("DEPRECATION") motor.vibrate(duration)
         }
         lastPulseAt = now
     }
@@ -204,7 +229,11 @@ constructor(
     private fun lowPassAlpha(cutoffHz: Float, sampleRate: Int): Float =
         (1.0 - exp(-2.0 * Math.PI * cutoffHz / sampleRate)).toFloat()
 
-    private enum class Event { BASS, SNARE, HIHAT }
+    private enum class Event {
+        BASS,
+        SNARE,
+        HIHAT,
+    }
 
     private companion object {
         const val BYTES_PER_SAMPLE = 2
