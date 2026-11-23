@@ -423,6 +423,11 @@
     <string name="vocal_model_license_title">نکته مجوز استفاده از مدل</string>
     <string name="vocal_model_license_notice">کد موتور Demucs مجوز MIT دارد، اما وزن‌های مدل دارایی جداگانه‌ای هستند. سازنده اصلی Demucs اعلام کرده وزن‌های ازپیش‌آموزش‌دیده فقط برای اهداف علمی ارائه شده‌اند. این مدل صرفاً پژوهشی است و بدون دریافت مجوز کتبی جداگانه نباید در محصول تجاری استفاده شود. دانلود اختیاری حدود ۵۵ مگابایت است و از اینترنت خود گوشی استفاده می‌کند؛ ممکن است هزینه اینترنت همراه داشته باشد. هیچ فایل صوتی آپلود نمی‌شود و مدل داخل NOTLI قرار ندارد.</string>
     <string name="vocal_download_model">دانلود مدل هوش مصنوعی (حدود ۵۵ مگابایت)</string>
+    <string name="vocal_remove_model">حذف مدل هوش مصنوعی دانلودشده</string>
+    <string name="vocal_remove_model_title">حذف مدل هوش مصنوعی؟</string>
+    <string name="vocal_remove_model_message">با این کار مدل اختیاری (حدود ۵۵ مگابایت) از گوشی حذف می‌شود. آهنگ‌های شما و نسخه‌های بی‌کلام ذخیره‌شده حذف نمی‌شوند. هر زمان بخواهید می‌توانید مدل را دوباره دانلود کنید.</string>
+    <string name="vocal_model_removed">مدل هوش مصنوعی حذف شد و حافظه آزاد شد.</string>
+    <string name="vocal_remove_model_failed">حذف مدل هوش مصنوعی انجام نشد.</string>
     <string name="vocal_downloading">در حال دانلود مدل…</string>
     <string name="vocal_download_percent">در حال دانلود مدل… %1$d٪</string>
     <string name="vocal_download_complete">مدل دانلود و بررسی شد. اکنون می‌توانید آفلاین کار کنید.</string>
