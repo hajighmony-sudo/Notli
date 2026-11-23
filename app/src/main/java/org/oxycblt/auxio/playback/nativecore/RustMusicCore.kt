@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2026 Notli contributors.
- * RustMusicCore.kt is part of Notli.
+ * Copyright (c) 2026 Auxio Project
+ * RustMusicCore.kt is part of Auxio.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,19 +29,36 @@ internal object RustMusicCore {
         System.loadLibrary("notli_music_core")
     }
 
-    internal external fun nativeCreate(): Long
+    private external fun nativeCreate(): Long
 
-    internal external fun nativeDestroy(handle: Long)
+    private external fun nativeDestroy(handle: Long)
 
-    internal external fun nativeDispatch(handle: Long, commandJson: String): String
+    private external fun nativeDispatch(handle: Long, commandJson: String): String
 
-    internal external fun nativeBackendEvent(handle: Long, eventJson: String): String
+    private external fun nativeBackendEvent(handle: Long, eventJson: String): String
 
-    internal external fun nativeSnapshot(handle: Long): String
+    private external fun nativeSnapshot(handle: Long): String
 
-    internal external fun nativeDownloadCommand(handle: Long, commandJson: String): String
+    private external fun nativeDownloadCommand(handle: Long, commandJson: String): String
 
-    internal external fun nativeDownloadSnapshot(handle: Long): String
+    private external fun nativeDownloadSnapshot(handle: Long): String
+
+    fun create(): Long = nativeCreate()
+
+    fun destroy(handle: Long) = nativeDestroy(handle)
+
+    fun dispatch(handle: Long, commandJson: String): String =
+        nativeDispatch(handle, commandJson)
+
+    fun backendEvent(handle: Long, eventJson: String): String =
+        nativeBackendEvent(handle, eventJson)
+
+    fun snapshot(handle: Long): String = nativeSnapshot(handle)
+
+    fun downloadCommand(handle: Long, commandJson: String): String =
+        nativeDownloadCommand(handle, commandJson)
+
+    fun downloadSnapshot(handle: Long): String = nativeDownloadSnapshot(handle)
 }
 
 /**
@@ -49,33 +66,33 @@ internal object RustMusicCore {
  * Calls are synchronized so a command cannot race with handle destruction.
  */
 internal class RustMusicEngine private constructor() : AutoCloseable {
-    private var handle: Long = RustMusicCore.nativeCreate()
+    private var handle: Long = RustMusicCore.create()
 
     @Synchronized
     fun dispatch(commandJson: String): String =
-        RustMusicCore.nativeDispatch(requireOpenHandle(), commandJson)
+        RustMusicCore.dispatch(requireOpenHandle(), commandJson)
 
     @Synchronized
     fun onBackendEvent(eventJson: String): String =
-        RustMusicCore.nativeBackendEvent(requireOpenHandle(), eventJson)
+        RustMusicCore.backendEvent(requireOpenHandle(), eventJson)
 
     @Synchronized
-    fun snapshot(): String = RustMusicCore.nativeSnapshot(requireOpenHandle())
+    fun snapshot(): String = RustMusicCore.snapshot(requireOpenHandle())
 
     @Synchronized
     fun dispatchDownload(commandJson: String): String =
-        RustMusicCore.nativeDownloadCommand(requireOpenHandle(), commandJson)
+        RustMusicCore.downloadCommand(requireOpenHandle(), commandJson)
 
     @Synchronized
     fun downloadSnapshot(): String =
-        RustMusicCore.nativeDownloadSnapshot(requireOpenHandle())
+        RustMusicCore.downloadSnapshot(requireOpenHandle())
 
     @Synchronized
     override fun close() {
         val currentHandle = handle
         if (currentHandle != 0L) {
             handle = 0L
-            RustMusicCore.nativeDestroy(currentHandle)
+            RustMusicCore.destroy(currentHandle)
         }
     }
 
