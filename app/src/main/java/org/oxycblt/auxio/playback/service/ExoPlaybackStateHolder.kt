@@ -270,7 +270,7 @@ class ExoPlaybackStateHolder(
         val target = startIndex ?: player.currentTimeline.getFirstWindowIndex(command.shuffled)
         player.seekTo(target, C.TIME_UNSET)
         val rawQueue = resolveQueue()
-        rustBridge.setQueue(rawQueue.resolveSongs(), rawQueue.resolveIndex(), true)
+        rustBridge.setQueue(rawQueue.resolveSongs(), rawQueue.resolveIndex(), true, rawQueue.isShuffled)
         playbackManager.ack(this, StateAck.NewPlayback)
         deferSave()
     }
@@ -283,6 +283,14 @@ class ExoPlaybackStateHolder(
                 BetterShuffleOrder(player.mediaItemCount, player.currentMediaItemIndex),
             )
         }
+        val rawQueue = resolveQueue()
+        rustBridge.synchronizeVisibleQueue(
+            rawQueue.resolveSongs(),
+            rawQueue.resolveIndex(),
+            player.playWhenReady,
+            player.currentPosition,
+            rawQueue.isShuffled,
+        )
         playbackManager.ack(this, StateAck.QueueReordered)
         deferSave()
     }
@@ -427,6 +435,13 @@ class ExoPlaybackStateHolder(
         if (shouldSeek || abs(player.currentPosition - positionMs) > 1000L) {
             player.seekTo(positionMs)
         }
+        rustBridge.synchronizeVisibleQueue(
+            rawQueue.resolveSongs(),
+            rawQueue.resolveIndex(),
+            false,
+            positionMs,
+            rawQueue.isShuffled,
+        )
 
         if (sendNewPlaybackEvent) {
             ack?.let { playbackManager.ack(this, it) }
