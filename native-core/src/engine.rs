@@ -24,8 +24,12 @@ impl PlayerCore {
     pub fn restore(snapshot: PlayerSnapshot) -> Result<Self, CoreError> {
         let queue = PlaybackQueue::restore(snapshot.queue)?;
         if let Some(id) = &snapshot.state.current_track {
-            if !queue.tracks().iter().any(|track| &track.id == id) { return Err(CoreError::NoCurrentTrack); }
-        } else if !queue.is_empty() { return Err(CoreError::NoCurrentTrack); }
+            if queue.current().map(|track| &track.id) != Some(id) {
+                return Err(CoreError::NoCurrentTrack);
+            }
+        } else if !queue.is_empty() {
+            return Err(CoreError::NoCurrentTrack);
+        }
         Ok(Self { state: snapshot.state, queue })
     }
 
@@ -153,8 +157,18 @@ impl PlayerCore {
             }
             BackendEvent::Buffering { track_id, is_buffering } if self.state.current_track.as_ref() == Some(&track_id) => self.state.is_buffering = is_buffering,
             BackendEvent::Ended { track_id } if self.state.current_track.as_ref() == Some(&track_id) => {
-                if let Some(track) = self.queue.next(self.state.repeat_mode).cloned() { self.select_track(track, true, &mut out); }
-                else { self.state.status = PlaybackStatus::Completed; self.state.position_ms = self.state.duration_ms.unwrap_or(self.state.position_ms); out.events.push(PlayerEvent::PlaybackCompleted); }
+                if let Some(track) = self.queue.next(self.state.repeat_mode).cloned() {
+                    self.select_track(track, true, &mut out);
+                } else if !self.queue.is_empty() {
+                    // Match the existing Android player: reaching the end with Repeat Off
+                    // returns to the first queue item and pauses there.
+                    let track = self.queue.select_index(0).expect("non-empty queue").clone();
+                    self.select_track(track, false, &mut out);
+                } else {
+                    self.state.status = PlaybackStatus::Completed;
+                    self.state.position_ms = self.state.duration_ms.unwrap_or(self.state.position_ms);
+                    out.events.push(PlayerEvent::PlaybackCompleted);
+                }
             }
             BackendEvent::Failed { track_id, message } if self.state.current_track.as_ref() == Some(&track_id) => {
                 self.state.status = PlaybackStatus::Error;
@@ -234,7 +248,7 @@ mod tests {
     }
 
     #[test]
-    fn natural_end_completes_without_repeat_instead_of_wrapping() {
+    fn natural_end_returns_to_first_item_paused_when_repeat_is_off() {
         let mut core = PlayerCore::new();
         core.handle(PlayerCommand::SetQueue {
             tracks: vec![track("a")],
@@ -246,7 +260,7 @@ mod tests {
             track_id: TrackId::new("a").unwrap(),
         });
 
-        assert_eq!(core.state().status, PlaybackStatus::Completed);
+        assert_eq!(core.state().status, PlaybackStatus::Paused);
         assert_eq!(core.queue().current().unwrap().id.0, "a");
     }
 }
