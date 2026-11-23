@@ -63,6 +63,7 @@
         android:layout_height="match_parent"
         android:animateLayoutChanges="true"
         android:clipToPadding="false"
+        android:paddingBottom="78dp"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
         <androidx.viewpager2.widget.ViewPager2
@@ -104,5 +105,11 @@
 
     </FrameLayout>
 
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/home_bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:elevation="12dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
