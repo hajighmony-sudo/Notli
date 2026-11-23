@@ -32,7 +32,8 @@ internal class VocalModelStore(context: Context) {
     }
 
     suspend fun download(onProgress: (Int) -> Unit) = withContext(Dispatchers.IO) {
-        if (isReady) return@withContext
+        if (isReady && sha256(modelFile) == MODEL_SHA256) return@withContext
+        if (modelFile.exists()) modelFile.delete()
         val temporary = File(directory, "$MODEL_NAME.download")
         val connection = (URL(MODEL_URL).openConnection() as HttpURLConnection).apply {
             connectTimeout = 20_000
@@ -60,6 +61,7 @@ internal class VocalModelStore(context: Context) {
             }
             check(temporary.length() in MIN_MODEL_BYTES..MAX_MODEL_BYTES) { "Downloaded model has an unexpected size." }
             check(sha256(temporary) == MODEL_SHA256) { "Model checksum mismatch. The file was rejected." }
+            if (modelFile.exists()) modelFile.delete()
             check(temporary.renameTo(modelFile)) { "Could not install the verified model." }
             onProgress(100)
         } finally {
