@@ -391,7 +391,7 @@ class ExoPlaybackStateHolder(
         player.removeMediaItem(trueIndex)
         rustBridge.remove(at)
         if (songWillChange && !playbackSettings.rememberPause) {
-            player.play()
+            rustBridge.play()
         }
         playbackManager.ack(this, ack)
         deferSave()
@@ -513,7 +513,13 @@ class ExoPlaybackStateHolder(
 
         // So many actions trigger progression changes that it becomes easier just to handle it
         // in an ExoPlayer callback anyway. This doesn't really cause issues anywhere.
-        if (events.containsAny(\n                Player.EVENT_POSITION_DISCONTINUITY,\n                Player.EVENT_PLAYBACK_STATE_CHANGED,\n                Player.EVENT_IS_PLAYING_CHANGED,\n            )\n        ) {
+        if (
+            events.containsAny(
+                Player.EVENT_POSITION_DISCONTINUITY,
+                Player.EVENT_PLAYBACK_STATE_CHANGED,
+                Player.EVENT_IS_PLAYING_CHANGED,
+            )
+        ) {
             rustBridge.onPositionChanged()
         }
 
