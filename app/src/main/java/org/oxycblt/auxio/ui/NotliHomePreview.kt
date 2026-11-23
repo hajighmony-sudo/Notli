@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+ 
 package org.oxycblt.auxio.ui
 
 import androidx.compose.foundation.background
@@ -58,7 +58,9 @@ private val previewRecent =
         NotliTrackCardItem("3", "Neon Dreams", "Synthwave Vibes"),
     )
 
-/** Placeholder artwork: a diagonal violet→cyan gradient (real covers are supplied by the caller). */
+/**
+ * Placeholder artwork: a diagonal violet→cyan gradient (real covers are supplied by the caller).
+ */
 @Composable
 private fun PreviewArt(seed: Int = 0) {
     val colors =

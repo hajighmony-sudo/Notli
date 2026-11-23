@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+ 
 package org.oxycblt.auxio.ui
 
 import androidx.compose.animation.AnimatedContent
@@ -170,7 +170,9 @@ internal fun formatPlaybackTime(ms: Long): String {
 @Composable
 internal fun Modifier.notliCard(shape: Shape): Modifier {
     val palette = NotliTheme.palette
-    return this.clip(shape).background(palette.cardBrush, shape).border(1.dp, palette.rimBrush, shape)
+    return this.clip(shape)
+        .background(palette.cardBrush, shape)
+        .border(1.dp, palette.rimBrush, shape)
 }
 
 /**
@@ -206,7 +208,10 @@ internal fun NotliPlayPauseGlyph(isPlaying: Boolean, tint: Color, modifier: Modi
         animateFloatAsState(
             targetValue = if (isPlaying) 0f else 1f,
             animationSpec =
-                spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+                spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium,
+                ),
             label = "play-pause-morph",
         )
     Canvas(modifier) {
@@ -267,7 +272,8 @@ internal fun NotliLogoMark(modifier: Modifier = Modifier, animated: Boolean = tr
         val count = base.size
         val gap = size.width * 0.045f
         val barW = (size.width - gap * (count - 1)) / count
-        val brush = Brush.verticalGradient(listOf(palette.accentCyan, palette.accent, palette.accentSoft))
+        val brush =
+            Brush.verticalGradient(listOf(palette.accentCyan, palette.accent, palette.accentSoft))
         base.forEachIndexed { i, h ->
             val barH = size.height * h * factors[i]
             drawRoundRect(
@@ -362,7 +368,10 @@ internal fun NotliHeader(
                 text = "NOTLI",
                 style =
                     TextStyle(
-                        brush = Brush.horizontalGradient(listOf(palette.textPrimary, palette.accentSoft)),
+                        brush =
+                            Brush.horizontalGradient(
+                                listOf(palette.textPrimary, palette.accentSoft),
+                            ),
                         fontSize = 38.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp,
@@ -409,7 +418,10 @@ internal fun NotliSeekBar(
         animateFloatAsState(
             targetValue = if (dragging) 1.55f else 1f,
             animationSpec =
-                spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+                spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium,
+                ),
             label = "seek-thumb",
         )
     Box(
@@ -433,7 +445,8 @@ internal fun NotliSeekBar(
                         },
                         onDragCancel = { dragging = false },
                         onHorizontalDrag = { change, _ ->
-                            dragFraction = (change.position.x / size.width.coerceAtLeast(1)).coerceIn(0f, 1f)
+                            dragFraction =
+                                (change.position.x / size.width.coerceAtLeast(1)).coerceIn(0f, 1f)
                         },
                     )
                 },
@@ -458,7 +471,11 @@ internal fun NotliSeekBar(
                 )
             }
             val thumbR = 6.dp.toPx() * thumbScale
-            drawCircle(palette.accent.copy(alpha = 0.32f), radius = thumbR * 2.1f, center = Offset(filled, cy))
+            drawCircle(
+                palette.accent.copy(alpha = 0.32f),
+                radius = thumbR * 2.1f,
+                center = Offset(filled, cy),
+            )
             drawCircle(Color.White, radius = thumbR, center = Offset(filled, cy))
         }
     }
@@ -486,7 +503,10 @@ private fun NudgeButton(
                         offset.animateTo(direction * 7f, tween(90))
                         offset.animateTo(
                             0f,
-                            spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessMedium),
+                            spring(
+                                dampingRatio = Spring.DampingRatioHighBouncy,
+                                stiffness = Spring.StiffnessMedium,
+                            ),
                         )
                     }
                     onClick()
@@ -508,7 +528,8 @@ internal fun NotliNowPlayingCard(
     val palette = NotliTheme.palette
     val shape = RoundedCornerShape(28.dp)
     val fraction =
-        if (state.durationMs > 0) (state.positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
+        if (state.durationMs > 0) (state.positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f)
+        else 0f
 
     // The big button's outer ring breathes only while playing.
     val ringPulse =
@@ -519,7 +540,10 @@ internal fun NotliNowPlayingCard(
                     initialValue = 0.35f,
                     targetValue = 1f,
                     animationSpec =
-                        infiniteRepeatable(tween(1300, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                        infiniteRepeatable(
+                            tween(1300, easing = FastOutSlowInEasing),
+                            RepeatMode.Reverse,
+                        ),
                     label = "play-ring-alpha",
                 )
             v
@@ -528,7 +552,10 @@ internal fun NotliNowPlayingCard(
         }
 
     Box(modifier = modifier.fillMaxWidth().notliCard(shape).padding(14.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(
                 Modifier.size(116.dp)
                     .clip(RoundedCornerShape(22.dp))
@@ -546,7 +573,10 @@ internal fun NotliNowPlayingCard(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        NotliLogoMark(Modifier.size(width = 14.dp, height = 14.dp), animated = false)
+                        NotliLogoMark(
+                            Modifier.size(width = 14.dp, height = 14.dp),
+                            animated = false,
+                        )
                         Text(
                             labels.nowPlaying,
                             color = palette.accentSoft,
@@ -592,8 +622,16 @@ internal fun NotliNowPlayingCard(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(formatPlaybackTime(state.positionMs), color = palette.textSecondary, fontSize = 12.sp)
-                    Text(formatPlaybackTime(state.durationMs), color = palette.textSecondary, fontSize = 12.sp)
+                    Text(
+                        formatPlaybackTime(state.positionMs),
+                        color = palette.textSecondary,
+                        fontSize = 12.sp,
+                    )
+                    Text(
+                        formatPlaybackTime(state.durationMs),
+                        color = palette.textSecondary,
+                        fontSize = 12.sp,
+                    )
                 }
                 Row(
                     Modifier.fillMaxWidth(),
@@ -613,10 +651,20 @@ internal fun NotliNowPlayingCard(
                             label = "repeat-tint",
                         )
                     NudgeButton(0, actions.onShuffle) {
-                        Icon(Icons.Filled.Shuffle, null, tint = shuffleTint, modifier = Modifier.size(22.dp))
+                        Icon(
+                            Icons.Filled.Shuffle,
+                            null,
+                            tint = shuffleTint,
+                            modifier = Modifier.size(22.dp),
+                        )
                     }
                     NudgeButton(-1, actions.onPrevious) {
-                        Icon(Icons.Filled.SkipPrevious, null, tint = palette.textPrimary, modifier = Modifier.size(28.dp))
+                        Icon(
+                            Icons.Filled.SkipPrevious,
+                            null,
+                            tint = palette.textPrimary,
+                            modifier = Modifier.size(28.dp),
+                        )
                     }
                     Box(
                         modifier =
@@ -624,17 +672,35 @@ internal fun NotliNowPlayingCard(
                                 .notliPressScale(0.9f)
                                 .clip(CircleShape)
                                 .background(palette.accent.copy(alpha = 0.14f))
-                                .border(2.dp, palette.accent.copy(alpha = 0.55f + 0.45f * ringPulse), CircleShape)
+                                .border(
+                                    2.dp,
+                                    palette.accent.copy(alpha = 0.55f + 0.45f * ringPulse),
+                                    CircleShape,
+                                )
                                 .clickable(onClick = actions.onTogglePlaying),
                         contentAlignment = Alignment.Center,
                     ) {
-                        NotliPlayPauseGlyph(state.isPlaying, palette.textPrimary, Modifier.size(26.dp))
+                        NotliPlayPauseGlyph(
+                            state.isPlaying,
+                            palette.textPrimary,
+                            Modifier.size(26.dp),
+                        )
                     }
                     NudgeButton(1, actions.onNext) {
-                        Icon(Icons.Filled.SkipNext, null, tint = palette.textPrimary, modifier = Modifier.size(28.dp))
+                        Icon(
+                            Icons.Filled.SkipNext,
+                            null,
+                            tint = palette.textPrimary,
+                            modifier = Modifier.size(28.dp),
+                        )
                     }
                     NudgeButton(0, actions.onRepeat) {
-                        Icon(Icons.Filled.Repeat, null, tint = repeatTint, modifier = Modifier.size(22.dp))
+                        Icon(
+                            Icons.Filled.Repeat,
+                            null,
+                            tint = repeatTint,
+                            modifier = Modifier.size(22.dp),
+                        )
                     }
                 }
             }
@@ -672,7 +738,10 @@ internal fun NotliSectionTitle(
             maxLines = 1,
         )
         Row(
-            modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onSeeAll).padding(6.dp),
+            modifier =
+                Modifier.clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onSeeAll)
+                    .padding(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(seeAllLabel, color = palette.textSecondary, fontSize = 14.sp)
@@ -829,12 +898,10 @@ internal fun NotliMadeForTonight(
                 .clickable(onClick = onPlay),
     ) {
         Canvas(
-            Modifier.size(150.dp)
-                .align(Alignment.CenterStart)
-                .graphicsLayer {
-                    translationX = -34.dp.toPx()
-                    rotationZ = spin
-                },
+            Modifier.size(150.dp).align(Alignment.CenterStart).graphicsLayer {
+                translationX = -34.dp.toPx()
+                rotationZ = spin
+            },
         ) {
             val c = center
             val r = size.minDimension / 2f
@@ -849,13 +916,25 @@ internal fun NotliMadeForTonight(
             }
             // A soft specular streak so the rotation is actually visible.
             drawArc(
-                brush = Brush.sweepGradient(listOf(Color.Transparent, palette.accent.copy(alpha = 0.55f), Color.Transparent), c),
+                brush =
+                    Brush.sweepGradient(
+                        listOf(
+                            Color.Transparent,
+                            palette.accent.copy(alpha = 0.55f),
+                            Color.Transparent,
+                        ),
+                        c,
+                    ),
                 startAngle = 0f,
                 sweepAngle = 360f,
                 useCenter = true,
                 alpha = 0.5f,
             )
-            drawCircle(Brush.linearGradient(listOf(palette.accent, palette.accentCyan)), radius = r * 0.30f, center = c)
+            drawCircle(
+                Brush.linearGradient(listOf(palette.accent, palette.accentCyan)),
+                radius = r * 0.30f,
+                center = c,
+            )
             drawCircle(Color(0xFF0B0816), radius = r * 0.06f, center = c)
         }
         Row(
@@ -878,7 +957,10 @@ internal fun NotliMadeForTonight(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
                     Icon(
                         Icons.AutoMirrored.Filled.QueueMusic,
                         null,
@@ -894,7 +976,11 @@ internal fun NotliMadeForTonight(
                     .background(Brush.linearGradient(listOf(palette.accent, Color(0xFF5B3BE0)))),
                 contentAlignment = Alignment.Center,
             ) {
-                NotliPlayPauseGlyph(isPlaying = false, tint = Color.White, modifier = Modifier.size(22.dp))
+                NotliPlayPauseGlyph(
+                    isPlaying = false,
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp),
+                )
             }
         }
     }
@@ -949,8 +1035,20 @@ internal fun NotliHomeDashboard(
         )
         NotliSectionTitle(labels.library, labels.seeAll, onSeeAllLibrary, Modifier.notliEnter(2))
         NotliLibraryChips(chips, selectedChip, onChipSelected, Modifier.notliEnter(3))
-        NotliSectionTitle(labels.recentlyPlayed, labels.seeAll, onSeeAllRecent, Modifier.notliEnter(4))
-        NotliRecentRow(recent, labels.more, onRecentClick, onRecentMore, Modifier.notliEnter(5), recentArtwork)
+        NotliSectionTitle(
+            labels.recentlyPlayed,
+            labels.seeAll,
+            onSeeAllRecent,
+            Modifier.notliEnter(4),
+        )
+        NotliRecentRow(
+            recent,
+            labels.more,
+            onRecentClick,
+            onRecentMore,
+            Modifier.notliEnter(5),
+            recentArtwork,
+        )
         NotliMadeForTonight(labels, onPlayMix, Modifier.padding(horizontal = 16.dp).notliEnter(6))
         Spacer(Modifier.height(96.dp)) // room for the mini player and bottom navigation
     }

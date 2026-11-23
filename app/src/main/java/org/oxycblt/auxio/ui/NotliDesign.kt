@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+ 
 package org.oxycblt.auxio.ui
 
 import androidx.compose.foundation.background
@@ -37,8 +37,8 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * Design tokens for the Notli look: a near-black indigo canvas lit by violet and cyan glows, with
- * glass cards that carry a violet-to-cyan rim. [Day] is the light counterpart, so every screen built
- * from these tokens has a proper day mode instead of an inverted night mode.
+ * glass cards that carry a violet-to-cyan rim. [Day] is the light counterpart, so every screen
+ * built from these tokens has a proper day mode instead of an inverted night mode.
  */
 @Immutable
 internal class NotliPalette(
@@ -123,7 +123,10 @@ internal object NotliTheme {
  * through [NotliTheme.palette]. Every Notli Compose surface should be wrapped in this.
  */
 @Composable
-internal fun NotliThemeHost(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+internal fun NotliThemeHost(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit,
+) {
     val palette = if (darkTheme) NotliPalettes.Night else NotliPalettes.Day
     val scheme =
         if (darkTheme) {
