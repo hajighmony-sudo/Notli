@@ -75,6 +75,7 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
 
         refreshModelState(binding)
         binding.vocalDownloadButton.setOnClickListener { confirmModelDownload() }
+        binding.vocalRemoveModelButton.setOnClickListener { confirmModelRemoval() }
         binding.vocalProcessButton.setOnClickListener { processSelectedSong() }
         binding.vocalCancelButton.setOnClickListener { cancelProcessing() }
         binding.vocalPreviewButton.setOnClickListener { togglePreview() }
@@ -98,6 +99,10 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
         binding.vocalDownloadButton.isEnabled = modelStore.isReady.not() && modelCheckJob?.isActive != true &&
             downloadJob?.isActive != true
         binding.vocalProcessButton.isEnabled = modelStore.isReady && processingJob?.isActive != true
+        binding.vocalRemoveModelButton.visibility =
+            if (modelStore.isReady) android.view.View.VISIBLE else android.view.View.GONE
+        binding.vocalRemoveModelButton.isEnabled = processingJob?.isActive != true &&
+            downloadJob?.isActive != true
 
         if (!modelStore.isReady && modelCheckJob?.isActive != true) {
             binding.vocalDownloadButton.isEnabled = false
@@ -109,6 +114,10 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
                     )
                     binding.vocalDownloadButton.isEnabled = !ready && downloadJob?.isActive != true
                     binding.vocalProcessButton.isEnabled = ready && processingJob?.isActive != true
+                    binding.vocalRemoveModelButton.visibility =
+                        if (ready) android.view.View.VISIBLE else android.view.View.GONE
+                    binding.vocalRemoveModelButton.isEnabled = processingJob?.isActive != true &&
+                        downloadJob?.isActive != true
                 }
             }
         }
@@ -124,6 +133,36 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
             .setNegativeButton(R.string.lbl_cancel, null)
             .setPositiveButton(R.string.vocal_download_model) { _, _ -> downloadModel() }
             .show()
+    }
+
+    private fun confirmModelRemoval() {
+        if (processingJob?.isActive == true || downloadJob?.isActive == true) return
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.vocal_remove_model_title)
+            .setMessage(R.string.vocal_remove_model_message)
+            .setNegativeButton(R.string.lbl_cancel, null)
+            .setPositiveButton(R.string.vocal_remove_model) { _, _ -> removeModel() }
+            .show()
+    }
+
+    private fun removeModel() {
+        val binding = binding ?: return
+        if (processingJob?.isActive == true || downloadJob?.isActive == true) return
+        viewLifecycleOwner.lifecycleScope.launch {
+            binding.vocalRemoveModelButton.isEnabled = false
+            try {
+                modelStore.deleteInstalledModel()
+                binding.vocalModelStatus.setText(R.string.vocal_model_missing)
+                binding.vocalProcessButton.isEnabled = false
+                binding.vocalRemoveModelButton.visibility = android.view.View.GONE
+                binding.vocalDownloadButton.isEnabled = true
+                binding.vocalProgressLabel.setText(R.string.vocal_model_removed)
+            } catch (error: Exception) {
+                binding.vocalProgressLabel.text =
+                    error.message ?: getString(R.string.vocal_remove_model_failed)
+                refreshModelState(binding)
+            }
+        }
     }
 
     private fun downloadModel() {
