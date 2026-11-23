@@ -18,8 +18,11 @@
  
 package org.oxycblt.auxio.home
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.os.Build
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -34,6 +37,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.content.ContextCompat
 import androidx.core.view.MenuCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
@@ -124,8 +128,13 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
 
         // Have to set up the permission launcher before the view is shown
         storagePermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-                musicModel.refresh()
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+                if (isGranted) {
+                    L.d("Audio permission granted; refreshing music library")
+                    musicModel.refresh()
+                } else {
+                    L.w("Audio permission was denied; music library cannot be loaded")
+                }
             }
 
         getContentLauncher =
@@ -183,7 +192,6 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
 
         // --- VIEWMODEL SETUP ---
         collect(homeModel.recreateTabs.flow, ::handleRecreate)
-        collect(homeModel.chooseMusicLocations.flow, ::handleChooseFolders)
         collectImmediately(homeModel.currentTabType, ::updateCurrentTab)
         collect(detailModel.toShow.flow, ::handleShow)
         collect(listModel.menu.flow, ::handleMenu)
@@ -192,6 +200,10 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
         collect(musicModel.playlistDecision.flow, ::handlePlaylistDecision)
         collectImmediately(musicModel.playlistMessage.flow, ::handlePlaylistMessage)
         collect(playbackModel.playbackDecision.flow, ::handlePlaybackDecision)
+
+        // Use Android's shared media index by default. Only the system permission prompt is
+        // shown; no folder picker or source-selection dialog is needed.
+        requestAudioPermissionIfNeeded()
     }
 
     override fun onDestroyBinding(binding: FragmentHomeBinding) {
@@ -435,12 +447,22 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
         homeModel.recreateTabs.consume()
     }
 
-    private fun handleChooseFolders(unit: Unit?) {
-        if (unit == null) {
+    private fun requestAudioPermissionIfNeeded() {
+        val permission =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                Manifest.permission.READ_MEDIA_AUDIO
+            } else {
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            }
+
+        if (ContextCompat.checkSelfPermission(requireContext(), permission) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            musicModel.refresh()
             return
         }
-        findNavController().navigateSafe(HomeFragmentDirections.chooseLocations())
-        homeModel.chooseMusicLocations.consume()
+
+        storagePermissionLauncher?.launch(permission)
     }
 
     private fun updateIndexerState(state: IndexingState?) {
