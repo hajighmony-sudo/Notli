@@ -1,5 +1,9 @@
 name: Notli Rust Android Core
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [Noti-rust-core]
