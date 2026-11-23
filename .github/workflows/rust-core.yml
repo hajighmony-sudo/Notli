@@ -1,0 +1,30 @@
+name: Rust Music Core
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [Noti-rust-core]
+    paths:
+      - 'native-core/**'
+      - '.github/workflows/rust-core.yml'
+  pull_request:
+    paths:
+      - 'native-core/**'
+      - '.github/workflows/rust-core.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  rust-core:
+    name: Rust core tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run Rust unit tests
+        run: cargo test --manifest-path native-core/Cargo.toml

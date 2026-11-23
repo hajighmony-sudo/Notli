@@ -92,8 +92,7 @@ constructor(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             motor.vibrate(VibrationEffect.createOneShot(duration, amplitude))
         } else {
-            @Suppress("DEPRECATION")
-            motor.vibrate(duration)
+            @Suppress("DEPRECATION") motor.vibrate(duration)
         }
         lastPulseAt = now
     }

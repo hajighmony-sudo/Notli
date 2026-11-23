@@ -40,3 +40,6 @@
 -dontwarn org.openjsse.javax.net.ssl.SSLParameters
 -dontwarn org.openjsse.javax.net.ssl.SSLSocket
 -dontwarn org.openjsse.net.ssl.OpenJSSE
+
+# JNI symbols are resolved by the class and method names exported from Rust.
+-keep class org.oxycblt.auxio.playback.nativecore.RustMusicCore { *; }

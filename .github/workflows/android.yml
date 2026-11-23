@@ -1,5 +1,9 @@
 name: Android Build
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: []
@@ -23,6 +27,22 @@ jobs:
         java-version: "21"
         distribution: "jetbrains"
         cache: gradle
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        packages: platform-tools
+
+    - name: Install Android NDK
+      run: sdkmanager "ndk;28.2.13676358"
+
+    - name: Set up Rust targets
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
+
+    - name: Install cargo-ndk
+      run: cargo install cargo-ndk --locked
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build debug APK with Gradle
