@@ -20,8 +20,12 @@ package org.oxycblt.auxio.home
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MenuItem
+import android.view.ViewGroup
+import android.widget.GridLayout
+import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.mutableIntStateOf
@@ -37,6 +41,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.android.material.transition.MaterialSharedAxis
 import dagger.hilt.android.AndroidEntryPoint
@@ -197,6 +203,10 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
 
         return when (item.itemId) {
             // Handle main actions (Search, Settings, About)
+            R.id.action_more -> {
+                showQuickActions()
+                true
+            }
             R.id.action_search -> {
                 L.d("Navigating to search")
                 findNavController().navigateSafe(HomeFragmentDirections.search())
@@ -232,6 +242,75 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
                 false
             }
         }
+    }
+
+    private fun showQuickActions() {
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.lbl_more_actions)
+            .create()
+        val density = resources.displayMetrics.density
+        fun dp(value: Int) = (value * density).toInt()
+        val grid = GridLayout(requireContext()).apply {
+            columnCount = 2
+            setPadding(dp(6), dp(6), dp(6), dp(6))
+        }
+        val actions =
+            listOf(
+                R.string.lbl_search to {
+                    findNavController().navigateSafe(HomeFragmentDirections.search())
+                },
+                R.string.lbl_sort to {
+                    val directions =
+                        when (homeModel.currentTabType.value) {
+                            MusicType.SONGS -> HomeFragmentDirections.sortSongs()
+                            MusicType.ALBUMS -> HomeFragmentDirections.sortAlbums()
+                            MusicType.ARTISTS -> HomeFragmentDirections.sortArtists()
+                            MusicType.GENRES -> HomeFragmentDirections.sortGenres()
+                            MusicType.PLAYLISTS -> HomeFragmentDirections.sortPlaylists()
+                        }
+                    findNavController().navigateSafe(directions)
+                },
+                R.string.lbl_queue to { playbackModel.openQueue() },
+                R.string.set_root_title to { homeModel.showSettings() },
+                R.string.lbl_about to { homeModel.showAbout() },
+            )
+
+        actions.forEach { (labelRes, action) ->
+            val tile = MaterialCardView(requireContext()).apply {
+                radius = dp(20).toFloat()
+                cardElevation = dp(1).toFloat()
+                isClickable = true
+                isFocusable = true
+                setOnClickListener {
+                    dialog.dismiss()
+                    action()
+                }
+            }
+            val label =
+                TextView(requireContext()).apply {
+                    text = getString(labelRes)
+                    textSize = 15f
+                    gravity = Gravity.CENTER
+                    setPadding(dp(12), dp(18), dp(12), dp(18))
+                }
+            tile.addView(
+                label,
+                ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ),
+            )
+            val params =
+                GridLayout.LayoutParams().apply {
+                    width = 0
+                    height = dp(72)
+                    columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                    setMargins(dp(5), dp(5), dp(5), dp(5))
+                }
+            grid.addView(tile, params)
+        }
+        dialog.setView(grid)
+        dialog.show()
     }
 
     private fun setupBottomNavigation(binding: FragmentHomeBinding) {
