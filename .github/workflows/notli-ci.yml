@@ -51,7 +51,17 @@ jobs:
         with:
           packages: platform-tools
       - name: Install Android NDK
-        run: sdkmanager "ndk;28.2.13676358"
+        run: |
+          for attempt in 1 2 3; do
+            if sdkmanager "ndk;28.2.13676358"; then
+              exit 0
+            fi
+            echo "NDK download/install failed (attempt $attempt/3); clearing partial package and retrying."
+            rm -rf "$ANDROID_HOME/ndk/28.2.13676358" "$ANDROID_HOME/.temp"
+            sleep 10
+          done
+          echo "Unable to install Android NDK after 3 attempts."
+          exit 1
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
       - name: Verify Kotlin formatting
@@ -81,7 +91,17 @@ jobs:
         with:
           packages: platform-tools
       - name: Install Android NDK
-        run: sdkmanager "ndk;28.2.13676358"
+        run: |
+          for attempt in 1 2 3; do
+            if sdkmanager "ndk;28.2.13676358"; then
+              exit 0
+            fi
+            echo "NDK download/install failed (attempt $attempt/3); clearing partial package and retrying."
+            rm -rf "$ANDROID_HOME/ndk/28.2.13676358" "$ANDROID_HOME/.temp"
+            sleep 10
+          done
+          echo "Unable to install Android NDK after 3 attempts."
+          exit 1
       - name: Set up Rust Android targets
         uses: dtolnay/rust-toolchain@stable
         with:
