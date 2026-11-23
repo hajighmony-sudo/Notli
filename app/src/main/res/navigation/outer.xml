@@ -22,9 +22,6 @@
         android:name="org.oxycblt.auxio.settings.RootPreferenceFragment"
         android:label="settings_fragment">
         <action
-            android:id="@+id/ui_preferences"
-            app:destination="@id/ui_preferences_fragment" />
-        <action
             android:id="@+id/personalize_preferences"
             app:destination="@id/personalize_preferences_fragment" />
         <action
@@ -36,15 +33,6 @@
         <action
             android:id="@+id/music_locations_settings"
             app:destination="@id/music_locations_dialog" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/ui_preferences_fragment"
-        android:name="org.oxycblt.auxio.settings.categories.UIPreferenceFragment"
-        android:label="ui_preferences_fragment">
-        <action
-            android:id="@+id/accent_settings"
-            app:destination="@id/accent_dialog" />
     </fragment>
 
     <fragment
@@ -74,11 +62,6 @@
             app:destination="@id/pre_amp_dialog" />
     </fragment>
 
-    <dialog
-        android:id="@+id/accent_dialog"
-        android:name="org.oxycblt.auxio.ui.accent.AccentCustomizeDialog"
-        android:label="accent_dialog"
-        tools:layout="@layout/dialog_accent" />
     <dialog
         android:id="@+id/tab_dialog"
         android:name="org.oxycblt.auxio.home.tabs.TabCustomizeDialog"
