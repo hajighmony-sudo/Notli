@@ -117,7 +117,8 @@ class PlaybackSettingsImpl @Inject constructor(@ApplicationContext context: Cont
         get() = sharedPreferences.getInt(getString(R.string.set_key_adaptive_haptics_intensity), 3)
 
     override val adaptiveHapticsSensitivity: Int
-        get() = sharedPreferences.getInt(getString(R.string.set_key_adaptive_haptics_sensitivity), 3)
+        get() =
+            sharedPreferences.getInt(getString(R.string.set_key_adaptive_haptics_sensitivity), 3)
 
     override val headsetAutoplay: Boolean
         get() = sharedPreferences.getBoolean(getString(R.string.set_key_headset_autoplay), false)

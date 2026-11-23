@@ -93,53 +93,70 @@ constructor(
         val bassHit = bassLevel > threshold
         val mode = playbackSettings.adaptiveHapticsMode
 
-        // A slow envelope follows overall loudness and adapts the trigger floor to quiet/loud tracks.
+        // A slow envelope follows overall loudness and adapts the trigger floor to quiet/loud
+        // tracks.
         slowEnvelope += ENVELOPE_ALPHA * (fullLevel - slowEnvelope)
-        noiseFloor = (noiseFloor * NOISE_FLOOR_DECAY + bassLevel * NOISE_FLOOR_ATTACK)
-            .coerceIn(MIN_NOISE_FLOOR, MAX_NOISE_FLOOR)
+        noiseFloor =
+            (noiseFloor * NOISE_FLOOR_DECAY + bassLevel * NOISE_FLOOR_ATTACK).coerceIn(
+                MIN_NOISE_FLOOR,
+                MAX_NOISE_FLOOR,
+            )
 
-        val minimumInterval = when (mode) {
-            MODE_BASS -> BASS_REFRACTORY_MS
-            MODE_RHYTHM -> RHYTHM_REFRACTORY_MS
-            else -> max(SMART_MIN_INTERVAL_MS, (estimatedBeatMs * 0.42f).toLong())
-        }
+        val minimumInterval =
+            when (mode) {
+                MODE_BASS -> BASS_REFRACTORY_MS
+                MODE_RHYTHM -> RHYTHM_REFRACTORY_MS
+                else -> max(SMART_MIN_INTERVAL_MS, (estimatedBeatMs * 0.42f).toLong())
+            }
         if (now - lastPulseAt < minimumInterval) return
 
-        val shouldPulse = when (mode) {
-            MODE_BASS -> bassHit
-            MODE_RHYTHM -> onset && fullLevel > max(MIN_RHYTHM_LEVEL, threshold * RHYTHM_LEVEL_FACTOR)
-            else -> bassHit && (onset || fullLevel > slowEnvelope * SMART_SUSTAINED_RATIO)
-        }
+        val shouldPulse =
+            when (mode) {
+                MODE_BASS -> bassHit
+                MODE_RHYTHM ->
+                    onset && fullLevel > max(MIN_RHYTHM_LEVEL, threshold * RHYTHM_LEVEL_FACTOR)
+                else -> bassHit && (onset || fullLevel > slowEnvelope * SMART_SUSTAINED_RATIO)
+            }
         if (!shouldPulse) return
 
         if (lastPulseAt != 0L) {
             val interval = now - lastPulseAt
             if (interval in MIN_BEAT_MS..MAX_BEAT_MS) {
-                estimatedBeatMs = (estimatedBeatMs * 0.72f + interval * 0.28f)
-                    .coerceIn(MIN_BEAT_MS.toFloat(), MAX_BEAT_MS.toFloat())
+                estimatedBeatMs =
+                    (estimatedBeatMs * 0.72f + interval * 0.28f).coerceIn(
+                        MIN_BEAT_MS.toFloat(),
+                        MAX_BEAT_MS.toFloat(),
+                    )
             }
         }
 
-        val signal = when (mode) {
-            MODE_RHYTHM -> fullLevel
-            else -> bassLevel
-        }
-        val strength = ((signal - threshold) / (threshold * STRENGTH_RANGE))
-            .coerceIn(MIN_STRENGTH, MAX_STRENGTH)
+        val signal =
+            when (mode) {
+                MODE_RHYTHM -> fullLevel
+                else -> bassLevel
+            }
+        val strength =
+            ((signal - threshold) / (threshold * STRENGTH_RANGE)).coerceIn(
+                MIN_STRENGTH,
+                MAX_STRENGTH,
+            )
         val intensity = playbackSettings.adaptiveHapticsIntensity.coerceIn(1, 5)
         val userScale = intensity / 5f
-        val duration = (MIN_PULSE_MS + strength * MAX_EXTRA_PULSE_MS * userScale)
-            .toLong().coerceIn(MIN_PULSE_MS, MAX_PULSE_MS)
-        val amplitude = (MIN_AMPLITUDE + strength * AMPLITUDE_RANGE * userScale)
-            .toInt().coerceIn(MIN_AMPLITUDE.toInt(), MAX_AMPLITUDE)
+        val duration =
+            (MIN_PULSE_MS + strength * MAX_EXTRA_PULSE_MS * userScale)
+                .toLong()
+                .coerceIn(MIN_PULSE_MS, MAX_PULSE_MS)
+        val amplitude =
+            (MIN_AMPLITUDE + strength * AMPLITUDE_RANGE * userScale)
+                .toInt()
+                .coerceIn(MIN_AMPLITUDE.toInt(), MAX_AMPLITUDE)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val resolvedAmplitude =
                 if (motor.hasAmplitudeControl()) amplitude else VibrationEffect.DEFAULT_AMPLITUDE
             motor.vibrate(VibrationEffect.createOneShot(duration, resolvedAmplitude))
         } else {
-            @Suppress("DEPRECATION")
-            motor.vibrate(duration)
+            @Suppress("DEPRECATION") motor.vibrate(duration)
         }
         lastPulseAt = now
     }

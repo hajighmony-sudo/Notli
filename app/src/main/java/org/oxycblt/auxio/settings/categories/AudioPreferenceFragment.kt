@@ -23,8 +23,8 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import androidx.preference.Preference
 import androidx.navigation.fragment.findNavController
+import androidx.preference.Preference
 import org.oxycblt.auxio.R
 import org.oxycblt.auxio.settings.BasePreferenceFragment
 import org.oxycblt.auxio.settings.ui.WrappedDialogPreference
@@ -55,8 +55,7 @@ class AudioPreferenceFragment : BasePreferenceFragment(R.xml.preferences_audio) 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     vibrator.vibrate(VibrationEffect.createOneShot(32L, 110))
                 } else {
-                    @Suppress("DEPRECATION")
-                    vibrator.vibrate(32L)
+                    @Suppress("DEPRECATION") vibrator.vibrate(32L)
                 }
             }
             true
