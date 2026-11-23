@@ -24,6 +24,7 @@ import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.audiofx.BassBoost
 import android.media.audiofx.Equalizer
+import android.media.audiofx.EnvironmentalReverb
 import android.media.audiofx.Virtualizer
 import android.os.Build
 import android.os.Handler
@@ -48,6 +49,7 @@ internal class PlaybackAudioEffects(
     private var equalizer: Equalizer? = null
     private var bassBoost: BassBoost? = null
     private var virtualizer: Virtualizer? = null
+    private var environmentalReverb: EnvironmentalReverb? = null
 
     private val deviceCallback =
         object : AudioDeviceCallback() {
@@ -84,15 +86,17 @@ internal class PlaybackAudioEffects(
         applyEqualizer()
         applyBassBoost()
         applySpatialization()
+        applyEcho()
         applyPitch()
     }
 
     private fun ensureEffects() {
         val sessionId = player.audioSessionId
-        if (sessionId <= 0 || equalizer != null || bassBoost != null || virtualizer != null) return
+        if (sessionId <= 0 || equalizer != null || bassBoost != null || virtualizer != null || environmentalReverb != null) return
 
         equalizer = runCatching { Equalizer(0, sessionId) }.getOrNull()
         bassBoost = runCatching { BassBoost(0, sessionId) }.getOrNull()
+        environmentalReverb = runCatching { EnvironmentalReverb(0, sessionId) }.getOrNull()
         if (Build.VERSION.SDK_INT < 32) {
             virtualizer = runCatching { Virtualizer(0, sessionId) }.getOrNull()
         }
@@ -204,25 +208,53 @@ internal class PlaybackAudioEffects(
         }
     }
 
-    private fun applyPitch() {
-        val pitch =
-            when (preferences.getInt(KEY_PITCH_EFFECT, 0).coerceIn(0, 2)) {
-                1 -> 1.35f
-                2 -> 0.85f
-                else -> 1.0f
-            }
+    private fun applyEcho() {
+        val effect = environmentalReverb ?: return
+        val strength = preferences.getInt(KEY_ECHO_STRENGTH, 0).coerceIn(0, 100)
         runCatching {
-            player.setPlaybackParameters(PlaybackParameters(player.playbackParameters.speed, pitch))
+            if (strength == 0) {
+                effect.enabled = false
+            } else {
+                val settings = effect.properties
+                settings.decayTime = 500 + strength * 45
+                settings.decayHFRatio = (500 + strength * 5).toShort()
+                settings.reflectionsDelay = (10 + strength).toShort()
+                settings.reverbDelay = (20 + strength / 2).toShort()
+                settings.reflectionsLevel = (-9000 + strength * 55).toShort()
+                settings.reverbLevel = (-9000 + strength * 70).toShort()
+                settings.roomLevel = (-9000 + strength * 70).toShort()
+                settings.roomHFLevel = (-6000 + strength * 50).toShort()
+                settings.diffusion = (500 + strength * 5).toShort()
+                settings.density = (500 + strength * 5).toShort()
+                effect.properties = settings
+                effect.enabled = true
+            }
         }
     }
 
+    private fun applyPitch() {
+        val preset = preferences.getInt(KEY_PITCH_EFFECT, 0).coerceIn(0, 7)
+        val (speed, pitch) =
+            when (preset) {
+                1 -> 0.88f to 0.68f
+                2 -> 1.0f to 1.55f
+                3 -> 1.0f to 1.28f
+                5 -> 0.92f to 0.78f
+                6 -> 0.78f to 0.82f
+                7 -> 1.08f to 1.42f
+                else -> 1.0f to 1.0f
+            }
+        runCatching { player.setPlaybackParameters(PlaybackParameters(speed, pitch)) }
+    }
+
     private fun releaseEffects() {
-        listOfNotNull(equalizer, bassBoost, virtualizer).forEach { effect ->
+        listOfNotNull(equalizer, bassBoost, virtualizer, environmentalReverb).forEach { effect ->
             runCatching { effect.release() }
         }
         equalizer = null
         bassBoost = null
         virtualizer = null
+        environmentalReverb = null
     }
 
     private companion object {
@@ -237,5 +269,6 @@ internal class PlaybackAudioEffects(
         const val KEY_SPATIAL_AUDIO = "auxio_audio_spatial"
         const val KEY_SPATIAL_STRENGTH = "auxio_audio_spatial_strength"
         const val KEY_PITCH_EFFECT = "auxio_audio_pitch"
+        const val KEY_ECHO_STRENGTH = "notli_audio_echo_strength"
     }
 }
