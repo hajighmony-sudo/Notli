@@ -32,7 +32,7 @@ internal class RustMedia3Bridge(
     private var activeTrackId: String? = null
 
     @Synchronized
-    fun setQueue(songs: List<Song>, startIndex: Int, autoplay: Boolean) {
+    fun setQueue(songs: List<Song>, startIndex: Int, autoplay: Boolean, shuffleEnabled: Boolean = false) {
         val tracks = JSONArray()
         songs.forEach { tracks.put(it.toRustTrack()) }
         val command =
