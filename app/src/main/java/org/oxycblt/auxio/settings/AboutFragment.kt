@@ -19,7 +19,7 @@
 package org.oxycblt.auxio.settings
 
 import android.os.Bundle
-import android.text.format.DateFormat
+import java.text.DateFormat
 import android.text.format.Formatter
 import android.view.LayoutInflater
 import androidx.core.view.updatePadding
@@ -35,7 +35,6 @@ import org.oxycblt.auxio.music.MusicViewModel
 import org.oxycblt.auxio.playback.formatDurationMs
 import org.oxycblt.auxio.ui.ViewBindingFragment
 import org.oxycblt.auxio.util.collectImmediately
-import org.oxycblt.auxio.util.openInBrowser
 import org.oxycblt.auxio.util.systemBarInsetsCompat
 
 /**
@@ -65,7 +64,6 @@ class AboutFragment : ViewBindingFragment<FragmentAboutBinding>() {
             insets
         }
         binding.aboutVersion.text = BuildConfig.VERSION_NAME
-        binding.aboutWiki.setOnClickListener { requireContext().openInBrowser(LINK_WIKI) }
         // VIEWMODEL SETUP
         collectImmediately(musicModel.statistics, ::updateStatistics)
         updateListeningStatistics()
