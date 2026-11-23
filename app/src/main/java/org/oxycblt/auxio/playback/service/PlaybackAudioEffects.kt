@@ -144,8 +144,9 @@ internal class PlaybackAudioEffects(
     private fun applyBassBoost() {
         val effect = bassBoost ?: return
         runCatching {
+            val strength = preferences.getInt(KEY_BASS_STRENGTH, 60).coerceIn(0, 100) * 10
             effect.setStrength(
-                if (preferences.getBoolean(KEY_BASS_BOOST, false)) 600.toShort() else 0.toShort(),
+                if (preferences.getBoolean(KEY_BASS_BOOST, false)) strength.toShort() else 0.toShort(),
             )
             effect.enabled = preferences.getBoolean(KEY_BASS_BOOST, false)
         }
@@ -175,7 +176,8 @@ internal class PlaybackAudioEffects(
         // session virtualizer only as a fallback, and only for Bluetooth output.
         virtualizer?.let { effect ->
             runCatching {
-                effect.setStrength(if (requested) 450.toShort() else 0.toShort())
+                val strength = preferences.getInt(KEY_SPATIAL_STRENGTH, 60).coerceIn(0, 100) * 10
+                effect.setStrength(if (requested) strength.toShort() else 0.toShort())
                 effect.enabled = requested
             }
         }
@@ -215,7 +217,9 @@ internal class PlaybackAudioEffects(
     private companion object {
         const val KEY_EQ_PRESET = "auxio_audio_eq_preset"
         const val KEY_BASS_BOOST = "auxio_audio_bass_boost"
+        const val KEY_BASS_STRENGTH = "auxio_audio_bass_strength"
         const val KEY_SPATIAL_AUDIO = "auxio_audio_spatial"
+        const val KEY_SPATIAL_STRENGTH = "auxio_audio_spatial_strength"
         const val KEY_PITCH_EFFECT = "auxio_audio_pitch"
     }
 }
