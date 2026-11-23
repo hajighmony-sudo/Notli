@@ -186,6 +186,11 @@ impl PlayerCore {
                 self.state.shuffle_enabled = enabled;
                 out.events.push(PlayerEvent::QueueChanged);
             }
+            PlayerCommand::SetShuffleFlag(enabled) => {
+                self.queue.set_shuffle_flag(enabled);
+                self.state.shuffle_enabled = enabled;
+                out.events.push(PlayerEvent::QueueChanged);
+            }
         }
         self.state.revision = self.state.revision.saturating_add(1);
         out.events.push(PlayerEvent::StateChanged(self.state.clone()));
