@@ -36,8 +36,8 @@ import org.oxycblt.auxio.settings.ui.IntListPreference
 import org.oxycblt.auxio.settings.ui.IntListPreferenceDialog
 import org.oxycblt.auxio.settings.ui.PreferenceHeaderItemDecoration
 import org.oxycblt.auxio.settings.ui.WrappedDialogPreference
-import org.oxycblt.auxio.ui.AuxioToolbar
 import org.oxycblt.auxio.ui.AuroraMotion
+import org.oxycblt.auxio.ui.AuxioToolbar
 import org.oxycblt.auxio.util.systemBarInsetsCompat
 import timber.log.Timber as L
 
@@ -64,18 +64,22 @@ abstract class BasePreferenceFragment(@XmlRes private val screen: Int) :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enterTransition = MaterialSharedAxis(MaterialSharedAxis.X, true).apply {
-            duration = AuroraMotion.duration(requireContext(), 300L)
-        }
-        returnTransition = MaterialSharedAxis(MaterialSharedAxis.X, false).apply {
-            duration = AuroraMotion.duration(requireContext(), 300L)
-        }
-        exitTransition = MaterialSharedAxis(MaterialSharedAxis.X, true).apply {
-            duration = AuroraMotion.duration(requireContext(), 300L)
-        }
-        reenterTransition = MaterialSharedAxis(MaterialSharedAxis.X, false).apply {
-            duration = AuroraMotion.duration(requireContext(), 300L)
-        }
+        enterTransition =
+            MaterialSharedAxis(MaterialSharedAxis.X, true).apply {
+                duration = AuroraMotion.duration(requireContext(), 300L)
+            }
+        returnTransition =
+            MaterialSharedAxis(MaterialSharedAxis.X, false).apply {
+                duration = AuroraMotion.duration(requireContext(), 300L)
+            }
+        exitTransition =
+            MaterialSharedAxis(MaterialSharedAxis.X, true).apply {
+                duration = AuroraMotion.duration(requireContext(), 300L)
+            }
+        reenterTransition =
+            MaterialSharedAxis(MaterialSharedAxis.X, false).apply {
+                duration = AuroraMotion.duration(requireContext(), 300L)
+            }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
