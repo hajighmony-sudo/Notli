@@ -59,7 +59,7 @@ jobs:
         run: cargo test --manifest-path native-core/Cargo.toml
 
       - name: Build Android APK (includes Rust .so for all configured ABIs)
-        run: ./gradlew patchMedia3ProgressiveSource app:packageDebug
+        run: ./gradlew patchMedia3ProgressiveMediaSource app:packageDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
