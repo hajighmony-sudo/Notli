@@ -2,6 +2,38 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     app:title="@string/set_audio">
+    <PreferenceCategory android:title="@string/set_sound_effects">
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="0"
+            app:entries="@array/entries_audio_preset"
+            app:entryValues="@array/values_audio_preset"
+            app:key="@string/set_key_eq_preset"
+            app:title="@string/set_equalizer_preset"
+            app:summary="@string/set_equalizer_preset_desc" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="@string/set_key_bass_boost"
+            app:title="@string/set_bass_boost"
+            app:summary="@string/set_bass_boost_desc" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="@string/set_key_spatial_audio"
+            app:title="@string/set_spatial_audio"
+            app:summary="@string/set_spatial_audio_desc" />
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="0"
+            app:entries="@array/entries_pitch_effect"
+            app:entryValues="@array/values_pitch_effect"
+            app:key="@string/set_key_pitch_effect"
+            app:title="@string/set_pitch_effect"
+            app:summary="@string/set_pitch_effect_desc" />
+
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/set_playback">
 
         <SwitchPreferenceCompat
