@@ -573,4 +573,14 @@
         android:name="org.oxycblt.auxio.music.locations.LocationsDialog"
         android:label="music_locations_dialog"
         tools:layout="@layout/dialog_music_locations" />
+
+    <dialog
+        android:id="@+id/vocal_studio_dialog"
+        android:name="org.oxycblt.auxio.vocal.VocalStudioDialogFragment"
+        android:label="vocal_studio_dialog"
+        tools:layout="@layout/dialog_vocal_studio">
+        <argument
+            android:name="songUid"
+            app:argType="org.oxycblt.musikr.Music$UID" />
+    </dialog>
 </navigation>
