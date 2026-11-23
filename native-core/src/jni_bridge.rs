@@ -86,10 +86,16 @@ pub extern "system" fn Java_org_oxycblt_auxio_playback_nativecore_RustMusicCore_
     _env: JNIEnv<'_>,
     _this: JObject<'_>,
 ) -> jlong {
-    let handle = NEXT_HANDLE.fetch_add(1, Ordering::Relaxed);
-    if handle <= 0 {
-        return 0;
-    }
+    // Never wrap the handle counter: reusing an old positive handle could let a stale
+    // Kotlin owner accidentally address a different engine after integer overflow.
+    let handle = match NEXT_HANDLE.fetch_update(
+        Ordering::Relaxed,
+        Ordering::Relaxed,
+        |current| current.checked_add(1),
+    ) {
+        Ok(handle) if handle > 0 => handle,
+        _ => return 0,
+    };
     match runtimes().lock() {
         Ok(mut registry) => {
             registry.insert(handle, Arc::new(Mutex::new(NativeRuntime::default())));
