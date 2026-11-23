@@ -83,31 +83,26 @@ class UIPreferenceFragment : BasePreferenceFragment(R.xml.preferences_ui) {
             "aurora_reset_colors" -> preference.onPreferenceClickListener =
                 Preference.OnPreferenceClickListener {
                     uiSettings.resetAuroraColors()
-                    requireActivity().recreate()
+                    listOf(
+                        UISettings.AURORA_PRIMARY,
+                        UISettings.AURORA_SECONDARY,
+                        UISettings.AURORA_SURFACE,
+                        UISettings.AURORA_BACKGROUND,
+                    ).forEach { key ->
+                        findPreference<Preference>(key)?.summary = getString(R.string.aurora_pick_color)
+                    }
                     true
                 }
             "aurora_reset_layout" -> preference.onPreferenceClickListener =
                 Preference.OnPreferenceClickListener {
                     uiSettings.resetAuroraLayout()
-                    requireActivity().recreate()
                     true
                 }
             "aurora_reset_motion" -> preference.onPreferenceClickListener =
                 Preference.OnPreferenceClickListener {
                     uiSettings.resetAuroraMotion()
-                    requireActivity().recreate()
                     true
                 }
-            UISettings.AURORA_FONT_SCALE,
-            UISettings.AURORA_ICON_SCALE,
-            UISettings.AURORA_DENSITY -> {
-                preference.onPreferenceChangeListener =
-                    Preference.OnPreferenceChangeListener { _, _ ->
-                        val activity = requireActivity()
-                        activity.window.decorView.post { activity.recreate() }
-                        true
-                    }
-            }
             getString(R.string.set_key_black_theme) -> {
                 L.d("Configuring black theme setting")
                 preference.onPreferenceChangeListener =
@@ -207,7 +202,7 @@ class UIPreferenceFragment : BasePreferenceFragment(R.xml.preferences_ui) {
                     runCatching { Color.parseColor(normalized) }
                         .onSuccess {
                             uiSettings.setAuroraColor(key, normalized)
-                            requireActivity().recreate()
+                            findPreference<Preference>(key)?.summary = normalized.uppercase()
                             dialog.dismiss()
                         }
                         .onFailure { hex.error = getString(R.string.aurora_color_invalid) }

@@ -19,6 +19,7 @@
 package org.oxycblt.auxio
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
@@ -28,6 +29,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.WindowCompat
 import androidx.core.view.updatePadding
+import androidx.preference.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import org.oxycblt.auxio.databinding.ActivityMainBinding
@@ -57,6 +59,19 @@ import timber.log.Timber as L
 class MainActivity : AppCompatActivity() {
     private val playbackModel: PlaybackViewModel by viewModels()
     @Inject lateinit var uiSettings: UISettings
+    private var appearanceRoot: View? = null
+    private val appearanceRefresh = Runnable {
+        appearanceRoot?.let { AuroraAppearance.apply(it, uiSettings) }
+    }
+    private val appearancePreferenceListener =
+        SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key?.startsWith("notli_aurora_") == true) {
+                appearanceRoot?.let { root ->
+                    root.removeCallbacks(appearanceRefresh)
+                    root.postDelayed(appearanceRefresh, 80L)
+                }
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,6 +92,9 @@ class MainActivity : AppCompatActivity() {
         )
         val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        appearanceRoot = binding.root
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .registerOnSharedPreferenceChangeListener(appearancePreferenceListener)
         setupEdgeToEdge(binding.root)
         AuroraAppearance.apply(binding.root, uiSettings)
         binding.root.post { AuroraAppearance.apply(binding.root, uiSettings) }
@@ -95,6 +113,14 @@ class MainActivity : AppCompatActivity() {
             // No intent action to do, just restore the previously saved state.
             playbackModel.playDeferred(DeferredPlayback.RestoreState(false))
         }
+    }
+
+    override fun onDestroy() {
+        appearanceRoot?.removeCallbacks(appearanceRefresh)
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .unregisterOnSharedPreferenceChangeListener(appearancePreferenceListener)
+        appearanceRoot = null
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {
