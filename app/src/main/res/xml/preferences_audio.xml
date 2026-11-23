@@ -10,6 +10,12 @@
             app:title="@string/set_headset_autoplay" />
 
         <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="@string/set_key_adaptive_haptics"
+            app:summary="@string/set_adaptive_haptics_desc"
+            app:title="@string/set_adaptive_haptics" />
+
+        <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="@string/set_key_rewind_prev"
             app:summary="@string/set_rewind_prev_desc"

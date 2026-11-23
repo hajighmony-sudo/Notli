@@ -37,6 +37,8 @@ import timber.log.Timber as L
 interface PlaybackSettings : Settings<PlaybackSettings.Listener> {
     /** The action to display on the playback bar. */
     val barAction: ActionMode
+    /** Whether music rhythm should drive short device haptic pulses. */
+    val adaptiveHapticsEnabled: Boolean
     /** Whether to start playback when a headset is plugged in. */
     val headsetAutoplay: Boolean
     /** The current ReplayGain configuration. */
@@ -98,6 +100,9 @@ class PlaybackSettingsImpl @Inject constructor(@ApplicationContext context: Cont
             ActionMode.fromIntCode(
                 sharedPreferences.getInt(getString(R.string.set_key_bar_action), Int.MIN_VALUE),
             ) ?: ActionMode.NEXT
+
+    override val adaptiveHapticsEnabled: Boolean
+        get() = sharedPreferences.getBoolean(getString(R.string.set_key_adaptive_haptics), false)
 
     override val headsetAutoplay: Boolean
         get() = sharedPreferences.getBoolean(getString(R.string.set_key_headset_autoplay), false)
