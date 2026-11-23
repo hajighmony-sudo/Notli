@@ -1,4 +1,6 @@
-use std::sync::Mutex;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::atomic::{AtomicI64, Ordering};
 
 use jni::objects::{JObject, JString};
 use jni::sys::{jlong, jstring};
@@ -13,6 +15,15 @@ use crate::model::{BackendEvent, PlayerCommand};
 struct NativeRuntime {
     player: PlayerCore,
     downloads: DownloadManager,
+}
+
+// Handles are opaque integers, never raw pointers. Cloning the Arc before an operation
+// means destroy() can remove a handle without invalidating an operation already in flight.
+static RUNTIMES: OnceLock<Mutex<HashMap<jlong, Arc<Mutex<NativeRuntime>>>>> = OnceLock::new();
+static NEXT_HANDLE: AtomicI64 = AtomicI64::new(1);
+
+fn runtimes() -> &'static Mutex<HashMap<jlong, Arc<Mutex<NativeRuntime>>>> {
+    RUNTIMES.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 fn java_string(env: &mut JNIEnv<'_>, value: String) -> jstring {
@@ -45,7 +56,12 @@ fn with_runtime<T>(
     if handle == 0 {
         return Err("native engine is closed".to_owned());
     }
-    let runtime = unsafe { &*(handle as *const Mutex<NativeRuntime>) };
+    let runtime = runtimes()
+        .lock()
+        .map_err(|_| "native engine registry lock poisoned".to_owned())?
+        .get(&handle)
+        .cloned()
+        .ok_or_else(|| "native engine handle is invalid or closed".to_owned())?;
     let mut runtime = runtime
         .lock()
         .map_err(|_| "native engine lock poisoned".to_owned())?;
@@ -57,7 +73,17 @@ pub extern "system" fn Java_org_oxycblt_auxio_playback_nativecore_RustMusicCore_
     _env: JNIEnv<'_>,
     _this: JObject<'_>,
 ) -> jlong {
-    Box::into_raw(Box::new(Mutex::new(NativeRuntime::default()))) as jlong
+    let handle = NEXT_HANDLE.fetch_add(1, Ordering::Relaxed);
+    if handle <= 0 {
+        return 0;
+    }
+    match runtimes().lock() {
+        Ok(mut registry) => {
+            registry.insert(handle, Arc::new(Mutex::new(NativeRuntime::default())));
+            handle
+        }
+        Err(_) => 0,
+    }
 }
 
 #[no_mangle]
@@ -67,8 +93,9 @@ pub extern "system" fn Java_org_oxycblt_auxio_playback_nativecore_RustMusicCore_
     handle: jlong,
 ) {
     if handle != 0 {
-        // The Kotlin wrapper guarantees that each handle is destroyed exactly once.
-        unsafe { drop(Box::from_raw(handle as *mut Mutex<NativeRuntime>)); }
+        if let Ok(mut registry) = runtimes().lock() {
+            registry.remove(&handle);
+        }
     }
 }
 
