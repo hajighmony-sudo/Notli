@@ -25,6 +25,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +44,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +54,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -87,6 +94,39 @@ internal fun Modifier.notliGlass(shape: Shape): Modifier {
             },
         )
     return this.clip(shape).background(fill, shape).border(1.dp, rim, shape)
+}
+
+/**
+ * Springs the element down slightly while a finger is on it, like iOS controls.
+ *
+ * The gesture is only observed, never consumed, so clicks, long-presses and scrolling on the same
+ * element keep working exactly as before.
+ */
+@Composable
+internal fun Modifier.notliPressScale(pressedScale: Float = 0.94f): Modifier {
+    var pressed by remember { mutableStateOf(false) }
+    val scale by
+        animateFloatAsState(
+            targetValue = if (pressed) pressedScale else 1f,
+            animationSpec =
+                spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow,
+                ),
+            label = "press-scale",
+        )
+    return this.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        }
+        .pointerInput(Unit) {
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false)
+                pressed = true
+                waitForUpOrCancellation()
+                pressed = false
+            }
+        }
 }
 
 /**
@@ -141,7 +181,8 @@ internal fun NotliGlassTabBar(
                     )
                 Box(
                     modifier =
-                        Modifier.graphicsLayer {
+                        Modifier.notliPressScale(pressedScale = 0.92f)
+                            .graphicsLayer {
                                 scaleX = scale
                                 scaleY = scale
                             }
