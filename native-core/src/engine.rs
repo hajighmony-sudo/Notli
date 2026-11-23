@@ -255,7 +255,12 @@ impl PlayerCore {
         self.state.is_buffering = autoplay;
         self.state.last_error = None;
         out.actions.push(BackendAction::Prepare(track));
-        if autoplay { out.actions.push(BackendAction::Play); }
+        if autoplay {
+            out.actions.push(BackendAction::Play);
+        } else {
+            // Preparing a paused selection must also clear Media3's prior playWhenReady flag.
+            out.actions.push(BackendAction::Pause);
+        }
         if changed { out.events.push(PlayerEvent::TrackChanged(self.state.current_track.clone())); }
     }
 
