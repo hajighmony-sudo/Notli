@@ -87,6 +87,12 @@ impl PlaybackQueue {
         self.shuffle_enabled
     }
 
+    /// Marks an already ordered queue as shuffled without generating a second permutation.
+    /// The Android adapter uses this when it supplies Media3's resolved visible queue order.
+    pub fn set_shuffle_flag(&mut self, enabled: bool) {
+        self.shuffle_enabled = enabled;
+    }
+
     pub fn current(&self) -> Option<&Track> {
         self.cursor
             .and_then(|cursor| self.order.get(cursor))
