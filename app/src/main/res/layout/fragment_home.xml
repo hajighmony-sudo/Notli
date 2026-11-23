@@ -46,6 +46,14 @@
             app:tabGravity="start"
             app:tabMode="scrollable" />
 
+        <!-- Glass tab bar (Compose). Mirrors home_tabs, which stays attached but hidden so the
+             ViewPager/TabLayout wiring is untouched. -->
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/home_glass_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
     </org.oxycblt.auxio.ui.CoordinatorAppBarLayout>
 
 

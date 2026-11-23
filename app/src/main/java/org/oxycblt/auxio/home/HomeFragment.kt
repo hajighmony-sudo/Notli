@@ -24,6 +24,8 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.MenuCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
@@ -57,9 +59,11 @@ import org.oxycblt.auxio.music.MusicType
 import org.oxycblt.auxio.music.MusicViewModel
 import org.oxycblt.auxio.music.PlaylistDecision
 import org.oxycblt.auxio.music.PlaylistMessage
+import org.oxycblt.auxio.playback.NotliComposeTheme
 import org.oxycblt.auxio.playback.PlaybackDecision
 import org.oxycblt.auxio.playback.PlaybackViewModel
 import org.oxycblt.auxio.ui.FadingToolbarOffsetListener
+import org.oxycblt.auxio.ui.NotliGlassTabBar
 import org.oxycblt.auxio.util.collect
 import org.oxycblt.auxio.util.collectImmediately
 import org.oxycblt.auxio.util.dampen
@@ -87,6 +91,8 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
     private var storagePermissionLauncher: ActivityResultLauncher<String>? = null
     private var getContentLauncher: ActivityResultLauncher<String>? = null
     private var pendingImportTarget: Playlist? = null
+    /** Selected page mirrored into the glass tab bar; the ViewPager stays the source of truth. */
+    private val glassTabIndex = mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,6 +146,7 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
                 object : ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(position: Int) {
                         homeModel.synchronizeTabPosition(position)
+                        glassTabIndex.intValue = position
                     }
                 },
             )
@@ -235,10 +242,14 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
             // behavior.
             L.d("Single tab shown, disabling TabLayout")
             binding.homeTabs.isVisible = false
+            binding.homeGlassTabs.isVisible = false
             binding.homeAppbar.setExpanded(true, false)
             toolbarParams.scrollFlags = 0
         } else {
-            binding.homeTabs.isVisible = true
+            // The glass bar replaces the visible TabLayout; the TabLayout stays attached
+            // (hidden) so the existing ViewPager mediator behaves exactly as before.
+            binding.homeTabs.isVisible = false
+            binding.homeGlassTabs.isVisible = true
             toolbarParams.scrollFlags =
                 AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL or
                     AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS
@@ -251,6 +262,21 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
                 NamedTabStrategy(homeModel.currentTabTypes),
             )
             .attach()
+
+        val labels = homeModel.currentTabTypes.map { getString(it.nameRes) }
+        glassTabIndex.intValue = binding.homePager.currentItem
+        binding.homeGlassTabs.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                NotliComposeTheme {
+                    NotliGlassTabBar(
+                        labels = labels,
+                        selectedIndex = glassTabIndex.intValue,
+                        onSelect = { binding.homePager.setCurrentItem(it, true) },
+                    )
+                }
+            }
+        }
     }
 
     private fun updateCurrentTab(tabType: MusicType) {

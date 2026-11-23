@@ -107,11 +107,23 @@ internal fun NotliPlaybackBar(
     Surface(
         modifier =
             modifier.fillMaxWidth().combinedClickable(onClick = onOpen, onLongClick = onShowAlbum),
-        color = colors.surfaceContainer,
+        // Glass treatment: slightly translucent container with a specular gradient rim. Layout,
+        // shape and every callback are unchanged.
+        color = colors.surfaceContainer.copy(alpha = 0.88f),
         contentColor = colors.onSurface,
         shape =
             androidx.compose.foundation.shape.RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        border = BorderStroke(1.dp, colors.outlineVariant.copy(alpha = 0.35f)),
+        border =
+            BorderStroke(
+                1.dp,
+                Brush.linearGradient(
+                    listOf(
+                        colors.onSurface.copy(alpha = 0.28f),
+                        colors.outlineVariant.copy(alpha = 0.18f),
+                        colors.onSurface.copy(alpha = 0.14f),
+                    ),
+                ),
+            ),
         tonalElevation = 3.dp,
     ) {
         Column {
