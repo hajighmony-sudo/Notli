@@ -234,7 +234,9 @@ constructor(
                     library.songs.maxByOrNull {
                         fuzzy(it.name, songQuery) +
                             fuzzy(it.album.name, albumQuery) +
-                            (it.artists.maxOfOrNull { artist -> fuzzy(artist.name, artistQuery) } ?: 0.0)
+                            (it.artists.maxOfOrNull { artist ->
+                                fuzzy(artist.name, artistQuery)
+                            } ?: 0.0)
                     }
                 if (best != null) {
                     return expandSongIntoCommand(best, null)
