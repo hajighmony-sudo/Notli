@@ -133,7 +133,7 @@ pub enum PlayerCommand {
     RemoveFromQueue(TrackId), RemoveQueueItem(usize),
     MoveInQueue { track_id: TrackId, new_index: usize },
     MoveQueueItem { from_index: usize, to_index: usize }, ClearQueue,
-    SetRepeatMode(RepeatMode), SetShuffle { enabled: bool, seed: u64 },
+    SetRepeatMode(RepeatMode), SetShuffle { enabled: bool, seed: u64 }, SetShuffleFlag(bool),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
