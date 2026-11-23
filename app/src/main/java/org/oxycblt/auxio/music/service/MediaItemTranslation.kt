@@ -19,7 +19,8 @@
 package org.oxycblt.auxio.music.service
 
 import android.content.Context
-import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat.MediaItem
@@ -126,8 +127,15 @@ fun TabNode.toMediaItem(context: Context): MediaItem {
             .setTitle(context.getString(nameRes))
             .setExtras(extras)
     bitmapRes?.let { res ->
-        val bitmap = BitmapFactory.decodeResource(context.resources, res)
-        description.setIconBitmap(bitmap)
+        // Render vector category artwork to a bitmap for MediaDescriptionCompat.
+        // A fixed 3x asset keeps the cyan Notli glyph crisp on high-density head units.
+        val icon = context.getDrawable(res)
+        if (icon != null) {
+            val bitmap = Bitmap.createBitmap(72, 72, Bitmap.Config.ARGB_8888)
+            icon.setBounds(0, 0, bitmap.width, bitmap.height)
+            icon.draw(Canvas(bitmap))
+            description.setIconBitmap(bitmap)
+        }
     }
     return MediaItem(description.build(), MediaItem.FLAG_BROWSABLE)
 }
