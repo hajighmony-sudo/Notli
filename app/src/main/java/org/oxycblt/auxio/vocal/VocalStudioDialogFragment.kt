@@ -32,25 +32,31 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
     @Inject lateinit var musicRepository: MusicRepository
     private val args: VocalStudioDialogFragmentArgs by navArgs()
     private lateinit var modelStore: VocalModelStore
+    private var modelCheckJob: Job? = null
     private var processingJob: Job? = null
     private var downloadJob: Job? = null
     private var instrumentalFile: File? = null
     private var player: MediaPlayer? = null
 
-    private val saveLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("audio/wav")) { uri ->
-        val source = instrumentalFile
-        if (uri != null && source?.isFile == true) {
-            runCatching {
-                requireContext().contentResolver.openOutputStream(uri)?.use { output ->
-                    source.inputStream().use { input -> input.copyTo(output) }
-                } ?: error("Could not open the selected destination.")
-            }.onSuccess {
-                Toast.makeText(requireContext(), R.string.vocal_saved, Toast.LENGTH_SHORT).show()
-            }.onFailure {
-                Toast.makeText(requireContext(), it.message ?: getString(R.string.vocal_save_failed), Toast.LENGTH_LONG).show()
+    private val saveLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("audio/wav")) { uri ->
+            val source = instrumentalFile
+            if (uri != null && source?.isFile == true) {
+                runCatching {
+                    requireContext().contentResolver.openOutputStream(uri)?.use { output ->
+                        source.inputStream().use { input -> input.copyTo(output) }
+                    } ?: error("Could not open the selected destination.")
+                }.onSuccess {
+                    Toast.makeText(requireContext(), R.string.vocal_saved, Toast.LENGTH_SHORT).show()
+                }.onFailure {
+                    Toast.makeText(
+                        requireContext(),
+                        it.message ?: getString(R.string.vocal_save_failed),
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
             }
         }
-    }
 
     override fun onCreateBinding(inflater: LayoutInflater) = DialogVocalStudioBinding.inflate(inflater)
 
@@ -66,27 +72,50 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
             binding.vocalSongTitle.text = song.name.resolve(requireContext())
             binding.vocalSongArtist.text = song.artists.resolveNames(requireContext())
         }
+
         refreshModelState(binding)
         binding.vocalDownloadButton.setOnClickListener { confirmModelDownload() }
         binding.vocalProcessButton.setOnClickListener { processSelectedSong() }
         binding.vocalCancelButton.setOnClickListener { cancelProcessing() }
         binding.vocalPreviewButton.setOnClickListener { togglePreview() }
-        binding.vocalSaveButton.setOnClickListener { saveLauncher.launch("NOTLI_Instrumental.wav") }
+        binding.vocalSaveButton.setOnClickListener {
+            saveLauncher.launch("NOTLI_Instrumental.wav")
+        }
         binding.vocalDiscardButton.setOnClickListener { discardResult() }
     }
 
     private fun refreshModelState(binding: DialogVocalStudioBinding) {
-        binding.vocalModelStatus.text = when {
-            !supportsEngine() -> getString(R.string.vocal_unsupported_device)
-            modelStore.isReady -> getString(R.string.vocal_model_ready)
-            else -> getString(R.string.vocal_model_missing)
+        if (!supportsEngine()) {
+            binding.vocalModelStatus.setText(R.string.vocal_unsupported_device)
+            binding.vocalDownloadButton.isEnabled = false
+            binding.vocalProcessButton.isEnabled = false
+            return
         }
-        binding.vocalDownloadButton.isEnabled = supportsEngine() && !modelStore.isReady && downloadJob?.isActive != true
-        binding.vocalProcessButton.isEnabled = supportsEngine() && modelStore.isReady && processingJob?.isActive != true
+
+        binding.vocalModelStatus.setText(
+            if (modelStore.isReady) R.string.vocal_model_ready else R.string.vocal_model_checking,
+        )
+        binding.vocalDownloadButton.isEnabled = modelStore.isReady.not() && modelCheckJob?.isActive != true &&
+            downloadJob?.isActive != true
+        binding.vocalProcessButton.isEnabled = modelStore.isReady && processingJob?.isActive != true
+
+        if (!modelStore.isReady && modelCheckJob?.isActive != true) {
+            binding.vocalDownloadButton.isEnabled = false
+            modelCheckJob = viewLifecycleOwner.lifecycleScope.launch {
+                val ready = runCatching { modelStore.verifyInstalled() }.getOrDefault(false)
+                if (view === binding.root) {
+                    binding.vocalModelStatus.setText(
+                        if (ready) R.string.vocal_model_ready else R.string.vocal_model_missing,
+                    )
+                    binding.vocalDownloadButton.isEnabled = !ready && downloadJob?.isActive != true
+                    binding.vocalProcessButton.isEnabled = ready && processingJob?.isActive != true
+                }
+            }
+        }
     }
 
-    private fun supportsEngine() = Build.VERSION.SDK_INT >= 29 &&
-        Build.SUPPORTED_ABIS.any { it == "arm64-v8a" }
+    private fun supportsEngine() =
+        Build.VERSION.SDK_INT >= 29 && Build.SUPPORTED_ABIS.any { it == "arm64-v8a" }
 
     private fun confirmModelDownload() {
         AlertDialog.Builder(requireContext())
@@ -102,22 +131,26 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
         downloadJob = viewLifecycleOwner.lifecycleScope.launch {
             binding.vocalProgress.progress = 0
             binding.vocalProgress.visibility = android.view.View.VISIBLE
-            binding.vocalProgressLabel.text = getString(R.string.vocal_downloading)
+            binding.vocalProgressLabel.setText(R.string.vocal_downloading)
             binding.vocalDownloadButton.isEnabled = false
             try {
                 modelStore.download { progress ->
-                    binding.vocalProgress.post {
+                    binding.root.post {
                         binding.vocalProgress.progress = progress
-                        binding.vocalProgressLabel.text = getString(R.string.vocal_download_percent, progress)
+                        binding.vocalProgressLabel.text =
+                            getString(R.string.vocal_download_percent, progress)
                     }
                 }
-                binding.vocalProgressLabel.text = getString(R.string.vocal_download_complete)
+                if (view === binding.root) {
+                    binding.vocalProgressLabel.setText(R.string.vocal_download_complete)
+                }
             } catch (error: Exception) {
-                if (error !is CancellationException) {
-                    binding.vocalProgressLabel.text = error.message ?: getString(R.string.vocal_download_failed)
+                if (error !is CancellationException && view === binding.root) {
+                    binding.vocalProgressLabel.text =
+                        error.message ?: getString(R.string.vocal_download_failed)
                 }
             } finally {
-                refreshModelState(binding)
+                if (view === binding.root) refreshModelState(binding)
             }
         }
     }
@@ -128,29 +161,42 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
         val model = modelStore.modelFile
         if (!modelStore.isReady) {
             Toast.makeText(requireContext(), R.string.vocal_model_missing, Toast.LENGTH_SHORT).show()
+            refreshModelState(binding)
             return
         }
+
+        val appContext = requireContext().applicationContext
         processingJob = viewLifecycleOwner.lifecycleScope.launch {
-            val appContext = requireContext().applicationContext
-            val work = File(appContext.cacheDir, "vocal-studio/" + System.currentTimeMillis()).apply { mkdirs() }
+            val work = File(appContext.cacheDir, "vocal-studio/" + System.currentTimeMillis()).apply {
+                mkdirs()
+            }
             val raw = File(work, "input.f32")
             val prepared = File(work, "prepared.f32")
             val stems = File(work, "stems").apply { mkdirs() }
             val output = File(work, "instrumental.wav")
+            var completed = false
+
             binding.vocalProgress.progress = 0
             binding.vocalProgress.visibility = android.view.View.VISIBLE
-            binding.vocalProgressLabel.text = getString(R.string.vocal_decoding)
+            binding.vocalProgressLabel.setText(R.string.vocal_decoding)
             binding.vocalProcessButton.isEnabled = false
             binding.vocalCancelButton.isEnabled = true
+
             try {
                 withContext(Dispatchers.IO) {
                     if (!modelStore.verifyInstalled()) {
-                        model.delete()
+                        modelStore.markInvalid()
                         error("The local AI model failed its integrity check. Download it again.")
                     }
+
                     val pcm = AudioPcmDecoder.decode(appContext, song.uri, raw)
                     NativeEngine.loadModel(model.absolutePath)
-                    NativeEngine.prepareInput(raw.absolutePath, pcm.sampleRate, pcm.channels, prepared.absolutePath)
+                    NativeEngine.prepareInput(
+                        raw.absolutePath,
+                        pcm.sampleRate,
+                        pcm.channels,
+                        prepared.absolutePath,
+                    )
                     NativeEngine.separate(
                         prepared.absolutePath,
                         stems.absolutePath,
@@ -158,62 +204,87 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
                         threads = 1,
                         gpu = true,
                         listener = NativeEngine.ProgressListener { fraction, stage ->
-                            binding.vocalProgress.post {
-                                binding.vocalProgress.progress = (fraction * 100).toInt().coerceIn(0, 100)
+                            binding.root.post {
+                                binding.vocalProgress.progress =
+                                    (fraction * 100).toInt().coerceIn(0, 100)
                                 binding.vocalProgressLabel.text = stage
                             }
-                            !Thread.currentThread().isInterrupted
+                            processingJob?.isActive == true
                         },
                     )
                     InstrumentalMixer.mix(stems, output)
                 }
+
+                completed = true
                 instrumentalFile = output
-                binding.vocalProgress.progress = 100
-                binding.vocalProgressLabel.text = getString(R.string.vocal_ready)
-                binding.vocalPreviewButton.isEnabled = true
-                binding.vocalSaveButton.isEnabled = true
-                binding.vocalDiscardButton.isEnabled = true
+                if (view === binding.root) {
+                    binding.vocalProgress.progress = 100
+                    binding.vocalProgressLabel.setText(R.string.vocal_ready)
+                    binding.vocalPreviewButton.isEnabled = true
+                    binding.vocalSaveButton.isEnabled = true
+                    binding.vocalDiscardButton.isEnabled = true
+                }
             } catch (error: Exception) {
-                if (error !is CancellationException) {
-                    binding.vocalProgressLabel.text = error.message ?: getString(R.string.vocal_process_failed)
+                if (error !is CancellationException && view === binding.root) {
+                    binding.vocalProgressLabel.text =
+                        error.message ?: getString(R.string.vocal_process_failed)
                 }
             } finally {
                 raw.delete()
                 prepared.delete()
-                binding.vocalCancelButton.isEnabled = false
-                binding.vocalProcessButton.isEnabled = modelStore.isReady
-                refreshModelState(binding)
+                if (!completed) work.deleteRecursively()
+                if (view === binding.root) {
+                    binding.vocalCancelButton.isEnabled = false
+                    refreshModelState(binding)
+                }
             }
         }
     }
 
     private fun cancelProcessing() {
-        if (processingJob?.isActive == true) runCatching { NativeEngine.cancel() }
-        processingJob?.cancel()
-        binding?.vocalProgressLabel?.text = getString(R.string.vocal_cancelled)
+        if (processingJob?.isActive == true) {
+            runCatching { NativeEngine.cancel() }
+            processingJob?.cancel()
+        }
+        binding?.vocalProgressLabel?.setText(R.string.vocal_cancelled)
     }
 
     private fun togglePreview() {
         val file = instrumentalFile ?: return
         if (player?.isPlaying == true) {
             player?.pause()
-            binding?.vocalPreviewButton?.text = getString(R.string.vocal_preview)
+            binding?.vocalPreviewButton?.setText(R.string.vocal_preview)
             return
         }
+
         runCatching {
             player?.release()
             player = MediaPlayer().apply {
                 setDataSource(file.absolutePath)
-                setOnCompletionListener { binding?.vocalPreviewButton?.text = getString(R.string.vocal_preview) }
+                setOnCompletionListener {
+                    binding?.vocalPreviewButton?.setText(R.string.vocal_preview)
+                }
+                setOnErrorListener { _, _, _ ->
+                    binding?.vocalPreviewButton?.setText(R.string.vocal_preview)
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.vocal_preview_failed,
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    true
+                }
                 setOnPreparedListener {
                     it.start()
-                    binding?.vocalPreviewButton?.text = getString(R.string.vocal_pause_preview)
+                    binding?.vocalPreviewButton?.setText(R.string.vocal_pause_preview)
                 }
                 prepareAsync()
             }
-            binding?.vocalPreviewButton?.text = getString(R.string.vocal_pause_preview)
         }.onFailure {
-            Toast.makeText(requireContext(), it.message ?: getString(R.string.vocal_preview_failed), Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                requireContext(),
+                it.message ?: getString(R.string.vocal_preview_failed),
+                Toast.LENGTH_LONG,
+            ).show()
         }
     }
 
@@ -225,12 +296,13 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
         binding?.vocalPreviewButton?.isEnabled = false
         binding?.vocalSaveButton?.isEnabled = false
         binding?.vocalDiscardButton?.isEnabled = false
-        binding?.vocalProgressLabel?.text = getString(R.string.vocal_result_discarded)
+        binding?.vocalProgressLabel?.setText(R.string.vocal_result_discarded)
     }
 
     override fun onDestroyBinding(binding: DialogVocalStudioBinding) {
         cancelProcessing()
         downloadJob?.cancel()
+        modelCheckJob?.cancel()
         player?.release()
         player = null
         instrumentalFile?.parentFile?.deleteRecursively()
