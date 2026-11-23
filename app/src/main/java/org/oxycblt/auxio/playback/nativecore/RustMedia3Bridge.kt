@@ -48,23 +48,23 @@ internal class RustMedia3Bridge(
     }
 
     @Synchronized
-    fun play() = dispatch(JSONObject().put("Play", JSONObject.NULL))
+    fun play() = dispatchUnit("Play")
 
     @Synchronized
-    fun pause() = dispatch(JSONObject().put("Pause", JSONObject.NULL))
+    fun pause() = dispatchUnit("Pause")
 
     @Synchronized
-    fun stop() = dispatch(JSONObject().put("Stop", JSONObject.NULL))
+    fun stop() = dispatchUnit("Stop")
 
     @Synchronized
     fun seek(positionMs: Long) =
         dispatch(JSONObject().put("Seek", JSONObject().put("position_ms", positionMs.coerceAtLeast(0L))))
 
     @Synchronized
-    fun next() = dispatch(JSONObject().put("Next", JSONObject.NULL))
+    fun next() = dispatchUnit("Next")
 
     @Synchronized
-    fun previous() = dispatch(JSONObject().put("Previous", JSONObject.NULL))
+    fun previous() = dispatchUnit("Previous")
 
     @Synchronized
     fun playTrack(song: Song) =
@@ -98,7 +98,7 @@ internal class RustMedia3Bridge(
         dispatch(JSONObject().put("RemoveQueueItem", index))
 
     @Synchronized
-    fun clearQueue() = dispatch(JSONObject().put("ClearQueue", JSONObject.NULL))
+    fun clearQueue() = dispatchUnit("ClearQueue")
 
     @Synchronized
     fun setRepeatMode(mode: String) =
