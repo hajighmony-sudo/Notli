@@ -52,9 +52,23 @@ impl PlayerCore {
             return Err(CoreError::InvalidSnapshot);
         }
 
+        let has_track = snapshot.state.current_track.is_some();
+        let state_requires_track = matches!(
+            snapshot.state.status,
+            PlaybackStatus::Loading
+                | PlaybackStatus::Playing
+                | PlaybackStatus::Paused
+                | PlaybackStatus::Stopped
+                | PlaybackStatus::Completed
+                | PlaybackStatus::Error
+        );
         if snapshot.state.shuffle_enabled != queue.shuffle_enabled()
             || snapshot.state.duration_ms.is_some_and(|duration| snapshot.state.position_ms > duration)
             || snapshot.state.last_error.as_ref().is_some_and(|message| message.len() > 4096)
+            || state_requires_track != has_track
+            || (snapshot.state.is_buffering && snapshot.state.status != PlaybackStatus::Loading)
+            || (!has_track && snapshot.state.duration_ms.is_some())
+            || (snapshot.state.status == PlaybackStatus::Error && snapshot.state.last_error.is_none())
         {
             return Err(CoreError::InvalidSnapshot);
         }
@@ -171,7 +185,7 @@ impl PlayerCore {
                 out.events.push(PlayerEvent::QueueChanged);
             }
         }
-        self.state.revision = self.state.revision.wrapping_add(1);
+        self.state.revision = self.state.revision.saturating_add(1);
         out.events.push(PlayerEvent::StateChanged(self.state.clone()));
         Ok(out)
     }
@@ -217,6 +231,7 @@ impl PlayerCore {
             }
             BackendEvent::Failed { track_id, message } if self.state.current_track.as_ref() == Some(&track_id) => {
                 self.state.status = PlaybackStatus::Error;
+                let message: String = message.chars().take(4096).collect();
                 self.state.last_error = Some(message.clone());
                 out.events.push(PlayerEvent::PlaybackError(message));
             }
@@ -355,6 +370,58 @@ mod tests {
         assert_eq!(core.queue().current().unwrap().id.0, "c");
         assert!(out.actions.contains(&BackendAction::Prepare(track("c"))));
         assert!(out.actions.contains(&BackendAction::Play));
+    }
+
+    #[test]
+    fn restore_rejects_idle_state_with_a_current_track() {
+        let mut core = PlayerCore::new();
+        core.handle(PlayerCommand::SetQueue {
+            tracks: vec![track("a")],
+            start_index: 0,
+            autoplay: false,
+        }).unwrap();
+        let mut snapshot = core.snapshot();
+        snapshot.state.status = PlaybackStatus::Idle;
+        assert_eq!(
+            PlayerCore::restore(snapshot).err(),
+            Some(CoreError::InvalidSnapshot)
+        );
+    }
+
+    #[test]
+    fn restore_rejects_error_state_without_error_details() {
+        let mut core = PlayerCore::new();
+        core.handle(PlayerCommand::SetQueue {
+            tracks: vec![track("a")],
+            start_index: 0,
+            autoplay: false,
+        }).unwrap();
+        let mut snapshot = core.snapshot();
+        snapshot.state.status = PlaybackStatus::Error;
+        snapshot.state.last_error = None;
+        assert_eq!(
+            PlayerCore::restore(snapshot).err(),
+            Some(CoreError::InvalidSnapshot)
+        );
+    }
+
+    #[test]
+    fn backend_error_messages_are_bounded_before_publishing() {
+        let mut core = PlayerCore::new();
+        core.handle(PlayerCommand::SetQueue {
+            tracks: vec![track("a")],
+            start_index: 0,
+            autoplay: true,
+        }).unwrap();
+        let output = core.handle_backend_event(BackendEvent::Failed {
+            track_id: TrackId::new("a").unwrap(),
+            message: "x".repeat(10_000),
+        });
+        assert_eq!(core.state().last_error.as_ref().unwrap().len(), 4096);
+        assert!(matches!(
+            output.events.last(),
+            Some(PlayerEvent::StateChanged(state)) if state.last_error.as_ref().unwrap().len() == 4096
+        ));
     }
 
     #[test]
