@@ -31,6 +31,11 @@
 
     <string name="set_key_headset_autoplay" translatable="false">auxio_headset_autoplay</string>
     <string name="set_key_eq_preset" translatable="false">auxio_audio_eq_preset</string>
+    <string name="set_key_eq_60" translatable="false">auxio_audio_eq_60</string>
+    <string name="set_key_eq_230" translatable="false">auxio_audio_eq_230</string>
+    <string name="set_key_eq_910" translatable="false">auxio_audio_eq_910</string>
+    <string name="set_key_eq_3600" translatable="false">auxio_audio_eq_3600</string>
+    <string name="set_key_eq_14000" translatable="false">auxio_audio_eq_14000</string>
     <string name="set_key_bass_boost" translatable="false">auxio_audio_bass_boost</string>
     <string name="set_key_bass_strength" translatable="false">auxio_audio_bass_strength</string>
     <string name="set_key_spatial_audio" translatable="false">auxio_audio_spatial</string>
