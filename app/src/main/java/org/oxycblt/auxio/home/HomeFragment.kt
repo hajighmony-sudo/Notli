@@ -63,6 +63,7 @@ import org.oxycblt.auxio.playback.NotliComposeTheme
 import org.oxycblt.auxio.playback.PlaybackDecision
 import org.oxycblt.auxio.playback.PlaybackViewModel
 import org.oxycblt.auxio.ui.FadingToolbarOffsetListener
+import org.oxycblt.auxio.ui.NotliGlassBottomBar
 import org.oxycblt.auxio.ui.NotliGlassTabBar
 import org.oxycblt.auxio.util.collect
 import org.oxycblt.auxio.util.collectImmediately
@@ -137,6 +138,7 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
             setOnMenuItemClickListener(this@HomeFragment)
             MenuCompat.setGroupDividerEnabled(menu, true)
         }
+        setupBottomNavigation(binding)
 
         binding.homePager.apply {
             // Update HomeViewModel whenever the user swipes through the ViewPager.
@@ -228,6 +230,32 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
             else -> {
                 L.w("Unexpected menu item selected")
                 false
+            }
+        }
+    }
+
+    private fun setupBottomNavigation(binding: FragmentHomeBinding) {
+        val labels =
+            listOf(
+                getString(R.string.lbl_nav_library),
+                getString(R.string.lbl_nav_search),
+                getString(R.string.lbl_nav_settings),
+            )
+        binding.homeBottomNavigation.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                NotliComposeTheme {
+                    NotliGlassBottomBar(
+                        labels = labels,
+                        selectedIndex = 0,
+                        onSelect = { index ->
+                            when (index) {
+                                1 -> findNavController().navigateSafe(HomeFragmentDirections.search())
+                                2 -> homeModel.showSettings()
+                            }
+                        },
+                    )
+                }
             }
         }
     }
