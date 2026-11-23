@@ -23,9 +23,6 @@ import android.content.Intent
 import android.media.audiofx.AudioEffect
 import android.os.SystemClock
 import android.provider.OpenableColumns
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -42,6 +39,9 @@ import androidx.media3.exoplayer.audio.MediaCodecAudioRenderer
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
 import androidx.media3.exoplayer.source.MediaSource
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
@@ -515,8 +515,10 @@ class ExoPlaybackStateHolder(
                 audioEffects = PlaybackAudioEffects(context, player)
             }
             if (listeningStartedAtElapsedMs == null) {
-                val stats = context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
-                stats.edit()
+                val stats =
+                    context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
+                stats
+                    .edit()
                     .putLong(KEY_LISTENING_SESSIONS, stats.getLong(KEY_LISTENING_SESSIONS, 0L) + 1L)
                     .apply()
                 listeningStartedAtElapsedMs = SystemClock.elapsedRealtime()
@@ -592,8 +594,10 @@ class ExoPlaybackStateHolder(
         val stats = context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
         val today = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
         val storedDay = stats.getString(KEY_DAILY_LISTENING_DATE, null)
-        val todayTotal = if (storedDay == today) stats.getLong(KEY_DAILY_LISTENING_TIME_MS, 0L) else 0L
-        stats.edit()
+        val todayTotal =
+            if (storedDay == today) stats.getLong(KEY_DAILY_LISTENING_TIME_MS, 0L) else 0L
+        stats
+            .edit()
             .putLong(KEY_LISTENING_TIME_MS, stats.getLong(KEY_LISTENING_TIME_MS, 0L) + elapsed)
             .putLong(KEY_DAILY_LISTENING_TIME_MS, todayTotal + elapsed)
             .putString(KEY_DAILY_LISTENING_DATE, today)

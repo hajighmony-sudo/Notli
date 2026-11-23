@@ -252,11 +252,13 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
         val density = resources.displayMetrics.density
         fun dp(value: Int) = (value * density).toInt()
         val themeValue = TypedValue()
-        requireContext().theme.resolveAttribute(
-            com.google.android.material.R.attr.colorPrimary,
-            themeValue,
-            true,
-        )
+        requireContext()
+            .theme
+            .resolveAttribute(
+                com.google.android.material.R.attr.colorPrimary,
+                themeValue,
+                true,
+            )
         val accent = ColorStateList.valueOf(themeValue.data)
         val dialog =
             MaterialAlertDialogBuilder(requireContext())

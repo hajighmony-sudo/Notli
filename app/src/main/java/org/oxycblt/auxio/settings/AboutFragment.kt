@@ -19,15 +19,15 @@
 package org.oxycblt.auxio.settings
 
 import android.os.Bundle
-import android.text.format.Formatter
 import android.text.format.DateFormat
-import java.util.Date
+import android.text.format.Formatter
 import android.view.LayoutInflater
 import androidx.core.view.updatePadding
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.transition.MaterialFadeThrough
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.Date
 import org.oxycblt.auxio.BuildConfig
 import org.oxycblt.auxio.R
 import org.oxycblt.auxio.databinding.FragmentAboutBinding
@@ -83,7 +83,8 @@ class AboutFragment : ViewBindingFragment<FragmentAboutBinding>() {
         val listeningSessions = stats.getLong("listening_sessions", 0L)
         val todayListeningMs = stats.getLong("daily_listening_time_ms", 0L)
         val lastPlayedAt = stats.getLong("last_played_at", 0L)
-        val lastPlayed = if (lastPlayedAt > 0L) DateFormat.getDateTimeInstance().format(Date(lastPlayedAt))
+        val lastPlayed =
+            if (lastPlayedAt > 0L) DateFormat.getDateTimeInstance().format(Date(lastPlayedAt))
             else getString(R.string.lbl_never_played)
         val binding = requireBinding()
         binding.aboutListeningTime.text =

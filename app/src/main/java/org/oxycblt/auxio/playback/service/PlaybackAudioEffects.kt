@@ -156,7 +156,8 @@ internal class PlaybackAudioEffects(
         runCatching {
             val strength = preferences.getInt(KEY_BASS_STRENGTH, 60).coerceIn(0, 100) * 10
             effect.setStrength(
-                if (preferences.getBoolean(KEY_BASS_BOOST, false)) strength.toShort() else 0.toShort(),
+                if (preferences.getBoolean(KEY_BASS_BOOST, false)) strength.toShort()
+                else 0.toShort(),
             )
             effect.enabled = preferences.getBoolean(KEY_BASS_BOOST, false)
         }
