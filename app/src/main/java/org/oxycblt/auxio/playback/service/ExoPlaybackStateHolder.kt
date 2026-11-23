@@ -92,6 +92,7 @@ class ExoPlaybackStateHolder(
     private var currentSaveJob: Job? = null
     private var openAudioEffectSession = false
     private var listeningStartedAtElapsedMs: Long? = null
+    private var audioEffects: PlaybackAudioEffects? = null
 
     var sessionOngoing = false
         private set
@@ -108,6 +109,8 @@ class ExoPlaybackStateHolder(
     fun release() {
         persistListeningTime(force = true)
         listeningStartedAtElapsedMs = null
+        audioEffects?.release()
+        audioEffects = null
         rustBridge.close()
         saveJob.cancel()
         playbackManager.unregisterStateHolder(this)
@@ -505,6 +508,9 @@ class ExoPlaybackStateHolder(
     override fun onIsPlayingChanged(isPlaying: Boolean) {
         super.onIsPlayingChanged(isPlaying)
         if (isPlaying) {
+            if (audioEffects == null) {
+                audioEffects = PlaybackAudioEffects(context, player)
+            }
             if (listeningStartedAtElapsedMs == null) {
                 listeningStartedAtElapsedMs = SystemClock.elapsedRealtime()
             }
