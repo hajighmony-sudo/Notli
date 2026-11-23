@@ -19,8 +19,12 @@
 package org.oxycblt.auxio.playback
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -31,6 +35,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -100,6 +105,25 @@ internal fun NotliPlaybackBar(
             animationSpec = tween(durationMillis = 260),
             label = "playing-artwork-scale",
         )
+    // A soft ring around the artwork breathes while music plays and fades out when paused.
+    val pulse by
+        rememberInfiniteTransition(label = "artwork-pulse")
+            .animateFloat(
+                initialValue = 0.25f,
+                targetValue = 0.75f,
+                animationSpec =
+                    infiniteRepeatable(
+                        animation = tween(durationMillis = 1400, easing = FastOutSlowInEasing),
+                        repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+                    ),
+                label = "artwork-pulse-alpha",
+            )
+    val ringAlpha by
+        animateFloatAsState(
+            targetValue = if (isPlaying) pulse else 0f,
+            animationSpec = tween(durationMillis = 300),
+            label = "artwork-ring-alpha",
+        )
     val durationDs = (song?.durationMs ?: 0L) / 100L
     val progress =
         if (durationDs > 0L) {
@@ -157,6 +181,11 @@ internal fun NotliPlaybackBar(
                                     Brush.linearGradient(
                                         listOf(Color(0xFF3A246A), Color(0xFFB7D94A)),
                                     ),
+                                shape = RoundedCornerShape(16.dp),
+                            )
+                            .border(
+                                width = 2.dp,
+                                color = colors.primary.copy(alpha = ringAlpha),
                                 shape = RoundedCornerShape(16.dp),
                             ),
                     contentAlignment = Alignment.Center,
