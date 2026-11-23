@@ -236,10 +236,10 @@ internal class PlaybackAudioEffects(
         val preset = preferences.getInt(KEY_PITCH_EFFECT, 0).coerceIn(0, 7)
         val (speed, pitch) =
             when (preset) {
-                1 -> 0.88f to 0.68f
-                2 -> 1.0f to 1.55f
-                3 -> 1.0f to 1.28f
-                5 -> 0.92f to 0.78f
+                1 -> 1.0f to 1.35f
+                2 -> 0.92f to 0.85f
+                3 -> 0.88f to 0.68f
+                4 -> 1.0f to 1.28f
                 6 -> 0.78f to 0.82f
                 7 -> 1.08f to 1.42f
                 else -> 1.0f to 1.0f
