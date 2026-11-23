@@ -15,6 +15,33 @@
             app:summary="@string/set_adaptive_haptics_desc"
             app:title="@string/set_adaptive_haptics" />
 
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="2"
+            app:dependency="@string/set_key_adaptive_haptics"
+            app:entries="@array/entries_adaptive_haptics_mode"
+            app:entryValues="@array/values_adaptive_haptics_mode"
+            app:key="@string/set_key_adaptive_haptics_mode"
+            app:title="@string/set_haptics_mode"
+            app:summary="@string/set_haptics_mode_desc" />
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="3"
+            app:dependency="@string/set_key_adaptive_haptics"
+            app:entries="@array/entries_adaptive_haptics_intensity"
+            app:entryValues="@array/values_adaptive_haptics_intensity"
+            app:key="@string/set_key_adaptive_haptics_intensity"
+            app:title="@string/set_haptics_intensity"
+            app:summary="@string/set_haptics_intensity_desc" />
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="3"
+            app:dependency="@string/set_key_adaptive_haptics"
+            app:entries="@array/entries_adaptive_haptics_sensitivity"
+            app:entryValues="@array/values_adaptive_haptics_sensitivity"
+            app:key="@string/set_key_adaptive_haptics_sensitivity"
+            app:title="@string/set_haptics_sensitivity"
+            app:summary="@string/set_haptics_sensitivity_desc" />
+
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="@string/set_key_rewind_prev"
