@@ -126,7 +126,7 @@ internal class PlaybackAudioEffects(
     private fun applyBassBoost() {
         val effect = bassBoost ?: return
         runCatching {
-            effect.setStrength(if (preferences.getBoolean(KEY_BASS_BOOST, false)) 600 else 0)
+            effect.setStrength(if (preferences.getBoolean(KEY_BASS_BOOST, false)) 600.toShort() else 0.toShort())
             effect.enabled = preferences.getBoolean(KEY_BASS_BOOST, false)
         }
     }
