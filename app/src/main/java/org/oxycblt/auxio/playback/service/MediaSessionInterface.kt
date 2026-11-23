@@ -112,9 +112,10 @@ constructor(
         super.onRemoveQueueItem(description)
         val at = description.extras?.getInt(KEY_QUEUE_POS)
         if (at != null) {
-            // Direct queue item removal w/preserved extras, we can explicitly remove
-            // the correct item rather than a duplicate elsewhere.
-            playbackManager.removeQueueItem(at)
+            // Ignore stale or malformed positions supplied by external media hosts.
+            if (at in playbackManager.queue.indices) {
+                playbackManager.removeQueueItem(at)
+            }
             return
         }
         // Non-queue item or queue item lost it's extras in transit, remove the first item
@@ -125,7 +126,10 @@ constructor(
                 else -> return
             }
         val firstAt = playbackManager.queue.indexOfFirst { it.uid == songUid }
-        playbackManager.removeQueueItem(firstAt)
+        // The host may send a queue item after it has already been removed.
+        if (firstAt >= 0) {
+            playbackManager.removeQueueItem(firstAt)
+        }
     }
 
     override fun onPlay() {
@@ -208,8 +212,10 @@ constructor(
         extras: Bundle,
         library: Library,
     ): PlaybackCommand? {
-        if (query == null) {
-            // User just wanted to 'play some music', shuffle all
+        val normalizedQuery = query?.takeIf { it.isNotBlank() }
+        if (normalizedQuery == null) {
+            // Voice hosts can express "play music" as either a null or blank
+            // query. Treat both forms as a request for a shuffled library mix.
             return commandFactory.all(ShuffleMode.ON)
         }
 
@@ -222,7 +228,7 @@ constructor(
                     library.songs.maxByOrNull {
                         fuzzy(it.name, songQuery) +
                             fuzzy(it.album.name, albumQuery) +
-                            it.artists.maxOf { artist -> fuzzy(artist.name, artistQuery) }
+                            (it.artists.maxOfOrNull { artist -> fuzzy(artist.name, artistQuery) } ?: 0.0)
                     }
                 if (best != null) {
                     return expandSongIntoCommand(best, null)
@@ -266,7 +272,7 @@ constructor(
 
         val bestMusic =
             (library.songs + library.albums + library.artists + library.genres + library.playlists)
-                .maxByOrNull { fuzzy(it.name, query) }
+                .maxByOrNull { fuzzy(it.name, normalizedQuery) }
         // TODO: Error out when we can't correctly resolve the query
         return bestMusic?.let { expandMusicIntoCommand(it, null) }
             ?: commandFactory.all(ShuffleMode.ON)
