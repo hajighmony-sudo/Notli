@@ -1,12 +1,21 @@
 /*
- * Copyright (c) 2026 Auxio Project.
+ * Copyright (c) 2026 Auxio Project
  * RustMedia3Bridge.kt is part of Auxio.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+ 
 package org.oxycblt.auxio.playback.nativecore
 
 import androidx.media3.common.C
@@ -40,13 +49,14 @@ internal class RustMedia3Bridge(
         val tracks = JSONArray()
         songs.forEach { tracks.put(it.toRustTrack()) }
         val command =
-            JSONObject().put(
-                "SetQueue",
-                JSONObject()
-                    .put("tracks", tracks)
-                    .put("start_index", startIndex)
-                    .put("autoplay", autoplay),
-            )
+            JSONObject()
+                .put(
+                    "SetQueue",
+                    JSONObject()
+                        .put("tracks", tracks)
+                        .put("start_index", startIndex)
+                        .put("autoplay", autoplay),
+                )
         dispatch(command)
         if (shuffleEnabled) {
             // The list passed to Rust is already in Media3's visible playback order.
@@ -54,39 +64,36 @@ internal class RustMedia3Bridge(
         }
     }
 
-    @Synchronized
-    fun play() = dispatchUnit("Play")
+    @Synchronized fun play() = dispatchUnit("Play")
 
-    @Synchronized
-    fun pause() = dispatchUnit("Pause")
+    @Synchronized fun pause() = dispatchUnit("Pause")
 
-    @Synchronized
-    fun stop() = dispatchUnit("Stop")
+    @Synchronized fun stop() = dispatchUnit("Stop")
 
     @Synchronized
     fun seek(positionMs: Long) =
         dispatch(
-            JSONObject().put(
-                "Seek",
-                JSONObject().put("position_ms", positionMs.coerceAtLeast(0L)),
-            ),
+            JSONObject()
+                .put(
+                    "Seek",
+                    JSONObject().put("position_ms", positionMs.coerceAtLeast(0L)),
+                ),
         )
 
-    @Synchronized
-    fun next() = dispatchUnit("Next")
+    @Synchronized fun next() = dispatchUnit("Next")
 
     @Synchronized
     fun previous(rewindIfLate: Boolean) =
         dispatch(
-            JSONObject().put(
-                "PreviousWithRewind",
-                JSONObject().put("rewind_if_late", rewindIfLate),
-            ),
+            JSONObject()
+                .put(
+                    "PreviousWithRewind",
+                    JSONObject().put("rewind_if_late", rewindIfLate),
+                ),
         )
 
     @Synchronized
-    fun playTrack(song: Song) =
-        dispatch(JSONObject().put("PlayTrack", song.uid.toString()))
+    fun playTrack(song: Song) = dispatch(JSONObject().put("PlayTrack", song.uid.toString()))
 
     @Synchronized
     fun addToQueue(songs: List<Song>) {
@@ -103,23 +110,20 @@ internal class RustMedia3Bridge(
     @Synchronized
     fun move(from: Int, to: Int) {
         dispatch(
-            JSONObject().put(
-                "MoveQueueItem",
-                JSONObject().put("from_index", from).put("to_index", to),
-            ),
+            JSONObject()
+                .put(
+                    "MoveQueueItem",
+                    JSONObject().put("from_index", from).put("to_index", to),
+                ),
         )
     }
 
-    @Synchronized
-    fun remove(index: Int) =
-        dispatch(JSONObject().put("RemoveQueueItem", index))
+    @Synchronized fun remove(index: Int) = dispatch(JSONObject().put("RemoveQueueItem", index))
+
+    @Synchronized fun clearQueue() = dispatchUnit("ClearQueue")
 
     @Synchronized
-    fun clearQueue() = dispatchUnit("ClearQueue")
-
-    @Synchronized
-    fun setRepeatMode(mode: String) =
-        dispatch(JSONObject().put("SetRepeatMode", mode))
+    fun setRepeatMode(mode: String) = dispatch(JSONObject().put("SetRepeatMode", mode))
 
     /**
      * Media3 supplies the visible queue order (including its shuffle mapping), so Rust does not
@@ -148,38 +152,42 @@ internal class RustMedia3Bridge(
         when (state) {
             Player.STATE_BUFFERING ->
                 backendEvent(
-                    JSONObject().put(
-                        "Buffering",
-                        JSONObject().put("track_id", trackId).put("is_buffering", true),
-                    ),
+                    JSONObject()
+                        .put(
+                            "Buffering",
+                            JSONObject().put("track_id", trackId).put("is_buffering", true),
+                        ),
                 )
             Player.STATE_READY -> {
                 val duration = player.duration
                 backendEvent(
-                    JSONObject().put(
-                        "Prepared",
-                        JSONObject()
-                            .put("track_id", trackId)
-                            .put(
-                                "duration_ms",
-                                if (duration != C.TIME_UNSET && duration >= 0L) duration
-                                else JSONObject.NULL,
-                            ),
-                    ),
+                    JSONObject()
+                        .put(
+                            "Prepared",
+                            JSONObject()
+                                .put("track_id", trackId)
+                                .put(
+                                    "duration_ms",
+                                    if (duration != C.TIME_UNSET && duration >= 0L) duration
+                                    else JSONObject.NULL,
+                                ),
+                        ),
                 )
                 backendEvent(
-                    JSONObject().put(
-                        "Buffering",
-                        JSONObject().put("track_id", trackId).put("is_buffering", false),
-                    ),
+                    JSONObject()
+                        .put(
+                            "Buffering",
+                            JSONObject().put("track_id", trackId).put("is_buffering", false),
+                        ),
                 )
             }
             Player.STATE_ENDED ->
                 backendEvent(
-                    JSONObject().put(
-                        "Ended",
-                        JSONObject().put("track_id", activeTrackId ?: trackId),
-                    ),
+                    JSONObject()
+                        .put(
+                            "Ended",
+                            JSONObject().put("track_id", activeTrackId ?: trackId),
+                        ),
                 )
         }
     }
@@ -204,12 +212,13 @@ internal class RustMedia3Bridge(
     fun onPositionChanged() {
         val trackId = currentTrackId() ?: return
         backendEvent(
-            JSONObject().put(
-                "Position",
-                JSONObject()
-                    .put("track_id", trackId)
-                    .put("position_ms", player.currentPosition.coerceAtLeast(0L)),
-            ),
+            JSONObject()
+                .put(
+                    "Position",
+                    JSONObject()
+                        .put("track_id", trackId)
+                        .put("position_ms", player.currentPosition.coerceAtLeast(0L)),
+                ),
         )
     }
 
@@ -217,10 +226,11 @@ internal class RustMedia3Bridge(
     fun onPlayerError(message: String) {
         val trackId = currentTrackId() ?: activeTrackId ?: return
         backendEvent(
-            JSONObject().put(
-                "Failed",
-                JSONObject().put("track_id", trackId).put("message", message.take(4096)),
-            ),
+            JSONObject()
+                .put(
+                    "Failed",
+                    JSONObject().put("track_id", trackId).put("message", message.take(4096)),
+                ),
         )
     }
 
@@ -245,10 +255,10 @@ internal class RustMedia3Bridge(
             .put("title", name.raw.take(1024).ifBlank { uri.lastPathSegment ?: uid.toString() })
             .put(
                 "artist",
-                artists.joinToString(", ") { it.name.asText() }
+                artists
+                    .joinToString(", ") { it.name.asText() }
                     .take(1024)
-                    .takeIf { it.isNotBlank() }
-                    ?: JSONObject.NULL,
+                    .takeIf { it.isNotBlank() } ?: JSONObject.NULL,
             )
             .put(
                 "album",
@@ -306,7 +316,8 @@ internal class RustMedia3Bridge(
         val id = track?.optString("id")?.takeIf { it.isNotBlank() } ?: return
         val targetIndex =
             (0 until player.mediaItemCount).firstOrNull { index ->
-                (player.getMediaItemAt(index).localConfiguration?.tag as? Song)?.uid?.toString() == id
+                (player.getMediaItemAt(index).localConfiguration?.tag as? Song)?.uid?.toString() ==
+                    id
             }
         if (targetIndex == null) {
             L.e("Rust selected a track that is not present in the Media3 playlist: %s", id)
@@ -316,7 +327,9 @@ internal class RustMedia3Bridge(
         if (player.currentMediaItemIndex != targetIndex) {
             player.seekTo(targetIndex, C.TIME_UNSET)
         }
-        if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+        if (
+            player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED
+        ) {
             player.prepare()
         }
     }

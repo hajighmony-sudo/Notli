@@ -51,6 +51,7 @@ import kotlinx.coroutines.yield
 import org.oxycblt.auxio.image.ImageSettings
 import org.oxycblt.auxio.music.MusicRepository
 import org.oxycblt.auxio.playback.PlaybackSettings
+import org.oxycblt.auxio.playback.nativecore.RustMedia3Bridge
 import org.oxycblt.auxio.playback.persist.PersistenceRepository
 import org.oxycblt.auxio.playback.replaygain.ReplayGainAudioProcessor
 import org.oxycblt.auxio.playback.state.DeferredPlayback
@@ -62,7 +63,6 @@ import org.oxycblt.auxio.playback.state.RawQueue
 import org.oxycblt.auxio.playback.state.RepeatMode
 import org.oxycblt.auxio.playback.state.ShuffleMode
 import org.oxycblt.auxio.playback.state.StateAck
-import org.oxycblt.auxio.playback.nativecore.RustMedia3Bridge
 import org.oxycblt.musikr.MusicParent
 import org.oxycblt.musikr.Song
 import timber.log.Timber as L
@@ -270,7 +270,12 @@ class ExoPlaybackStateHolder(
         val target = startIndex ?: player.currentTimeline.getFirstWindowIndex(command.shuffled)
         player.seekTo(target, C.TIME_UNSET)
         val rawQueue = resolveQueue()
-        rustBridge.setQueue(rawQueue.resolveSongs(), rawQueue.resolveIndex(), true, rawQueue.isShuffled)
+        rustBridge.setQueue(
+            rawQueue.resolveSongs(),
+            rawQueue.resolveIndex(),
+            true,
+            rawQueue.isShuffled,
+        )
         playbackManager.ack(this, StateAck.NewPlayback)
         deferSave()
     }
