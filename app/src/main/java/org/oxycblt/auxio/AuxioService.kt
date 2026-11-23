@@ -113,7 +113,7 @@ class AuxioService :
         options: Bundle,
     ) {
         val maximumRootChildLimit = getRootChildrenLimit()
-        musicFragment.getChildren(parentId, maximumRootChildLimit, result)
+        musicFragment.getChildren(parentId, maximumRootChildLimit, options, result)
     }
 
     override fun onSearch(query: String, extras: Bundle?, result: Result<MutableList<MediaItem>>) {
