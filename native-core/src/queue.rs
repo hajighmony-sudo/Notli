@@ -1,9 +1,10 @@
 use crate::model::{RepeatMode, Track, TrackId};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QueueError { InvalidTrack, DuplicateTrack, InvalidStartIndex, InvalidIndex, TrackNotFound, InvalidSnapshot }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct QueueSnapshot {
     pub tracks: Vec<Track>,
     /// Playback order contains indexes into tracks, including in shuffle mode.
