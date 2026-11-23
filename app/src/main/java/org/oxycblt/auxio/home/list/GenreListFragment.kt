@@ -82,7 +82,6 @@ class GenreListFragment :
         }
         binding.homeNoMusicMsg.text = getString(R.string.lng_empty_genres)
 
-
         collectImmediately(homeModel.genreList, ::updateGenres)
         collectImmediately(homeModel.empty, musicModel.indexingState, ::updateNoMusicIndicator)
         collectImmediately(listModel.selected, ::updateSelection)

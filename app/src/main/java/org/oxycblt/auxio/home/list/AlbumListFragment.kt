@@ -83,7 +83,6 @@ class AlbumListFragment :
         }
         binding.homeNoMusicMsg.text = getString(R.string.lng_empty_albums)
 
-
         collectImmediately(homeModel.albumList, ::updateAlbums)
         collectImmediately(homeModel.empty, musicModel.indexingState, ::updateNoMusicIndicator)
         collectImmediately(listModel.selected, ::updateSelection)
