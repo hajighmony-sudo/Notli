@@ -8,7 +8,7 @@ pub mod engine;
 pub mod model;
 pub mod queue;
 
-pub use downloads::{DownloadCommand, DownloadError, DownloadManager, DownloadRequest, DownloadSnapshot, DownloadStatus};
-pub use engine::{CoreError, CoreOutput, PlayerCore, PlayerSnapshot};
+pub use downloads::{DownloadCommand, DownloadError, DownloadManager, DownloadRequest, DownloadSnapshot, DownloadStatus, MAX_DOWNLOAD_TASKS};
+pub use engine::{CoreError, CoreOutput, PlayerCore, PlayerSnapshot, SNAPSHOT_SCHEMA_VERSION};
 pub use model::{BackendAction, BackendEvent, PlaybackState, PlaybackStatus, PlayerCommand, PlayerEvent, RepeatMode, Track, TrackId};
-pub use queue::{PlaybackQueue, QueueError, QueueSnapshot};
+pub use queue::{PlaybackQueue, QueueError, QueueSnapshot, MAX_QUEUE_LEN};

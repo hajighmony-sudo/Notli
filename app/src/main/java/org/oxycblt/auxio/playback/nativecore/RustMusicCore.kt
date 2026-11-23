@@ -43,6 +43,10 @@ internal object RustMusicCore {
 
     private external fun nativeDownloadSnapshot(handle: Long): String
 
+    private external fun nativeRestore(handle: Long, snapshotJson: String): String
+
+    private external fun nativeDownloadClearFinished(handle: Long): String
+
     fun create(): Long = nativeCreate()
 
     fun destroy(handle: Long) = nativeDestroy(handle)
@@ -58,6 +62,10 @@ internal object RustMusicCore {
         nativeDownloadCommand(handle, commandJson)
 
     fun downloadSnapshot(handle: Long): String = nativeDownloadSnapshot(handle)
+
+    fun restore(handle: Long, snapshotJson: String): String = nativeRestore(handle, snapshotJson)
+
+    fun downloadClearFinished(handle: Long): String = nativeDownloadClearFinished(handle)
 }
 
 /**
@@ -76,6 +84,18 @@ internal class RustMusicEngine private constructor() : AutoCloseable {
         RustMusicCore.backendEvent(requireOpenHandle(), eventJson)
 
     @Synchronized fun snapshot(): String = RustMusicCore.snapshot(requireOpenHandle())
+
+    /**
+     * Restores a previously persisted player snapshot. The native side validates the snapshot
+     * (including its schema version) and keeps the current state if it is rejected.
+     */
+    @Synchronized
+    fun restore(snapshotJson: String): String =
+        RustMusicCore.restore(requireOpenHandle(), snapshotJson)
+
+    /** Removes every finished download task and returns the removed count in the JSON reply. */
+    @Synchronized
+    fun clearFinishedDownloads(): String = RustMusicCore.downloadClearFinished(requireOpenHandle())
 
     @Synchronized
     fun dispatchDownload(commandJson: String): String =

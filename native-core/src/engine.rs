@@ -3,14 +3,26 @@ use crate::model::{BackendAction, BackendEvent, PlaybackState, PlaybackStatus, P
 use crate::queue::{PlaybackQueue, QueueError, QueueSnapshot};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum CoreError { Queue(QueueError), EmptyQueue, NoCurrentTrack, InvalidSnapshot }
+pub enum CoreError { Queue(QueueError), EmptyQueue, NoCurrentTrack, InvalidSnapshot, UnsupportedSnapshotVersion(u32) }
 impl From<QueueError> for CoreError { fn from(value: QueueError) -> Self { Self::Queue(value) } }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CoreOutput { pub actions: Vec<BackendAction>, pub events: Vec<PlayerEvent> }
 
+/// Schema version written into every [`PlayerSnapshot`]. Bump it whenever the persisted shape
+/// changes incompatibly; [`PlayerCore::restore`] rejects snapshots from a newer schema.
+pub const SNAPSHOT_SCHEMA_VERSION: u32 = 1;
+
+fn legacy_snapshot_version() -> u32 { 1 }
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct PlayerSnapshot { pub state: PlaybackState, pub queue: QueueSnapshot }
+pub struct PlayerSnapshot {
+    /// Snapshots written before versioning existed have no field and are treated as version 1.
+    #[serde(default = "legacy_snapshot_version")]
+    pub version: u32,
+    pub state: PlaybackState,
+    pub queue: QueueSnapshot,
+}
 
 #[derive(Debug, Default)]
 pub struct PlayerCore { state: PlaybackState, queue: PlaybackQueue }
@@ -19,9 +31,14 @@ impl PlayerCore {
     pub fn new() -> Self { Self::default() }
     pub fn state(&self) -> &PlaybackState { &self.state }
     pub fn queue(&self) -> &PlaybackQueue { &self.queue }
-    pub fn snapshot(&self) -> PlayerSnapshot { PlayerSnapshot { state: self.state.clone(), queue: self.queue.snapshot() } }
+    pub fn snapshot(&self) -> PlayerSnapshot {
+        PlayerSnapshot { version: SNAPSHOT_SCHEMA_VERSION, state: self.state.clone(), queue: self.queue.snapshot() }
+    }
 
     pub fn restore(snapshot: PlayerSnapshot) -> Result<Self, CoreError> {
+        if snapshot.version == 0 || snapshot.version > SNAPSHOT_SCHEMA_VERSION {
+            return Err(CoreError::UnsupportedSnapshotVersion(snapshot.version));
+        }
         let queue = PlaybackQueue::restore(snapshot.queue)?;
         if let Some(id) = &snapshot.state.current_track {
             if queue.current().map(|track| &track.id) != Some(id) {
@@ -50,6 +67,9 @@ impl PlayerCore {
         match command {
             PlayerCommand::SetQueue { tracks, start_index, autoplay } => {
                 self.queue.replace(tracks, start_index)?;
+                // Replacing the queue resets its order to library order, so mirror that in the
+                // state; otherwise a later snapshot would fail the shuffle consistency check.
+                self.state.shuffle_enabled = self.queue.shuffle_enabled();
                 if let Some(track) = self.queue.current().cloned() { self.select_track(track, autoplay, &mut out); }
                 else { self.reset(); }
                 out.events.push(PlayerEvent::QueueChanged);
@@ -268,6 +288,73 @@ mod tests {
         let mut snapshot = core.snapshot();
         snapshot.state.shuffle_enabled = true;
         assert_eq!(PlayerCore::restore(snapshot).err(), Some(CoreError::InvalidSnapshot));
+    }
+
+    #[test]
+    fn replacing_queue_while_shuffled_keeps_snapshot_restorable() {
+        let mut core = PlayerCore::new();
+        core.handle(PlayerCommand::SetQueue { tracks: vec![track("a"), track("b"), track("c")], start_index: 0, autoplay: false }).unwrap();
+        core.handle(PlayerCommand::SetShuffle { enabled: true, seed: 42 }).unwrap();
+        assert!(core.state().shuffle_enabled);
+
+        core.handle(PlayerCommand::SetQueue { tracks: vec![track("x"), track("y")], start_index: 1, autoplay: true }).unwrap();
+
+        assert!(!core.state().shuffle_enabled);
+        let restored = PlayerCore::restore(core.snapshot()).expect("snapshot must restore");
+        assert_eq!(restored.snapshot(), core.snapshot());
+    }
+
+    #[test]
+    fn shuffled_snapshot_round_trips_and_keeps_playing_the_same_track() {
+        let mut core = PlayerCore::new();
+        core.handle(PlayerCommand::SetQueue { tracks: vec![track("a"), track("b"), track("c"), track("d")], start_index: 2, autoplay: false }).unwrap();
+        core.handle(PlayerCommand::SetShuffle { enabled: true, seed: 9 }).unwrap();
+
+        let restored = PlayerCore::restore(core.snapshot()).unwrap();
+        assert_eq!(restored.queue().current().unwrap().id.0, "c");
+        assert!(restored.state().shuffle_enabled);
+    }
+
+    #[test]
+    fn snapshots_carry_a_schema_version_and_reject_unknown_ones() {
+        let core = PlayerCore::new();
+        let mut snapshot = core.snapshot();
+        assert_eq!(snapshot.version, SNAPSHOT_SCHEMA_VERSION);
+        assert!(PlayerCore::restore(snapshot.clone()).is_ok());
+
+        snapshot.version = SNAPSHOT_SCHEMA_VERSION + 1;
+        assert_eq!(
+            PlayerCore::restore(snapshot.clone()).err(),
+            Some(CoreError::UnsupportedSnapshotVersion(SNAPSHOT_SCHEMA_VERSION + 1))
+        );
+        snapshot.version = 0;
+        assert_eq!(PlayerCore::restore(snapshot).err(), Some(CoreError::UnsupportedSnapshotVersion(0)));
+    }
+
+    #[test]
+    fn failed_track_can_be_skipped_with_next() {
+        let mut core = PlayerCore::new();
+        core.handle(PlayerCommand::SetQueue { tracks: vec![track("a"), track("b")], start_index: 0, autoplay: true }).unwrap();
+        core.handle_backend_event(BackendEvent::Failed { track_id: TrackId::new("a").unwrap(), message: "codec".into() });
+        assert_eq!(core.state().status, PlaybackStatus::Error);
+
+        core.handle(PlayerCommand::Next).unwrap();
+        assert_eq!(core.queue().current().unwrap().id.0, "b");
+        assert_eq!(core.state().status, PlaybackStatus::Loading);
+        assert_eq!(core.state().last_error, None);
+    }
+
+    #[test]
+    fn removing_the_current_track_advances_and_keeps_playing() {
+        let mut core = PlayerCore::new();
+        core.handle(PlayerCommand::SetQueue { tracks: vec![track("a"), track("b"), track("c")], start_index: 1, autoplay: true }).unwrap();
+        core.handle_backend_event(BackendEvent::Prepared { track_id: TrackId::new("b").unwrap(), duration_ms: Some(60_000) });
+        assert_eq!(core.state().status, PlaybackStatus::Playing);
+
+        let out = core.handle(PlayerCommand::RemoveQueueItem(1)).unwrap();
+        assert_eq!(core.queue().current().unwrap().id.0, "c");
+        assert!(out.actions.contains(&BackendAction::Prepare(track("c"))));
+        assert!(out.actions.contains(&BackendAction::Play));
     }
 
     #[test]

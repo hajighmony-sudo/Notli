@@ -58,6 +58,13 @@ Gradle پیش از `preBuild` کتابخانهٔ `libnotli_music_core.so` را �
 - wrapper Kotlin با مدیریت handle و close
 - Gradle task برای cross-compile و بسته‌بندی کتابخانهٔ native
 - Workflow مستقل Rust + Android برای تست و ساخت APK
+- Snapshot نسخه‌دار (`PlayerSnapshot.version`، فعلاً ۱): `restore` نسخهٔ ۰ یا نسخه‌های جدیدتر از هسته را رد می‌کند و Snapshotهای قدیمی بدون فیلد نسخه به‌عنوان نسخهٔ ۱ خوانده می‌شوند
+- فرمان JNI `nativeRestore` (در Kotlin: `RustMusicEngine.restore`) برای بازیابی Snapshot؛ اگر Snapshot نامعتبر باشد صف و وضعیت زندهٔ فعلی دست‌نخورده می‌ماند
+- محافظت در برابر panic در مرز JNI: panic به خطای نوع‌دار تبدیل می‌شود و فرایند برنامه را نمی‌اندازد
+- سقف ۱۰۰٬۰۰۰ آیتم برای صف (`MAX_QUEUE_LEN`) و ۱٬۰۰۰ تسک برای دانلودها (`MAX_DOWNLOAD_TASKS`)
+- فرمان `Remove` و `clear_finished` برای پاک‌کردن دانلودهای تمام‌شده/ناموفق/لغوشده (تسک‌های فعال قابل حذف نیستند)
+- هنگام روشن‌کردن Shuffle، آهنگ فعلی اول ترتیب جدید قرار می‌گیرد
+- رفع ناسازگاری: `SetQueue` در حالت Shuffle، وضعیت `shuffle_enabled` را با صف جدید هماهنگ نمی‌کرد و بازیابی Snapshot بعدی رد می‌شد
 
 هنوز انجام نشده و نباید به‌عنوان تکمیل‌شده معرفی شود:
 - اتصال RustMusicEngine به ExoPlaybackStateHolder واقعی و انتقال عملیات زندهٔ playback به Rust

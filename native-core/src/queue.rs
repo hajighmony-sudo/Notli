@@ -8,7 +8,12 @@ pub enum QueueError {
     InvalidIndex,
     TrackNotFound,
     InvalidSnapshot,
+    /// The queue already holds [`MAX_QUEUE_LEN`] entries.
+    QueueFull,
 }
+
+/// Upper bound on queue entries. Protects the engine (and the JSON bridge) from unbounded growth.
+pub const MAX_QUEUE_LEN: usize = 100_000;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct QueueSnapshot {
@@ -38,6 +43,9 @@ impl PlaybackQueue {
     }
 
     pub fn restore(snapshot: QueueSnapshot) -> Result<Self, QueueError> {
+        if snapshot.tracks.len() > MAX_QUEUE_LEN {
+            return Err(QueueError::InvalidSnapshot);
+        }
         validate_tracks(&snapshot.tracks)?;
         if snapshot.order.len() != snapshot.tracks.len() {
             return Err(QueueError::InvalidSnapshot);
@@ -99,6 +107,9 @@ impl PlaybackQueue {
         {
             return Err(QueueError::InvalidStartIndex);
         }
+        if tracks.len() > MAX_QUEUE_LEN {
+            return Err(QueueError::QueueFull);
+        }
         validate_tracks(&tracks)?;
         self.order = (0..tracks.len()).collect();
         self.tracks = tracks;
@@ -109,6 +120,9 @@ impl PlaybackQueue {
 
     pub fn enqueue(&mut self, track: Track) -> Result<(), QueueError> {
         validate_new_track(&track)?;
+        if self.tracks.len() >= MAX_QUEUE_LEN {
+            return Err(QueueError::QueueFull);
+        }
         let index = self.tracks.len();
         self.tracks.push(track);
         self.order.push(index);
@@ -120,6 +134,9 @@ impl PlaybackQueue {
 
     pub fn enqueue_next(&mut self, track: Track) -> Result<(), QueueError> {
         validate_new_track(&track)?;
+        if self.tracks.len() >= MAX_QUEUE_LEN {
+            return Err(QueueError::QueueFull);
+        }
         let index = self.tracks.len();
         self.tracks.push(track);
         match self.cursor {
@@ -269,6 +286,13 @@ impl PlaybackQueue {
                 state ^= state << 17;
                 self.order.swap(i, (state as usize) % (i + 1));
             }
+            // Like the existing Android player, a freshly shuffled queue starts with the
+            // current track, so "previous" never jumps to an arbitrary random entry.
+            if let Some(selected) = current {
+                if let Some(position) = self.order.iter().position(|index| *index == selected) {
+                    self.order.swap(0, position);
+                }
+            }
         }
         self.shuffle_enabled = enabled;
         self.cursor = current.and_then(|selected| {
@@ -326,6 +350,75 @@ mod tests {
         queue.select_index(1).unwrap();
         assert!(!queue.remove_at(0).unwrap());
         assert_eq!(queue.current().unwrap().title, "second");
+    }
+
+    fn numbered(count: usize) -> Vec<Track> {
+        (0..count).map(|i| track(&format!("t{i}"), &format!("t{i}"))).collect()
+    }
+
+    #[test]
+    fn enabling_shuffle_moves_current_track_first_and_is_a_permutation() {
+        let mut queue = PlaybackQueue::default();
+        queue.replace(numbered(10), 4).unwrap();
+        queue.set_shuffle(true, 7);
+
+        assert!(queue.shuffle_enabled());
+        assert_eq!(queue.current().unwrap().id.0, "t4");
+        assert_eq!(queue.current_index(), Some(0));
+
+        let mut ids: Vec<String> = queue.resolved_tracks().iter().map(|t| t.id.0.clone()).collect();
+        ids.sort();
+        let mut expected: Vec<String> = (0..10).map(|i| format!("t{i}")).collect();
+        expected.sort();
+        assert_eq!(ids, expected);
+    }
+
+    #[test]
+    fn disabling_shuffle_restores_library_order_around_current_track() {
+        let mut queue = PlaybackQueue::default();
+        queue.replace(numbered(6), 2).unwrap();
+        queue.set_shuffle(true, 99);
+        queue.next(RepeatMode::Off);
+        let playing = queue.current().unwrap().id.0.clone();
+        queue.set_shuffle(false, 0);
+
+        assert_eq!(queue.current().unwrap().id.0, playing);
+        let ids: Vec<&str> = queue.resolved_tracks().iter().map(|t| t.id.0.as_str()).collect();
+        assert_eq!(ids, ["t0", "t1", "t2", "t3", "t4", "t5"]);
+    }
+
+    #[test]
+    fn shuffle_is_deterministic_for_a_seed() {
+        let order = |seed| {
+            let mut queue = PlaybackQueue::default();
+            queue.replace(numbered(20), 0).unwrap();
+            queue.set_shuffle(true, seed);
+            queue.snapshot().order
+        };
+        assert_eq!(order(5), order(5));
+        assert_ne!(order(5), order(6));
+    }
+
+    #[test]
+    fn queue_rejects_growth_past_the_limit() {
+        let mut queue = PlaybackQueue::default();
+        assert_eq!(queue.replace(numbered(MAX_QUEUE_LEN + 1), 0), Err(QueueError::QueueFull));
+        assert!(queue.is_empty());
+
+        queue.replace(numbered(MAX_QUEUE_LEN), 0).unwrap();
+        assert_eq!(queue.enqueue(track("extra", "extra")), Err(QueueError::QueueFull));
+        assert_eq!(queue.enqueue_next(track("extra", "extra")), Err(QueueError::QueueFull));
+        assert_eq!(queue.len(), MAX_QUEUE_LEN);
+    }
+
+    #[test]
+    fn restore_round_trips_a_shuffled_queue() {
+        let mut queue = PlaybackQueue::default();
+        queue.replace(numbered(8), 3).unwrap();
+        queue.set_shuffle(true, 1234);
+        let snapshot = queue.snapshot();
+        let restored = PlaybackQueue::restore(snapshot.clone()).unwrap();
+        assert_eq!(restored.snapshot(), snapshot);
     }
 
     #[test]

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::sync::atomic::{AtomicI64, Ordering};
 
@@ -8,7 +9,7 @@ use jni::JNIEnv;
 use serde::Serialize;
 
 use crate::downloads::{DownloadCommand, DownloadManager};
-use crate::engine::PlayerCore;
+use crate::engine::{PlayerCore, PlayerSnapshot};
 use crate::model::{BackendEvent, PlayerCommand};
 
 #[derive(Default)]
@@ -65,7 +66,19 @@ fn with_runtime<T>(
     let mut runtime = runtime
         .lock()
         .map_err(|_| "native engine lock poisoned".to_owned())?;
-    Ok(operation(&mut runtime))
+    // A Rust panic must never unwind across the JNI boundary (that aborts the whole app).
+    // Turn it into a typed error; the poisoned lock then makes later calls fail cleanly too.
+    catch_unwind(AssertUnwindSafe(|| operation(&mut runtime)))
+        .map_err(|_| "native engine panicked".to_owned())
+}
+
+/// Replaces the player with a restored snapshot. The existing player is left untouched when the
+/// snapshot is invalid, so a corrupt persisted state can never wipe a live queue.
+fn restore_player(runtime: &mut NativeRuntime, snapshot: PlayerSnapshot) -> Result<PlayerSnapshot, String> {
+    let restored = PlayerCore::restore(snapshot).map_err(|error| format!("{error:?}"))?;
+    let current = restored.snapshot();
+    runtime.player = restored;
+    Ok(current)
 }
 
 #[no_mangle]
@@ -156,6 +169,43 @@ pub extern "system" fn Java_org_oxycblt_auxio_playback_nativecore_RustMusicCore_
     let result = with_runtime(handle, |runtime| runtime.player.snapshot());
     let response = match result {
         Ok(snapshot) => json_success(&snapshot),
+        Err(error) => json_error(error),
+    };
+    java_string(&mut env, response)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_oxycblt_auxio_playback_nativecore_RustMusicCore_nativeRestore(
+    mut env: JNIEnv<'_>,
+    _this: JObject<'_>,
+    handle: jlong,
+    snapshot_json: JString<'_>,
+) -> jstring {
+    let snapshot_text = match read_string(&mut env, snapshot_json) {
+        Ok(value) => value,
+        Err(error) => return java_string(&mut env, json_error(error)),
+    };
+    let snapshot: PlayerSnapshot = match serde_json::from_str(&snapshot_text) {
+        Ok(value) => value,
+        Err(error) => return java_string(&mut env, json_error(format!("invalid player snapshot: {error}"))),
+    };
+    let result = with_runtime(handle, |runtime| restore_player(runtime, snapshot));
+    let response = match result {
+        Ok(Ok(snapshot)) => json_success(&snapshot),
+        Ok(Err(error)) | Err(error) => json_error(error),
+    };
+    java_string(&mut env, response)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_oxycblt_auxio_playback_nativecore_RustMusicCore_nativeDownloadClearFinished(
+    mut env: JNIEnv<'_>,
+    _this: JObject<'_>,
+    handle: jlong,
+) -> jstring {
+    let result = with_runtime(handle, |runtime| runtime.downloads.clear_finished());
+    let response = match result {
+        Ok(removed) => json_success(&removed),
         Err(error) => json_error(error),
     };
     java_string(&mut env, response)

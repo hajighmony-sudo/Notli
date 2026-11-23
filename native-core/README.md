@@ -13,6 +13,9 @@ Kotlin is the Android adapter and UI language. New UI screens should use Jetpack
 - `RustMusicEngine` owns and closes one native handle.
 - Playback commands, backend events, player snapshots and download commands use Serde JSON.
 - JNI responses are JSON objects with either `ok: true` and `value`, or `ok: false` and `error`.
+- `nativeRestore` replaces the player from a persisted `PlayerSnapshot`. Snapshots carry a schema `version`; unknown versions are rejected and an invalid snapshot never replaces live state.
+- Rust panics are caught at the JNI boundary and reported as `ok: false` errors instead of aborting the process.
+- Limits: `MAX_QUEUE_LEN` (100,000 queue entries) and `MAX_DOWNLOAD_TASKS` (1,000 tracked downloads; finished ones can be removed with `Remove` / `nativeDownloadClearFinished`).
 
 The JNI bridge is transport infrastructure. It is not yet wired into the live ExoPlaybackStateHolder; the existing Kotlin playback path remains active until the adapter migration and device tests pass.
 
