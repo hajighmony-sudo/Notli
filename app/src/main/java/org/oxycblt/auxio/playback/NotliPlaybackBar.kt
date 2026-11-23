@@ -106,21 +106,29 @@ internal fun NotliPlaybackBar(
             label = "playing-artwork-scale",
         )
     // A soft ring around the artwork breathes while music plays and fades out when paused.
-    val pulse by
-        rememberInfiniteTransition(label = "artwork-pulse")
-            .animateFloat(
-                initialValue = 0.25f,
-                targetValue = 0.75f,
-                animationSpec =
-                    infiniteRepeatable(
-                        animation = tween(durationMillis = 1400, easing = FastOutSlowInEasing),
-                        repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
-                    ),
-                label = "artwork-pulse-alpha",
-            )
+    // The infinite transition only exists while playing, so a paused bar never recomposes per frame.
+    val pulse =
+        if (isPlaying) {
+            val animatedPulse by
+                rememberInfiniteTransition(label = "artwork-pulse")
+                    .animateFloat(
+                        initialValue = 0.25f,
+                        targetValue = 0.75f,
+                        animationSpec =
+                            infiniteRepeatable(
+                                animation =
+                                    tween(durationMillis = 1400, easing = FastOutSlowInEasing),
+                                repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+                            ),
+                        label = "artwork-pulse-alpha",
+                    )
+            animatedPulse
+        } else {
+            0f
+        }
     val ringAlpha by
         animateFloatAsState(
-            targetValue = if (isPlaying) pulse else 0f,
+            targetValue = pulse,
             animationSpec = tween(durationMillis = 300),
             label = "artwork-ring-alpha",
         )
