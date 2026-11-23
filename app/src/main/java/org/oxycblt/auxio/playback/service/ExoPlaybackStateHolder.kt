@@ -21,6 +21,7 @@ package org.oxycblt.auxio.playback.service
 import android.content.Context
 import android.content.Intent
 import android.media.audiofx.AudioEffect
+import android.os.SystemClock
 import android.provider.OpenableColumns
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
@@ -90,6 +91,7 @@ class ExoPlaybackStateHolder(
     private val restoreScope = CoroutineScope(Dispatchers.IO + saveJob)
     private var currentSaveJob: Job? = null
     private var openAudioEffectSession = false
+    private var listeningStartedAtElapsedMs: Long? = null
 
     var sessionOngoing = false
         private set
@@ -104,6 +106,8 @@ class ExoPlaybackStateHolder(
     }
 
     fun release() {
+        persistListeningTime(force = true)
+        listeningStartedAtElapsedMs = null
         rustBridge.close()
         saveJob.cancel()
         playbackManager.unregisterStateHolder(this)
@@ -498,6 +502,18 @@ class ExoPlaybackStateHolder(
         }
     }
 
+    override fun onIsPlayingChanged(isPlaying: Boolean) {
+        super.onIsPlayingChanged(isPlaying)
+        if (isPlaying) {
+            if (listeningStartedAtElapsedMs == null) {
+                listeningStartedAtElapsedMs = SystemClock.elapsedRealtime()
+            }
+        } else {
+            persistListeningTime(force = true)
+            listeningStartedAtElapsedMs = null
+        }
+    }
+
     override fun onPlaybackStateChanged(playbackState: Int) {
         super.onPlaybackStateChanged(playbackState)
         rustBridge.onPlaybackStateChanged(playbackState)
@@ -506,6 +522,10 @@ class ExoPlaybackStateHolder(
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         super.onMediaItemTransition(mediaItem, reason)
         rustBridge.onMediaItemTransition(reason)
+        if (mediaItem != null && player.playWhenReady) {
+            val stats = context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
+            stats.edit().putLong(KEY_TRACKS_PLAYED, stats.getLong(KEY_TRACKS_PLAYED, 0L) + 1L).apply()
+        }
 
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
             playbackManager.ack(this, StateAck.IndexMoved)
@@ -515,6 +535,7 @@ class ExoPlaybackStateHolder(
 
     override fun onEvents(player: Player, events: Player.Events) {
         super.onEvents(player, events)
+        persistListeningTime()
 
         // So many actions trigger progression changes that it becomes easier just to handle it
         // in an ExoPlayer callback anyway. This doesn't really cause issues anywhere.
@@ -543,6 +564,17 @@ class ExoPlaybackStateHolder(
     override fun onPlayerError(error: PlaybackException) {
         L.e(error, "Player error occurred")
         rustBridge.onPlayerError(error.message ?: error.errorCodeName)
+    }
+
+    private fun persistListeningTime(force: Boolean = false) {
+        val startedAt = listeningStartedAtElapsedMs ?: return
+        val now = SystemClock.elapsedRealtime()
+        val elapsed = now - startedAt
+        if (elapsed < 1_000L || (!force && elapsed < LISTENING_SAVE_INTERVAL_MS)) return
+
+        val stats = context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
+        stats.edit().putLong(KEY_LISTENING_TIME_MS, stats.getLong(KEY_LISTENING_TIME_MS, 0L) + elapsed).apply()
+        listeningStartedAtElapsedMs = now
     }
 
     private fun broadcastAudioEffectAction(event: String) {
@@ -718,5 +750,9 @@ class ExoPlaybackStateHolder(
 
     private companion object {
         const val SAVE_BUFFER = 5000L
+        const val LISTENING_STATS_PREFS = "notli_listening_stats"
+        const val KEY_LISTENING_TIME_MS = "listening_time_ms"
+        const val KEY_TRACKS_PLAYED = "tracks_played"
+        const val LISTENING_SAVE_INTERVAL_MS = 15_000L
     }
 }
