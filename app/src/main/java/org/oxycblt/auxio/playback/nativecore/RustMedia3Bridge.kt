@@ -76,7 +76,7 @@ internal class RustMedia3Bridge(
     fun next() = dispatchUnit("Next")
 
     @Synchronized
-    fun previous() = dispatchUnit("Previous")
+    fun previous(rewindIfLate: Boolean) =\n        dispatch(\n            JSONObject().put(\n                "PreviousWithRewind",\n                JSONObject().put("rewind_if_late", rewindIfLate),\n            ),\n        )
 
     @Synchronized
     fun playTrack(song: Song) =
