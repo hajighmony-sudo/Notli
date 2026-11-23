@@ -72,7 +72,11 @@ internal fun Modifier.notliGlass(shape: Shape): Modifier {
     val fill =
         Brush.verticalGradient(
             if (dark) {
-                listOf(Color.White.copy(alpha = 0.16f), Color.White.copy(alpha = 0.06f))
+                listOf(
+                    Color(0xFF111827).copy(alpha = 0.90f),
+                    Color(0xFF17152A).copy(alpha = 0.76f),
+                    Color(0xFF10212B).copy(alpha = 0.82f),
+                )
             } else {
                 listOf(Color.White.copy(alpha = 0.80f), Color.White.copy(alpha = 0.50f))
             },
@@ -81,15 +85,15 @@ internal fun Modifier.notliGlass(shape: Shape): Modifier {
         Brush.linearGradient(
             if (dark) {
                 listOf(
-                    Color.White.copy(alpha = 0.42f),
-                    Color.White.copy(alpha = 0.05f),
-                    Color.White.copy(alpha = 0.22f),
+                    Color(0xFF63E6F2).copy(alpha = 0.54f),
+                    Color(0xFF9A7BFF).copy(alpha = 0.14f),
+                    Color(0xFFF0C978).copy(alpha = 0.34f),
                 )
             } else {
                 listOf(
-                    Color.White.copy(alpha = 0.95f),
-                    Color(0xFF4B367D).copy(alpha = 0.16f),
-                    Color.White.copy(alpha = 0.60f),
+                    Color(0xFF4D9EAA).copy(alpha = 0.42f),
+                    Color(0xFF7453B8).copy(alpha = 0.18f),
+                    Color(0xFFC69D55).copy(alpha = 0.28f),
                 )
             },
         )
@@ -157,11 +161,13 @@ internal fun NotliGlassTabBar(
         ) {
             labels.forEachIndexed { index, label ->
                 val selected = index == selectedIndex
-                val container by
-                    animateColorAsState(
-                        targetValue = if (selected) colors.primary else Color.Transparent,
-                        animationSpec = tween(durationMillis = 220),
-                        label = "glass-tab-container",
+                val selectedFill =
+                    Brush.linearGradient(
+                        listOf(
+                            colors.primary,
+                            Color(0xFF42CDE0),
+                            Color(0xFF8068D9),
+                        ),
                     )
                 val content by
                     animateColorAsState(
@@ -187,7 +193,24 @@ internal fun NotliGlassTabBar(
                                 scaleY = scale
                             }
                             .clip(CircleShape)
-                            .background(container)
+                            .then(
+                                if (selected) {
+                                    Modifier.background(selectedFill, CircleShape)
+                                        .border(
+                                            1.dp,
+                                            Brush.linearGradient(
+                                                listOf(
+                                                    Color.White.copy(alpha = 0.60f),
+                                                    Color(0xFF63E6F2).copy(alpha = 0.48f),
+                                                    Color(0xFFB49AFF).copy(alpha = 0.42f),
+                                                ),
+                                            ),
+                                            CircleShape,
+                                        )
+                                } else {
+                                    Modifier.background(Color.Transparent, CircleShape)
+                                },
+                            )
                             .selectable(
                                 selected = selected,
                                 role = Role.Tab,
