@@ -220,6 +220,8 @@
     <string name="set_playback">پخش</string>
     <string name="set_headset_autoplay">پخش خودکار هدست</string>
     <string name="set_headset_autoplay_desc">شروع پخش هرگاه هدست متصل شود (ممکن است برای هر دستگاه‌ای کار نکند)</string>
+    <string name="set_adaptive_haptics">لرزش تطبیق‌پذیر</string>
+    <string name="set_adaptive_haptics_desc">هنگام پخش موسیقی در Notli، ضرب‌آهنگ را با لرزش‌های کوتاه و ملایم احساس کن. تحلیل صدا داخل خود برنامه انجام می‌شود و از میکروفون استفاده نمی‌شود.</string>
     <string name="set_rewind_prev">برگرداندن به اول قبل از رد کردن به قبلی</string>
     <string name="set_rewind_prev_desc">برگرداندن به اول قبل از رد کردن به آهنگ قبلی</string>
     <string name="set_repeat_pause">توقف هنگام تکرار</string>
