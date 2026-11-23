@@ -84,7 +84,6 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/vocal_cancel_button"
-            style="@style/Widget.Material3Expressive.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/vocal_cancel"
