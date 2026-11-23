@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="aurora_primary">#006B76</color>
+    <color name="aurora_onPrimary">#FFFFFF</color>
+    <color name="aurora_primaryContainer">#A6F1F8</color>
+    <color name="aurora_onPrimaryContainer">#001F24</color>
+    <color name="aurora_secondary">#5B5D7B</color>
+    <color name="aurora_onSecondary">#FFFFFF</color>
+    <color name="aurora_secondaryContainer">#E1E0FF</color>
+    <color name="aurora_onSecondaryContainer">#171937</color>
+    <color name="aurora_tertiary">#775A00</color>
+    <color name="aurora_onTertiary">#FFFFFF</color>
+    <color name="aurora_tertiaryContainer">#FFDF9A</color>
+    <color name="aurora_onTertiaryContainer">#251A00</color>
+    <color name="aurora_background">#F4FAFB</color>
+    <color name="aurora_onBackground">#151D1F</color>
+    <color name="aurora_surface">#F4FAFB</color>
+    <color name="aurora_onSurface">#151D1F</color>
+    <color name="aurora_surfaceVariant">#DCE4E6</color>
+    <color name="aurora_onSurfaceVariant">#40484B</color>
+    <color name="aurora_outline">#70797C</color>
+    <color name="aurora_outlineVariant">#C0C8CB</color>
+    <color name="aurora_inverseSurface">#293234</color>
+    <color name="aurora_inverseOnSurface">#ECF2F3</color>
+    <color name="aurora_inversePrimary">#70D5E1</color>
+    <color name="aurora_surfaceDim">#D5DEDF</color>
+    <color name="aurora_surfaceBright">#F4FAFB</color>
+    <color name="aurora_surfaceContainerLowest">#FFFFFF</color>
+    <color name="aurora_surfaceContainerLow">#EEF4F5</color>
+    <color name="aurora_surfaceContainer">#E8EFF0</color>
+    <color name="aurora_surfaceContainerHigh">#E2E9EA</color>
+    <color name="aurora_surfaceContainerHighest">#DCE4E6</color>
+
+    <color name="aurora_black_background">#000000</color>
+    <color name="aurora_black_surface">#000000</color>
+    <color name="aurora_black_surfaceVariant">#0D151E</color>
+    <color name="aurora_black_surfaceDim">#000000</color>
+    <color name="aurora_black_surfaceBright">#202A35</color>
+    <color name="aurora_black_surfaceContainerLowest">#000000</color>
+    <color name="aurora_black_surfaceContainerLow">#03070C</color>
+    <color name="aurora_black_surfaceContainer">#070D14</color>
+    <color name="aurora_black_surfaceContainerHigh">#0D151E</color>
+    <color name="aurora_black_surfaceContainerHighest">#17212B</color>
+</resources>

@@ -120,11 +120,12 @@ class UIPreferenceFragment : BasePreferenceFragment(R.xml.preferences_ui) {
     }
 
     private fun showAuroraColorPicker(key: String, title: CharSequence) {
+        val night = requireActivity().isNight
         val fallback = when (key) {
-            UISettings.AURORA_PRIMARY -> "#63E6F2"
-            UISettings.AURORA_SECONDARY -> "#9A7BFF"
-            UISettings.AURORA_SURFACE -> "#171D2D"
-            else -> "#0B1020"
+            UISettings.AURORA_PRIMARY -> if (night) "#6AD7E3" else "#006B76"
+            UISettings.AURORA_SECONDARY -> if (night) "#C2C1EA" else "#5B5D7B"
+            UISettings.AURORA_SURFACE -> if (night) "#0F1720" else "#F4FAFB"
+            else -> if (night) "#0B1117" else "#F4FAFB"
         }
         val initial = uiSettings.auroraColor(key) ?: Color.parseColor(fallback)
         val context = requireContext()
@@ -158,7 +159,7 @@ class UIPreferenceFragment : BasePreferenceFragment(R.xml.preferences_ui) {
         val names = listOf("Red", "Green", "Blue")
         fun refreshColor() {
             val color = Color.rgb(channels[0], channels[1], channels[2])
-            preview.setBackgroundColor(color)
+            (preview.background as? android.graphics.drawable.GradientDrawable)?.setColor(color)
             val value = String.format("#%06X", 0xFFFFFF and color)
             hex.setText(value)
             hex.setSelection(value.length)

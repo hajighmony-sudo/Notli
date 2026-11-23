@@ -30,6 +30,7 @@ import android.widget.TextView
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.dynamicanimation.animation.SpringForce
+import androidx.fragment.app.FragmentContainerView
 import com.google.android.material.R as MR
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
@@ -68,6 +69,7 @@ object AuroraAppearance {
             primary = primary,
             secondary = secondary,
             surface = surface,
+            background = background,
             density = densityScale(settings),
             isRoot = true,
         )
@@ -79,9 +81,12 @@ object AuroraAppearance {
         primary: Int,
         secondary: Int,
         surface: Int?,
+        background: Int?,
         density: Float,
         isRoot: Boolean = false,
     ) {
+        if (isRoot) background?.let { root.setBackgroundColor(it) }
+
         if (root is TextView) {
             val original =
                 (root.getTag(R.id.aurora_base_text_size) as? Float)
@@ -170,7 +175,7 @@ object AuroraAppearance {
             root.addOnChildAttachStateChangeListener(
                 object : RecyclerView.OnChildAttachStateChangeListener {
                     override fun onChildViewAttachedToWindow(child: View) {
-                        applyNode(child, settings, primary, secondary, surface, density)
+                        applyNode(child, settings, primary, secondary, surface, background, density)
                     }
 
                     override fun onChildViewDetachedFromWindow(child: View) = Unit
@@ -198,7 +203,17 @@ object AuroraAppearance {
 
         if (root is ViewGroup) {
             for (index in 0 until root.childCount) {
-                applyNode(root.getChildAt(index), settings, primary, secondary, surface, density)
+                val child = root.getChildAt(index)
+                applyNode(
+                    root = child,
+                    settings = settings,
+                    primary = primary,
+                    secondary = secondary,
+                    surface = surface,
+                    background = background,
+                    density = density,
+                    isRoot = root is FragmentContainerView,
+                )
             }
         }
     }
