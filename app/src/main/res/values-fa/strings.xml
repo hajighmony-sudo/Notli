@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="fmt_seconds">%1$d ثانیه</string>
+    <plurals name="fmt_seconds">
+        <item quantity="one">%d ثانیه</item>
+        <item quantity="other">%d ثانیه</item>
+    </plurals>
     <string name="lbl_indexer">بارگیری موسیقی</string>
     <string name="info_app_desc">یک پخش کننده موسیقی ساده و منطقی برای اندروید.</string>
     <string name="lbl_retry">تلاش مجدد</string>
