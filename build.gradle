@@ -80,14 +80,19 @@ tasks.register("patchMedia3ProgressiveMediaSource") {
     }
 }
 
-gradle.projectsEvaluated {
-    def media3Project = findProject(":media:lib-exoplayer")
-    if (media3Project != null) {
-        media3Project.tasks.matching {
-            it.name == "compileDebugJavaWithJavac" || it.name == "compileReleaseJavaWithJavac"
-        }.configureEach {
-            dependsOn(rootProject.tasks.named("patchMedia3ProgressiveMediaSource"))
+// The Media3 Android plugin registers javac tasks lazily. Hook the actual compile task
+// before it runs instead of relying on projectsEvaluated task lookup, which can miss
+// lazily-created variant tasks on newer Android Gradle Plugin versions.
+gradle.beforeProject { candidate ->
+    if (candidate.path == ":media:lib-exoplayer") {
+        candidate.tasks.configureEach { compileTask ->
+            if (compileTask.name.endsWith("JavaWithJavac")) {
+                compileTask.doFirst {
+                    rootProject.tasks.named("patchMedia3ProgressiveMediaSource").get().actions.each { action ->
+                        action.execute(compileTask)
+                    }
+                }
+            }
         }
     }
 }
-
