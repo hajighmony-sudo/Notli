@@ -81,7 +81,7 @@ internal class RustMedia3Bridge(
 
     @Synchronized
     fun playNext(songs: List<Song>) {
-        songs.forEach { dispatch(JSONObject().put("PlayNext", it.toRustTrack())) }
+        songs.asReversed().forEach { dispatch(JSONObject().put("PlayNext", it.toRustTrack())) }
     }
 
     @Synchronized
