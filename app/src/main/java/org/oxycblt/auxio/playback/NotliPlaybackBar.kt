@@ -18,6 +18,14 @@
 
 package org.oxycblt.auxio.playback
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -49,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -80,6 +89,11 @@ internal fun NotliPlaybackBar(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    val artworkScale by animateFloatAsState(
+        targetValue = if (isPlaying) 1.035f else 1f,
+        animationSpec = tween(durationMillis = 260),
+        label = "playing-artwork-scale",
+    )
     val durationDs = (song?.durationMs ?: 0L) / 100L
     val progress = if (durationDs > 0L) {
         (positionDs.toFloat() / durationDs.toFloat()).coerceIn(0f, 1f)
@@ -108,6 +122,7 @@ internal fun NotliPlaybackBar(
                 Box(
                     modifier = Modifier
                         .size(52.dp)
+                        .graphicsLayer { scaleX = artworkScale; scaleY = artworkScale }
                         .background(
                             brush = Brush.linearGradient(
                                 listOf(Color(0xFF3A246A), Color(0xFFB7D94A)),
@@ -169,12 +184,21 @@ internal fun NotliPlaybackBar(
                 }
 
                 IconButton(onClick = onTogglePlaying) {
-                    Icon(
-                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isPlaying) "مکث" else "پخش",
-                        tint = colors.primary,
-                        modifier = Modifier.size(30.dp),
-                    )
+                    AnimatedContent(
+                        targetState = isPlaying,
+                        transitionSpec = {
+                            (fadeIn(tween(140)) + scaleIn(initialScale = 0.82f)) togetherWith
+                                (fadeOut(tween(100)) + scaleOut(targetScale = 0.82f))
+                        },
+                        label = "play-pause-icon",
+                    ) { playing ->
+                        Icon(
+                            imageVector = if (playing) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (playing) "مکث" else "پخش",
+                            tint = colors.primary,
+                            modifier = Modifier.size(30.dp),
+                        )
+                    }
                 }
             }
 
