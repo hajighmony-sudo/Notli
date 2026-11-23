@@ -54,43 +54,43 @@ spotless {
 // ProgressiveMediaSource.Factory.createSourceDescriptor(): the flag is not declared by the
 // factory and the ProgressiveMediaSource constructor does not accept it. Apply this narrow,
 // deterministic compatibility patch before compiling the vendored Media3 module.
-tasks.register("patchMedia3ProgressiveMediaSource") {
-    group = "build"
-    description = "Apply the compatibility fix required by the pinned Media3 submodule."
+ext.applyMedia3ProgressiveMediaSourcePatch = {
+    def sourceFile = rootProject.file("media/libraries/exoplayer/src/main/java/androidx/media3/exoplayer/source/ProgressiveMediaSource.java")
+    if (!sourceFile.isFile()) {
+        throw new GradleException("Media3 ProgressiveMediaSource source was not found: ${sourceFile}")
+    }
 
-    doLast {
-        def sourceFile = file("media/libraries/exoplayer/src/main/java/androidx/media3/exoplayer/source/ProgressiveMediaSource.java")
-        if (!sourceFile.isFile()) {
-            throw new GradleException("Media3 ProgressiveMediaSource source was not found: ${sourceFile}")
-        }
+    def source = sourceFile.getText("UTF-8")
+    def staleDeclaration = "      boolean enableHagcPlayback = experimentalEnableHagcPlayback;\\n"
+    def staleArgument = "                  enableHagcPlayback,\\n"
 
-        def source = sourceFile.getText("UTF-8")
-        def staleDeclaration = "      boolean enableHagcPlayback = experimentalEnableHagcPlayback;\n"
-        def staleArgument = "                  enableHagcPlayback,\n"
-
-        if (source.contains(staleDeclaration) && source.contains(staleArgument)) {
-            source = source.replace(staleDeclaration, "").replace(staleArgument, "")
-            sourceFile.write(source, "UTF-8")
-            logger.lifecycle("Applied Media3 ProgressiveMediaSource compatibility fix.")
-        } else if (source.contains("experimentalEnableHagcPlayback") || source.contains("enableHagcPlayback")) {
-            throw new GradleException("Media3 ProgressiveMediaSource changed; review the compatibility patch before building.")
-        } else {
-            logger.lifecycle("Media3 ProgressiveMediaSource is already compatible; no patch needed.")
-        }
+    if (source.contains(staleDeclaration) && source.contains(staleArgument)) {
+        source = source.replace(staleDeclaration, "").replace(staleArgument, "")
+        sourceFile.write(source, "UTF-8")
+        logger.lifecycle("Applied Media3 ProgressiveMediaSource compatibility fix.")
+    } else if (source.contains("experimentalEnableHagcPlayback") || source.contains("enableHagcPlayback")) {
+        throw new GradleException("Media3 ProgressiveMediaSource changed; review the compatibility patch before building.")
+    } else {
+        logger.lifecycle("Media3 ProgressiveMediaSource is already compatible; no patch needed.")
     }
 }
 
-// The Media3 Android plugin registers javac tasks lazily. Hook the actual compile task
-// before it runs instead of relying on projectsEvaluated task lookup, which can miss
-// lazily-created variant tasks on newer Android Gradle Plugin versions.
+tasks.register("patchMedia3ProgressiveMediaSource") {
+    group = "build"
+    description = "Apply the compatibility fix required by the pinned Media3 submodule."
+    doLast {
+        applyMedia3ProgressiveMediaSourcePatch()
+    }
+}
+
+// The Media3 Android plugin registers javac tasks lazily. Patch the source directly in
+// each compile task's doFirst action, guaranteeing the edit happens before javac reads it.
 gradle.beforeProject { candidate ->
     if (candidate.path == ":media:lib-exoplayer") {
         candidate.tasks.configureEach { compileTask ->
             if (compileTask.name.endsWith("JavaWithJavac")) {
                 compileTask.doFirst {
-                    rootProject.tasks.named("patchMedia3ProgressiveMediaSource").get().actions.each { action ->
-                        action.execute(compileTask)
-                    }
+                    rootProject.ext.applyMedia3ProgressiveMediaSourcePatch()
                 }
             }
         }
