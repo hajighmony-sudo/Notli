@@ -104,7 +104,7 @@ class AuxioService :
 
     override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaItem>>) {
         val maximumRootChildLimit = getRootChildrenLimit()
-        musicFragment.getChildren(parentId, maximumRootChildLimit, result)
+        musicFragment.getChildren(parentId, maximumRootChildLimit, null, result)
     }
 
     override fun onLoadChildren(
