@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+ 
 package org.oxycblt.auxio.playback.nativecore
 
 /**
@@ -47,8 +47,7 @@ internal object RustMusicCore {
 
     fun destroy(handle: Long) = nativeDestroy(handle)
 
-    fun dispatch(handle: Long, commandJson: String): String =
-        nativeDispatch(handle, commandJson)
+    fun dispatch(handle: Long, commandJson: String): String = nativeDispatch(handle, commandJson)
 
     fun backendEvent(handle: Long, eventJson: String): String =
         nativeBackendEvent(handle, eventJson)
@@ -62,8 +61,8 @@ internal object RustMusicCore {
 }
 
 /**
- * Owns one native engine handle. Close this object when the playback service is destroyed.
- * Calls are synchronized so a command cannot race with handle destruction.
+ * Owns one native engine handle. Close this object when the playback service is destroyed. Calls
+ * are synchronized so a command cannot race with handle destruction.
  */
 internal class RustMusicEngine private constructor() : AutoCloseable {
     private var handle: Long = RustMusicCore.create()
@@ -76,16 +75,14 @@ internal class RustMusicEngine private constructor() : AutoCloseable {
     fun onBackendEvent(eventJson: String): String =
         RustMusicCore.backendEvent(requireOpenHandle(), eventJson)
 
-    @Synchronized
-    fun snapshot(): String = RustMusicCore.snapshot(requireOpenHandle())
+    @Synchronized fun snapshot(): String = RustMusicCore.snapshot(requireOpenHandle())
 
     @Synchronized
     fun dispatchDownload(commandJson: String): String =
         RustMusicCore.downloadCommand(requireOpenHandle(), commandJson)
 
     @Synchronized
-    fun downloadSnapshot(): String =
-        RustMusicCore.downloadSnapshot(requireOpenHandle())
+    fun downloadSnapshot(): String = RustMusicCore.downloadSnapshot(requireOpenHandle())
 
     @Synchronized
     override fun close() {

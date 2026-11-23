@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+ 
 package org.oxycblt.auxio.playback.state
 
 import org.oxycblt.musikr.MusicParent
@@ -24,9 +24,9 @@ import org.oxycblt.musikr.Song
 /**
  * Immutable point-in-time playback state.
  *
- * This is the Kotlin-side counterpart to NAVAQ's platform-neutral PlaybackState snapshot.
- * It deliberately carries Notli's existing Musikr Song and MusicParent models so no
- * library conversion, queue replacement, or playback behavior change is required.
+ * This is the Kotlin-side counterpart to NAVAQ's platform-neutral PlaybackState snapshot. It
+ * deliberately carries Notli's existing Musikr Song and MusicParent models so no library
+ * conversion, queue replacement, or playback behavior change is required.
  */
 data class PlaybackSnapshot(
     val currentSong: Song?,
