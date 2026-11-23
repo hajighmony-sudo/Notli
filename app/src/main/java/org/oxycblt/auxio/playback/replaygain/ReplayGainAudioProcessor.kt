@@ -74,6 +74,7 @@ constructor(
     fun release() {
         playbackManager.removeListener(this)
         playbackSettings.unregisterListener(this)
+        adaptiveHaptics.stop()
     }
 
     // --- OVERRIDES ---
@@ -94,6 +95,10 @@ constructor(
         if (!progression.isPlaying) adaptiveHaptics.stop()
     }
 
+    override fun onSessionEnded() {
+        adaptiveHaptics.stop()
+    }
+
     override fun onNewPlayback(
         parent: MusicParent?,
         queue: List<Song>,
@@ -101,6 +106,7 @@ constructor(
         isShuffled: Boolean,
     ) {
         L.d("New playback started, updating playback information")
+        adaptiveHaptics.stop()
         applyReplayGain(playbackManager.currentSong)
     }
 
