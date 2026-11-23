@@ -108,6 +108,14 @@ private constructor(
                 MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
                     MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS,
             )
+            // Give Android Auto and Bluetooth/steering-wheel hosts an explicit media-button
+            // receiver PendingIntent in addition to the exported manifest receiver.
+            setMediaButtonReceiver(
+                MediaButtonReceiver.buildMediaButtonPendingIntent(
+                    context,
+                    PlaybackStateCompat.ACTION_PLAY_PAUSE,
+                ),
+            )
             isActive = true
             setQueueTitle(context.getString(R.string.lbl_queue))
             setCallback(mediaSessionInterface)
