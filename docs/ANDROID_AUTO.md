@@ -50,6 +50,7 @@ The attached reference images define the Notli direction: a dark navy/black cybe
 
 Implementation is deliberately limited to app-owned Android Auto media surfaces:
 - Advertise grid presentation for the app's top-level browse categories using the standard MediaBrowser content-style hint; leave nested content and host pagination behavior intact.
+- Render app-owned songs, albums, artists, genres, playlists, and more glyphs as crisp cyan vector artwork in the MediaDescription bitmaps; preserve the user's real album art for track and album rows.
 - Use a high-contrast, monochrome, tintable Notli monogram for the Android Auto attribution icon. Android Auto may tint it to match the vehicle theme.
 - Continue publishing the existing title, artist, album, duration, album artwork, queue, and transport metadata through MediaSession. The host decides how much of that metadata to show on each vehicle.
 - Keep the existing browse IDs, category contents, playback callbacks, queue semantics, voice search, and OEM-gated passenger policy unchanged.
