@@ -111,7 +111,13 @@ fun TabNode.toMediaItem(context: Context): MediaItem {
     val extras =
         makeExtras(
             context,
-            style(MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_LIST_ITEM),
+            style(
+                if (this is TabNode.Home) {
+                    MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_GRID_ITEM
+                } else {
+                    MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_LIST_ITEM
+                },
+            ),
         )
     val mediaSessionUID = MediaSessionUID.Tab(this)
     val description =
