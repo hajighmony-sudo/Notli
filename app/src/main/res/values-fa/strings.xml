@@ -407,4 +407,10 @@
     <string name="set_effect_strength_60">۶۰٪</string>
     <string name="set_effect_strength_80">۸۰٪</string>
     <string name="set_effect_strength_100">۱۰۰٪</string>
+    <string name="set_manual_equalizer">اکولایزر دستی · از ۱۲- تا ۱۲+ دسی‌بل</string>
+    <string name="set_eq_60">۶۰ هرتز · زیر‌بم</string>
+    <string name="set_eq_230">۲۳۰ هرتز · صدای بم</string>
+    <string name="set_eq_910">۹۱۰ هرتز · میانی</string>
+    <string name="set_eq_3600">۳٫۶ کیلوهرتز · وضوح صدا</string>
+    <string name="set_eq_14000">۱۴ کیلوهرتز · زیر</string>
 </resources>
