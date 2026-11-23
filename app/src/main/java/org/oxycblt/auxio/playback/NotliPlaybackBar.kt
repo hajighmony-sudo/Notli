@@ -38,7 +38,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,8 +58,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -319,33 +316,8 @@ internal fun NotliPlaybackBar(
     }
 }
 
+/** Kept as the single entry point used across the app; the palette now lives in NotliDesign.kt. */
 @Composable
 internal fun NotliComposeTheme(content: @Composable () -> Unit) {
-    val scheme =
-        if (isSystemInDarkTheme()) {
-            darkColorScheme(
-                primary = Color(0xFFC7F24E),
-                onPrimary = Color(0xFF1A2200),
-                secondary = Color(0xFFB9A6FF),
-                background = Color(0xFF0B0A10),
-                surface = Color(0xFF14121B),
-                surfaceContainer = Color(0xFF201D29),
-                onSurface = Color(0xFFF0ECF7),
-                onSurfaceVariant = Color(0xFFAAA3B8),
-                outlineVariant = Color(0xFF3A3546),
-            )
-        } else {
-            lightColorScheme(
-                primary = Color(0xFF4B367D),
-                onPrimary = Color.White,
-                secondary = Color(0xFF59468A),
-                background = Color(0xFFF6F5F0),
-                surface = Color(0xFFF6F5F0),
-                surfaceContainer = Color(0xFFEAE8E0),
-                onSurface = Color(0xFF19171F),
-                onSurfaceVariant = Color(0xFF5D5868),
-                outlineVariant = Color(0xFFD0CDD5),
-            )
-        }
-    MaterialTheme(colorScheme = scheme, content = content)
+    org.oxycblt.auxio.ui.NotliThemeHost(content = content)
 }
