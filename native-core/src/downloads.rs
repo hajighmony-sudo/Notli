@@ -40,19 +40,22 @@ impl DownloadManager {
         Ok(())
     }
     pub fn handle(&mut self, command: DownloadCommand) -> Result<DownloadSnapshot, DownloadError> {
+        let id = match &command {
+            DownloadCommand::Enqueue { request } => request.id.clone(),
+            DownloadCommand::Start { id } | DownloadCommand::Pause { id }
+            | DownloadCommand::Progress { id, .. } | DownloadCommand::Complete { id }
+            | DownloadCommand::Fail { id, .. } => id.clone(),
+        };
         match command {
             DownloadCommand::Enqueue { request } => self.enqueue(request)?,
             DownloadCommand::Start { id } => self.start(&id)?,
             DownloadCommand::Pause { id } => self.pause(&id)?,
-            DownloadCommand::Progress { id, received_bytes, expected_bytes } => self.update_progress(&id, received_bytes, expected_bytes)?,
+            DownloadCommand::Progress { id, received_bytes, expected_bytes } => {
+                self.update_progress(&id, received_bytes, expected_bytes)?
+            }
             DownloadCommand::Complete { id } => self.complete(&id)?,
             DownloadCommand::Fail { id, message } => self.fail(&id, message)?,
         }
-        let id = match &command {
-            DownloadCommand::Enqueue { request } => request.id.clone(),
-            DownloadCommand::Start { id } | DownloadCommand::Pause { id } | DownloadCommand::Progress { id, .. }
-            | DownloadCommand::Complete { id } | DownloadCommand::Fail { id, .. } => id.clone(),
-        };
         self.get(&id).cloned().ok_or(DownloadError::NotFound)
     }
 
