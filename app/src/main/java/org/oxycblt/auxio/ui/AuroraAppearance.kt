@@ -55,7 +55,7 @@ object AuroraAppearance {
     fun apply(root: View, settings: UISettings) {
         val primary =
             settings.auroraColor(UISettings.AURORA_PRIMARY)
-                ?: MaterialColors.getColor(root, MR.attr.colorPrimary)
+                ?: MaterialColors.getColor(root, android.R.attr.colorAccent)
         val secondary =
             settings.auroraColor(UISettings.AURORA_SECONDARY)
                 ?: MaterialColors.getColor(root, MR.attr.colorSecondary)

@@ -78,7 +78,7 @@ class UIPreferenceFragment : BasePreferenceFragment(R.xml.preferences_ui) {
                     uiSettings.auroraColorHex(preference.key)
                         ?: getString(R.string.aurora_pick_color)
                 preference.onPreferenceClickListener = Preference.OnPreferenceClickListener {
-                    showAuroraColorPicker(preference.key, preference.title)
+                    showAuroraColorPicker(preference.key, preference.title ?: preference.key)
                     true
                 }
             }
