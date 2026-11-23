@@ -1,6 +1,7 @@
 use std::fmt;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct TrackId(pub String);
 
 impl TrackId {
@@ -11,7 +12,7 @@ impl TrackId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Track {
     pub id: TrackId,
     pub title: String,
@@ -31,13 +32,13 @@ impl Track {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum RepeatMode { #[default] Off, One, All }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum PlaybackStatus { #[default] Idle, Loading, Playing, Paused, Stopped, Completed, Error }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct PlaybackState {
     pub status: PlaybackStatus,
     pub current_track: Option<TrackId>,
@@ -50,7 +51,7 @@ pub struct PlaybackState {
     pub revision: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PlayerCommand {
     SetQueue { tracks: Vec<Track>, start_index: usize, autoplay: bool },
     Play, Pause, Resume, Stop, Seek { position_ms: u64 }, Next, Previous,
@@ -59,10 +60,10 @@ pub enum PlayerCommand {
     SetRepeatMode(RepeatMode), SetShuffle { enabled: bool, seed: u64 },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BackendAction { Prepare(Track), Play, Pause, Stop, SeekTo(u64) }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BackendEvent {
     Prepared { track_id: TrackId, duration_ms: Option<u64> },
     Position { track_id: TrackId, position_ms: u64 },
@@ -71,7 +72,7 @@ pub enum BackendEvent {
     Failed { track_id: TrackId, message: String },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PlayerEvent {
     StateChanged(PlaybackState), TrackChanged(Option<TrackId>), QueueChanged,
     PlaybackStarted, PlaybackPaused, PlaybackStopped, PlaybackCompleted, PlaybackError(String),
