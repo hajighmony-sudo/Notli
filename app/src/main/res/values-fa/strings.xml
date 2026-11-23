@@ -411,4 +411,33 @@
     <string name="set_eq_910">۹۱۰ هرتز · میانی</string>
     <string name="set_eq_3600">۳٫۶ کیلوهرتز · وضوح صدا</string>
     <string name="set_eq_14000">۱۴ کیلوهرتز · زیر</string>
+
+    <string name="vocal_menu_action">بی‌کلام کردن آهنگ</string>
+    <string name="vocal_studio_title">استودیوی بی‌کلام‌سازی</string>
+    <string name="vocal_song_unavailable">آهنگ انتخاب‌شده دیگر در دسترس نیست.</string>
+    <string name="vocal_unsupported_device">پردازش روی دستگاه به اندروید ۱۰ یا بالاتر و پردازنده ARM64 نیاز دارد.</string>
+    <string name="vocal_model_ready">مدل هوش مصنوعی نصب است؛ پردازش کاملاً آفلاین انجام می‌شود.</string>
+    <string name="vocal_model_missing">مدل هوش مصنوعی نصب نیست. یک‌بار آن را دانلود کنید تا بعداً آفلاین استفاده کنید.</string>
+    <string name="vocal_privacy_notice">فایل صوتی شما روی همین گوشی پردازش می‌شود. اینترنت فقط برای دانلود اختیاری مدل است؛ آهنگ شما آپلود نمی‌شود.</string>
+    <string name="vocal_model_license_title">نکته مجوز استفاده از مدل</string>
+    <string name="vocal_model_license_notice">کد موتور مجوز MIT دارد، اما سازنده اصلی وزن‌های مدل Demucs استفاده از آن‌ها را صرفاً پژوهشی اعلام کرده است. فقط در صورت پذیرش این محدودیت دانلود کنید. بدون دریافت مجوز جداگانه، استفاده تجاری نکنید. دانلود اختیاری است و مدل داخل NOTLI قرار ندارد.</string>
+    <string name="vocal_download_model">دانلود مدل هوش مصنوعی (حدود ۵۵ مگابایت)</string>
+    <string name="vocal_downloading">در حال دانلود مدل…</string>
+    <string name="vocal_download_percent">در حال دانلود مدل… %1$d٪</string>
+    <string name="vocal_download_complete">مدل دانلود و بررسی شد. اکنون می‌توانید آفلاین کار کنید.</string>
+    <string name="vocal_download_failed">دانلود مدل ناموفق بود.</string>
+    <string name="vocal_make_instrumental">ساخت نسخه بی‌کلام</string>
+    <string name="vocal_decoding">در حال آماده‌سازی صدای آهنگ…</string>
+    <string name="vocal_ready">نسخه بی‌کلام آماده است.</string>
+    <string name="vocal_process_failed">جداسازی این آهنگ انجام نشد.</string>
+    <string name="vocal_cancel">لغو پردازش</string>
+    <string name="vocal_cancelled">پردازش لغو شد.</string>
+    <string name="vocal_preview">پیش‌شنوی نسخه بی‌کلام</string>
+    <string name="vocal_pause_preview">توقف پیش‌شنوی</string>
+    <string name="vocal_preview_failed">پخش پیش‌شنوی ممکن نیست.</string>
+    <string name="vocal_save">ذخیره نسخه بی‌کلام</string>
+    <string name="vocal_saved">نسخه بی‌کلام ذخیره شد.</string>
+    <string name="vocal_save_failed">ذخیره نسخه بی‌کلام ناموفق بود.</string>
+    <string name="vocal_discard">حذف خروجی موقت</string>
+    <string name="vocal_result_discarded">خروجی موقت حذف شد.</string>
 </resources>
