@@ -145,7 +145,10 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
             binding.vocalCancelButton.isEnabled = true
             try {
                 withContext(Dispatchers.IO) {
-                    check(modelStore.verifyInstalled()) { "The local AI model failed its integrity check. Download it again." }
+                    if (!modelStore.verifyInstalled()) {
+                        model.delete()
+                        error("The local AI model failed its integrity check. Download it again.")
+                    }
                     val pcm = AudioPcmDecoder.decode(appContext, song.uri, raw)
                     NativeEngine.loadModel(model.absolutePath)
                     NativeEngine.prepareInput(raw.absolutePath, pcm.sampleRate, pcm.channels, prepared.absolutePath)
@@ -202,8 +205,11 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
             player = MediaPlayer().apply {
                 setDataSource(file.absolutePath)
                 setOnCompletionListener { binding?.vocalPreviewButton?.text = getString(R.string.vocal_preview) }
-                prepare()
-                start()
+                setOnPreparedListener {
+                    it.start()
+                    binding?.vocalPreviewButton?.text = getString(R.string.vocal_pause_preview)
+                }
+                prepareAsync()
             }
             binding?.vocalPreviewButton?.text = getString(R.string.vocal_pause_preview)
         }.onFailure {
