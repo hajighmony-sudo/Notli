@@ -70,6 +70,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import android.view.ViewGroup
+import org.oxycblt.auxio.image.CoverView
 import org.oxycblt.auxio.playback.state.RepeatMode
 import org.oxycblt.auxio.ui.notliPressScale
 import org.oxycblt.musikr.Song
@@ -199,12 +202,31 @@ internal fun NotliPlaybackBar(
                             ),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = "♫",
-                        color = Color.White,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
+                    if (song != null) {
+                        // Reuse the app's native cover pipeline so embedded, folder and cached
+                        // artwork all render exactly as they do in the library and full player.
+                        AndroidView(
+                            factory = { context ->
+                                CoverView(context).apply {
+                                    layoutParams =
+                                        ViewGroup.LayoutParams(
+                                            ViewGroup.LayoutParams.MATCH_PARENT,
+                                            ViewGroup.LayoutParams.MATCH_PARENT,
+                                        )
+                                    bind(song)
+                                }
+                            },
+                            update = { cover -> cover.bind(song) },
+                            modifier = Modifier.matchParentSize(),
+                        )
+                    } else {
+                        Text(
+                            text = "♫",
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                 }
 
                 // Title and artist glide in when the track changes.
