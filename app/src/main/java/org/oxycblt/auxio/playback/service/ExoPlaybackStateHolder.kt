@@ -305,7 +305,7 @@ class ExoPlaybackStateHolder(
 
     override fun prev() {
         val shouldRemainPaused = playbackSettings.rememberPause && !player.playWhenReady
-        rustBridge.previous()
+        rustBridge.previous(playbackSettings.rewindWithPrev)
         if (shouldRemainPaused) rustBridge.pause()
         playbackManager.ack(this, StateAck.IndexMoved)
         deferSave()
