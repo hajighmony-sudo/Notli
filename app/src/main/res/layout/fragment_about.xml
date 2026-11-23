@@ -169,6 +169,30 @@
                         android:layout_height="wrap_content"
                         app:drawableStartCompat="@drawable/ic_song_24"
                         tools:text="Tracks played: 320" />
+
+                    <TextView
+                        android:id="@+id/about_today_listening"
+                        style="@style/Widget.Auxio.TextView.Icon"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:drawableStartCompat="@drawable/ic_time_24"
+                        tools:text="Listened today: 2 hours" />
+
+                    <TextView
+                        android:id="@+id/about_listening_sessions"
+                        style="@style/Widget.Auxio.TextView.Icon"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:drawableStartCompat="@drawable/ic_play_24"
+                        tools:text="Listening sessions: 18" />
+
+                    <TextView
+                        android:id="@+id/about_last_played"
+                        style="@style/Widget.Auxio.TextView.Icon"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:drawableStartCompat="@drawable/ic_time_24"
+                        tools:text="Last played: Today" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
