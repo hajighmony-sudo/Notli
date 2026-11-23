@@ -18,6 +18,12 @@
  
 package org.oxycblt.auxio.settings.categories
 
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import androidx.preference.Preference
 import androidx.navigation.fragment.findNavController
 import org.oxycblt.auxio.R
 import org.oxycblt.auxio.settings.BasePreferenceFragment
@@ -31,6 +37,31 @@ import timber.log.Timber as L
  * @author Alexander Capehart (OxygenCobalt)
  */
 class AudioPreferenceFragment : BasePreferenceFragment(R.xml.preferences_audio) {
+
+    override fun onSetupPreference(preference: Preference) {
+        if (preference.key != "adaptive_haptics_test") return
+
+        preference.setOnPreferenceClickListener {
+            val context = requireContext()
+            val vibrator =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    context.getSystemService(VibratorManager::class.java)?.defaultVibrator
+                } else {
+                    @Suppress("DEPRECATION")
+                    context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                }
+
+            if (vibrator?.hasVibrator() == true) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(32L, 110))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(32L)
+                }
+            }
+            true
+        }
+    }
 
     override fun onOpenDialogPreference(preference: WrappedDialogPreference) {
         if (preference.key == getString(R.string.set_key_pre_amp)) {
