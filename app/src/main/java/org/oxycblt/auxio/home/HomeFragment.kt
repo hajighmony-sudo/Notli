@@ -19,12 +19,16 @@
 package org.oxycblt.auxio.home
 
 import android.annotation.SuppressLint
+import android.content.res.ColorStateList
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.GridLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -245,70 +249,109 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
     }
 
     private fun showQuickActions() {
+        val density = resources.displayMetrics.density
+        fun dp(value: Int) = (value * density).toInt()
+        val themeValue = TypedValue()
+        requireContext().theme.resolveAttribute(
+            com.google.android.material.R.attr.colorPrimary,
+            themeValue,
+            true,
+        )
+        val accent = ColorStateList.valueOf(themeValue.data)
         val dialog =
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.lbl_more_actions)
                 .create()
-        val density = resources.displayMetrics.density
-        fun dp(value: Int) = (value * density).toInt()
         val grid =
             GridLayout(requireContext()).apply {
                 columnCount = 2
                 setPadding(dp(6), dp(6), dp(6), dp(6))
             }
+        data class QuickAction(val label: Int, val icon: Int, val action: () -> Unit)
         val actions =
             listOf(
-                R.string.lbl_search to
-                    {
-                        findNavController().navigateSafe(HomeFragmentDirections.search())
-                    },
-                R.string.lbl_sort to
-                    {
-                        val directions =
-                            when (homeModel.currentTabType.value) {
-                                MusicType.SONGS -> HomeFragmentDirections.sortSongs()
-                                MusicType.ALBUMS -> HomeFragmentDirections.sortAlbums()
-                                MusicType.ARTISTS -> HomeFragmentDirections.sortArtists()
-                                MusicType.GENRES -> HomeFragmentDirections.sortGenres()
-                                MusicType.PLAYLISTS -> HomeFragmentDirections.sortPlaylists()
-                            }
-                        findNavController().navigateSafe(directions)
-                    },
-                R.string.lbl_queue to { playbackModel.openQueue() },
-                R.string.set_root_title to { homeModel.showSettings() },
-                R.string.lbl_about to { homeModel.showAbout() },
+                QuickAction(R.string.lbl_search, R.drawable.ic_search_24) {
+                    findNavController().navigateSafe(HomeFragmentDirections.search())
+                },
+                QuickAction(R.string.lbl_sort, R.drawable.ic_sort_24) {
+                    val directions =
+                        when (homeModel.currentTabType.value) {
+                            MusicType.SONGS -> HomeFragmentDirections.sortSongs()
+                            MusicType.ALBUMS -> HomeFragmentDirections.sortAlbums()
+                            MusicType.ARTISTS -> HomeFragmentDirections.sortArtists()
+                            MusicType.GENRES -> HomeFragmentDirections.sortGenres()
+                            MusicType.PLAYLISTS -> HomeFragmentDirections.sortPlaylists()
+                        }
+                    findNavController().navigateSafe(directions)
+                },
+                QuickAction(R.string.lbl_queue, R.drawable.ic_queue_add_24) {
+                    playbackModel.openQueue()
+                },
+                QuickAction(R.string.set_root_title, android.R.drawable.ic_menu_preferences) {
+                    homeModel.showSettings()
+                },
+                QuickAction(R.string.lbl_about, R.drawable.ic_about_24) {
+                    homeModel.showAbout()
+                },
+                QuickAction(R.string.lbl_shuffle, R.drawable.ic_shortcut_shuffle_24) {
+                    playbackModel.shuffleAll()
+                },
             )
 
-        actions.forEach { (labelRes, action) ->
+        actions.forEach { action ->
             val tile =
                 MaterialCardView(requireContext()).apply {
-                    radius = dp(20).toFloat()
-                    cardElevation = dp(1).toFloat()
+                    radius = dp(22).toFloat()
+                    cardElevation = dp(2).toFloat()
+                    strokeWidth = dp(1)
+                    strokeColor = accent.defaultColor
                     isClickable = true
                     isFocusable = true
                     setOnClickListener {
                         dialog.dismiss()
-                        action()
+                        action.action()
                     }
                 }
+            val content =
+                LinearLayout(requireContext()).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER
+                    setPadding(dp(10), dp(10), dp(10), dp(10))
+                }
+            val icon =
+                ImageView(requireContext()).apply {
+                    setImageResource(action.icon)
+                    imageTintList = accent
+                    contentDescription = getString(action.label)
+                }
+            content.addView(icon, LinearLayout.LayoutParams(dp(26), dp(26)))
             val label =
                 TextView(requireContext()).apply {
-                    text = getString(labelRes)
-                    textSize = 15f
+                    text = getString(action.label)
+                    textSize = 14f
                     gravity = Gravity.CENTER
-                    setPadding(dp(12), dp(18), dp(12), dp(18))
+                    setTextColor(accent)
+                    setPadding(0, dp(8), 0, 0)
+                    maxLines = 2
                 }
-            tile.addView(
+            content.addView(
                 label,
-                ViewGroup.LayoutParams(
+                LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
+                ),
+            )
+            tile.addView(
+                content,
+                ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
                 ),
             )
             val params =
                 GridLayout.LayoutParams().apply {
                     width = 0
-                    height = dp(72)
+                    height = dp(104)
                     columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
                     setMargins(dp(5), dp(5), dp(5), dp(5))
                 }
