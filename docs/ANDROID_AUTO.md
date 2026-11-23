@@ -71,3 +71,27 @@ The visual treatment must degrade gracefully across Android Auto versions, scree
 ## Known limitation
 
 A generic Android Auto media app cannot distinguish driver touches from passenger touches. Passenger-specific interaction is only possible if the vehicle OEM exposes a supported, trustworthy passenger-input or occupant-state API and the app is authorized to use it. Do not infer passenger status from seat occupancy guesses, touch location, biometrics, or a user confirmation.
+
+
+## Open-source implementation research
+
+The following public projects were reviewed as implementation references. Their code was not copied wholesale; Notli keeps its existing media browser/session architecture and uses only compatible, narrowly scoped presentation patterns.
+
+- [Android for Cars samples](https://github.com/android/car-samples) (Apache-2.0): official template and host-compatibility examples. Useful for understanding the boundary between app-provided content/actions and host-rendered UI.
+- [Open Hype](https://github.com/josusanmartin/open-hype) (MIT): centralizes MediaConstants browse hints, separates category-style root navigation from compact content rows, and supplies app-owned artwork for top-level sections. Notli adopts the general browse-hint pattern, not its service architecture or product-specific code.
+- [Music Assistant mobile app](https://github.com/music-assistant/mobile-app) (Apache-2.0): useful reference for artwork delivery, stable artwork URIs, and testing metadata/artwork across Android Auto sessions.
+- [Melodee Player](https://github.com/melodee-project/melodee-player) (MIT): useful reference for Android Auto media metadata, voice/search behavior, and test coverage around media browser integration.
+- [Universal Android Music Player](https://github.com/googlesamples/android-UniversalMusicPlayer): historical multi-form-factor reference for sharing a media session across phone and car surfaces.
+
+### Applied browse presentation
+
+- Root navigation categories advertise category/grid presentation with Notli's own cyan section artwork.
+- The More node advertises category-style children.
+- Songs and nested library contents advertise compact list rows; browsable album, artist, genre, and playlist items tell the host that their children are list content.
+- Album/artist/genre/playlist artwork continues to come from the user's actual library. No static concept screenshot replaces live track metadata or controls.
+
+### Why the full concept image is not the live car screen
+
+The generated Cyber image is a visual target, not a valid Android Auto screen definition. A MediaBrowserServiceCompat app cannot submit an arbitrary bitmap as its complete screen and retain working, host-integrated controls. The screenshot includes host-owned elements such as the app rail, status indicators, other apps, and the bottom dock. Notli can brand its own attribution icon, section artwork, media metadata, and supported actions; Android Auto/head-unit software chooses the overall layout, colors, sizing, and control placement.
+
+Car App Library templated media experiences offer more customization through host-approved templates, but Google's current documentation describes templated media as beta/limited-distribution. Do not switch Notli to that path as a universal default until eligibility, host support, and distribution requirements are confirmed. Keep the existing standard media service as the compatibility baseline.
