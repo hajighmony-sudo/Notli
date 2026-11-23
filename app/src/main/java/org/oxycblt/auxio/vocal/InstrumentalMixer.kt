@@ -44,12 +44,11 @@ internal object InstrumentalMixer {
                     val count = minOf(CHUNK_BYTES, remaining)
                     sourceBuffers.forEachIndexed { index, bytes -> readFully(inputs[index], bytes, count) }
                     val samples = count / 2
+                    val sources = sourceBuffers.map { ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN) }
                     val out = ByteBuffer.wrap(mixed).order(ByteOrder.LITTLE_ENDIAN)
                     for (sample in 0 until samples) {
                         var sum = 0
-                        sourceBuffers.forEach { bytes ->
-                            sum += ByteBuffer.wrap(bytes, sample * 2, 2).order(ByteOrder.LITTLE_ENDIAN).short.toInt()
-                        }
+                        sources.forEach { source -> sum += source.short.toInt() }
                         out.putShort(sum.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort())
                     }
                     output.write(mixed, 0, count)
