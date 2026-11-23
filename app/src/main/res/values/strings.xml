@@ -500,6 +500,8 @@
     <!-- As in the total duration of all songs in the music library -->
     <string name="fmt_lib_total_duration">Total duration: %s</string>
     <string name="fmt_lib_total_size">Total size: %s</string>
+    <string name="fmt_listening_time">Listening time: %s</string>
+    <string name="fmt_tracks_played">Tracks played: %d</string>
 
     <plurals name="fmt_song_count">
         <item quantity="one">%d song</item>
