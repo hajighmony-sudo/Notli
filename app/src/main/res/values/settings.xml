@@ -41,6 +41,7 @@
     <string name="set_key_spatial_audio" translatable="false">auxio_audio_spatial</string>
     <string name="set_key_spatial_strength" translatable="false">auxio_audio_spatial_strength</string>
     <string name="set_key_pitch_effect" translatable="false">auxio_audio_pitch</string>
+    <string name="set_key_echo_strength" translatable="false">notli_audio_echo_strength</string>
     <string name="set_key_adaptive_haptics" translatable="false">auxio_adaptive_haptics</string>
     <string name="set_key_adaptive_haptics_mode" translatable="false">auxio_adaptive_haptics_mode</string>
     <string name="set_key_adaptive_haptics_intensity" translatable="false">auxio_adaptive_haptics_intensity</string>
@@ -222,12 +223,18 @@
 
     <string-array name="entries_pitch_effect">
         <item>@string/set_pitch_normal</item>
-        <item>@string/set_pitch_chipmunk</item>
+        <item>@string/set_pitch_zombie</item>
+        <item>@string/set_pitch_child</item>
+        <item>@string/set_pitch_girl</item>
+        <item>@string/set_pitch_echo</item>
         <item>@string/set_pitch_deep</item>
+        <item>@string/set_pitch_dazed</item>
+        <item>@string/set_pitch_alien</item>
     </string-array>
 
     <integer-array name="values_pitch_effect">
-        <item>0</item><item>1</item><item>2</item>
+        <item>0</item><item>1</item><item>2</item><item>3</item>
+        <item>4</item><item>5</item><item>6</item><item>7</item>
     </integer-array>
 
     <string-array name="entries_replay_gain">
