@@ -19,11 +19,11 @@
             app:title="@string/set_round_mode" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/set_accent">
-        <org.oxycblt.auxio.settings.ui.WrappedDialogPreference
-            app:icon="@drawable/ic_accent_dynamic_24"
-            app:key="@string/set_key_accent"
-            app:title="@string/set_accent" />
+    <PreferenceCategory app:title="NOTLI AURORA">
+        <Preference
+            app:selectable="false"
+            app:title="NOTLI AURORA"
+            app:summary="The single default Notli design system." />
 
         <SwitchPreferenceCompat
             app:defaultValue="false"

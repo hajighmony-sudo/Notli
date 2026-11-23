@@ -173,4 +173,7 @@
         <item name="colorSurfaceContainerHigh">@color/grey_surfaceContainerHigh_black</item>
         <item name="colorSurfaceContainerHighest">@color/grey_surfaceContainerHighest_black</item>
     </style>
+
+    <!-- OLED variant of the single NOTLI AURORA brand theme. -->
+    <style name="Theme.Auxio.Aurora.Black" parent="Theme.Auxio.Cyan.Black" />
 </resources>

@@ -91,11 +91,11 @@ class MainActivity : AppCompatActivity() {
         // Apply the color scheme. The black theme requires it's own set of themes since
         // it's not possible to modify the themes at run-time.
         if (isNight && uiSettings.useBlackTheme) {
-            L.d("Applying black theme [accent ${uiSettings.accent}]")
-            setTheme(uiSettings.accent.blackTheme)
+            L.d("Applying NOTLI AURORA OLED theme")
+            setTheme(R.style.Theme_Auxio_Aurora_Black)
         } else {
-            L.d("Applying normal theme [accent ${uiSettings.accent}]")
-            setTheme(uiSettings.accent.theme)
+            L.d("Applying NOTLI AURORA theme")
+            setTheme(R.style.Theme_Auxio_Aurora)
         }
     }
 

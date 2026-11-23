@@ -783,4 +783,7 @@
         <item name="colorSurfaceContainerHigh">@color/grey_surfaceContainerHigh</item>
         <item name="colorSurfaceContainerHighest">@color/grey_surfaceContainerHighest</item>
     </style>
+
+    <!-- NOTLI AURORA: single brand theme using the cyan palette. -->
+    <style name="Theme.Auxio.Aurora" parent="Theme.Auxio.Cyan" />
 </resources>
