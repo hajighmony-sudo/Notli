@@ -18,6 +18,7 @@
  
 package org.oxycblt.auxio.playback
 
+import android.view.ViewGroup
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -71,7 +72,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import android.view.ViewGroup
 import org.oxycblt.auxio.image.CoverView
 import org.oxycblt.auxio.playback.state.RepeatMode
 import org.oxycblt.auxio.ui.notliPressScale
