@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum DownloadStatus { #[default] Queued, Downloading, Paused, Completed, Failed, Cancelled }
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DownloadRequest { pub id: String, pub url: String, pub file_name: Option<String> }
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DownloadSnapshot {
     pub id: String, pub url: String, pub file_name: Option<String>, pub status: DownloadStatus,
     pub received_bytes: u64, pub expected_bytes: Option<u64>, pub error: Option<String>,
@@ -14,6 +15,17 @@ pub enum DownloadError { InvalidRequest, DuplicateId, NotFound, InvalidTransitio
 
 #[derive(Debug, Default)]
 pub struct DownloadManager { tasks: BTreeMap<String, DownloadSnapshot> }
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum DownloadCommand {
+    Enqueue { request: DownloadRequest },
+    Start { id: String },
+    Pause { id: String },
+    Progress { id: String, received_bytes: u64, expected_bytes: Option<u64> },
+    Complete { id: String },
+    Fail { id: String, message: String },
+}
 
 impl DownloadManager {
     /// Owns download-task state only. Android performs network and filesystem operations.
@@ -27,6 +39,23 @@ impl DownloadManager {
         });
         Ok(())
     }
+    pub fn handle(&mut self, command: DownloadCommand) -> Result<DownloadSnapshot, DownloadError> {
+        match command {
+            DownloadCommand::Enqueue { request } => self.enqueue(request)?,
+            DownloadCommand::Start { id } => self.start(&id)?,
+            DownloadCommand::Pause { id } => self.pause(&id)?,
+            DownloadCommand::Progress { id, received_bytes, expected_bytes } => self.update_progress(&id, received_bytes, expected_bytes)?,
+            DownloadCommand::Complete { id } => self.complete(&id)?,
+            DownloadCommand::Fail { id, message } => self.fail(&id, message)?,
+        }
+        let id = match &command {
+            DownloadCommand::Enqueue { request } => request.id.clone(),
+            DownloadCommand::Start { id } | DownloadCommand::Pause { id } | DownloadCommand::Progress { id, .. }
+            | DownloadCommand::Complete { id } | DownloadCommand::Fail { id, .. } => id.clone(),
+        };
+        self.get(&id).cloned().ok_or(DownloadError::NotFound)
+    }
+
     pub fn get(&self, id: &str) -> Option<&DownloadSnapshot> { self.tasks.get(id) }
     pub fn all(&self) -> Vec<DownloadSnapshot> { self.tasks.values().cloned().collect() }
     pub fn start(&mut self, id: &str) -> Result<(), DownloadError> {
