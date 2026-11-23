@@ -93,7 +93,7 @@ mod validation_tests {
             "https://",
             "content://",
             "file://relative/path.mp3",
-            "https://example.com/song.mp3\\n",
+            "https://example.com/song.mp3\n",
         ] {
             assert!(!track("1", uri).is_valid(), "URI should be rejected: {uri:?}");
         }
@@ -102,7 +102,7 @@ mod validation_tests {
     #[test]
     fn rejects_invalid_deserialized_track_ids() {
         assert!(!track("  ", "content://media/audio/1").is_valid());
-        assert!(!track("bad\\nid", "content://media/audio/1").is_valid());
+        assert!(!track("bad\nid", "content://media/audio/1").is_valid());
     }
 }
 
