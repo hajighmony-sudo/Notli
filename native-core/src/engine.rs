@@ -66,8 +66,23 @@ impl PlayerCore {
                 out.actions.push(BackendAction::SeekTo(position));
             }
             PlayerCommand::Next => {
-                let track = self.queue.next(self.state.repeat_mode).cloned().ok_or(CoreError::EmptyQueue)?;
-                self.select_track(track, true, &mut out);
+                if self.queue.is_empty() {
+                    return Err(CoreError::EmptyQueue);
+                }
+                // A manual skip advances even in Repeat One mode. At the end of a
+                // non-repeating queue, mirror Notli's existing player behavior:
+                // return to the first item and leave playback paused.
+                let repeat = if self.state.repeat_mode == crate::model::RepeatMode::One {
+                    crate::model::RepeatMode::Off
+                } else {
+                    self.state.repeat_mode
+                };
+                if let Some(track) = self.queue.next(repeat).cloned() {
+                    self.select_track(track, true, &mut out);
+                } else {
+                    let track = self.queue.select_index(0)?.clone();
+                    self.select_track(track, false, &mut out);
+                }
             }
             PlayerCommand::Previous => {
                 let track = if self.state.position_ms > 3000 {
@@ -75,7 +90,13 @@ impl PlayerCore {
                     out.actions.push(BackendAction::SeekTo(0));
                     None
                 } else { self.queue.previous(self.state.repeat_mode).cloned() };
-                if let Some(track) = track { self.select_track(track, true, &mut out); }
+                if let Some(track) = track {
+                    self.select_track(track, true, &mut out);
+                } else if self.state.current_track.is_some() {
+                    // At the first item, Previous rewinds rather than wrapping.
+                    self.state.position_ms = 0;
+                    out.actions.push(BackendAction::SeekTo(0));
+                }
             }
             PlayerCommand::PlayTrack(id) => {
                 let track = self.queue.select(&id)?.clone();
