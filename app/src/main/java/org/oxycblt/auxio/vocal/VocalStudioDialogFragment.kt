@@ -189,13 +189,18 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
                         error("The local AI model failed its integrity check. Download it again.")
                     }
 
-                    val pcm = AudioPcmDecoder.decode(appContext, song.uri, raw)
+                    val pcm = AudioPcmDecoder.decode(appContext, song.uri, raw) {
+                        processingJob?.isActive == true
+                    }
                     NativeEngine.loadModel(model.absolutePath)
                     NativeEngine.prepareInput(
                         raw.absolutePath,
                         pcm.sampleRate,
                         pcm.channels,
                         prepared.absolutePath,
+                        listener = NativeEngine.ProgressListener { _, _ ->
+                            processingJob?.isActive == true
+                        },
                     )
                     NativeEngine.separate(
                         prepared.absolutePath,
@@ -212,7 +217,9 @@ class VocalStudioDialogFragment : ViewBindingBottomSheetDialogFragment<DialogVoc
                             processingJob?.isActive == true
                         },
                     )
-                    InstrumentalMixer.mix(stems, output)
+                    InstrumentalMixer.mix(stems, output) {
+                        processingJob?.isActive == true
+                    }
                 }
 
                 completed = true
