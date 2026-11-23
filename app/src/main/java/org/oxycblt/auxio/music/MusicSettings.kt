@@ -81,6 +81,18 @@ interface MusicSettings : Settings<MusicSettings.Listener> {
 class MusicSettingsImpl @Inject constructor(@ApplicationContext private val context: Context) :
     Settings.Impl<MusicSettings.Listener>(context), MusicSettings {
 
+    init {
+        // The app now loads the device library through MediaStore automatically.
+        // Migrate existing installations away from the old folder-picker mode.
+        sharedPreferences.edit {
+            putInt(
+                getString(R.string.set_key_locations_mode),
+                LocationMode.MEDIA_STORE.intCode,
+            )
+            apply()
+        }
+    }
+
     override var revision: UUID?
         get() =
             sharedPreferences
@@ -118,9 +130,9 @@ class MusicSettingsImpl @Inject constructor(@ApplicationContext private val cont
             val mode =
                 sharedPreferences.getInt(
                     getString(R.string.set_key_locations_mode),
-                    IntegerTable.LOCATION_MODE_SAF,
+                    LocationMode.MEDIA_STORE.intCode,
                 )
-            return LocationMode.fromInt(mode) ?: LocationMode.SAF
+            return LocationMode.fromInt(mode) ?: LocationMode.MEDIA_STORE
         }
         set(value) {
             sharedPreferences.edit {
