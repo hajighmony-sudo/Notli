@@ -32,7 +32,7 @@ internal class RustMedia3Bridge(
     private var activeTrackId: String? = null
 
     @Synchronized
-    fun setQueue(songs: List<Song>, startIndex: Int, autoplay: Boolean, shuffleEnabled: Boolean = false) {
+    fun setQueue(\n        songs: List<Song>,\n        startIndex: Int,\n        autoplay: Boolean,\n        shuffleEnabled: Boolean = false,\n    ) {
         val tracks = JSONArray()
         songs.forEach { tracks.put(it.toRustTrack()) }
         val command =
@@ -203,7 +203,7 @@ internal class RustMedia3Bridge(
     private fun currentTrackId(): String? =
         (player.currentMediaItem?.localConfiguration?.tag as? Song)?.uid?.toString()
 
-    private fun Song.toRustTrack(): JSONObject =
+    private fun Name.asText(): String =\n        when (this) {\n            is Name.Known -> raw\n            is Name.Unknown -> placeholder.name\n        }\n\n    private fun Song.toRustTrack(): JSONObject =
         JSONObject()
             .put("id", uid.toString())
             .put("title", name.raw.take(1024).ifBlank { uri.lastPathSegment ?: uid.toString() })
