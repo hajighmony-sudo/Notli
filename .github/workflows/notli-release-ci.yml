@@ -50,7 +50,7 @@ jobs:
         with:
           workspaces: native-core
       - name: Run native Rust tests
-        run: cargo test --manifest-path native-core/Cargo.toml --locked
+        run: cargo test --manifest-path native-core/Cargo.toml
 
   android-tests:
     name: Android formatting and unit tests
