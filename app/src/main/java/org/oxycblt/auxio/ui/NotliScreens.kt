@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+ 
 package org.oxycblt.auxio.ui
 
 import androidx.compose.animation.AnimatedContent
@@ -327,8 +327,8 @@ internal fun NotliEmptyState(
 // ---------------------------------------------------------------- library
 
 /**
- * The library screen: the Songs / Albums / Artists / Playlists chips from home, and the list for the
- * selected chip. The caller decides which items belong to [selectedChip]; switching chips
+ * The library screen: the Songs / Albums / Artists / Playlists chips from home, and the list for
+ * the selected chip. The caller decides which items belong to [selectedChip]; switching chips
  * cross-fades the list.
  */
 @Composable
@@ -556,7 +556,8 @@ internal fun NotliThemeSelector(
 ) {
     val palette = NotliTheme.palette
     val modes = NotliThemeMode.entries
-    val icons = listOf(Icons.Filled.SettingsBrightness, Icons.Filled.LightMode, Icons.Filled.DarkMode)
+    val icons =
+        listOf(Icons.Filled.SettingsBrightness, Icons.Filled.LightMode, Icons.Filled.DarkMode)
     val shape = RoundedCornerShape(18.dp)
     BoxWithConstraints(
         modifier
@@ -659,9 +660,11 @@ internal fun NotliSettingsGroup(
 private fun SettingsIconTile(icon: ImageVector) {
     val palette = NotliTheme.palette
     Box(
-        Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(
-            palette.accent.copy(alpha = 0.16f),
-        ),
+        Modifier.size(42.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                palette.accent.copy(alpha = 0.16f),
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, null, tint = palette.accentSoft, modifier = Modifier.size(22.dp))
@@ -672,9 +675,9 @@ private fun SettingsIconTile(icon: ImageVector) {
 internal fun NotliToggleRow(item: NotliToggleItem, onToggle: (Boolean) -> Unit) {
     val palette = NotliTheme.palette
     Row(
-        Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onToggle(!item.checked) },
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable {
+            onToggle(!item.checked)
+        },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
