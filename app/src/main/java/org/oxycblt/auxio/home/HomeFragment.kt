@@ -18,12 +18,26 @@
  
 package org.oxycblt.auxio.home
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.content.res.ColorStateList
+import android.os.Build
 import android.os.Bundle
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MenuItem
+import android.view.ViewGroup
+import android.widget.GridLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.content.ContextCompat
 import androidx.core.view.MenuCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
@@ -35,6 +49,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.android.material.transition.MaterialSharedAxis
 import dagger.hilt.android.AndroidEntryPoint
@@ -57,9 +73,12 @@ import org.oxycblt.auxio.music.MusicType
 import org.oxycblt.auxio.music.MusicViewModel
 import org.oxycblt.auxio.music.PlaylistDecision
 import org.oxycblt.auxio.music.PlaylistMessage
+import org.oxycblt.auxio.playback.NotliComposeTheme
 import org.oxycblt.auxio.playback.PlaybackDecision
 import org.oxycblt.auxio.playback.PlaybackViewModel
 import org.oxycblt.auxio.ui.FadingToolbarOffsetListener
+import org.oxycblt.auxio.ui.NotliGlassBottomBar
+import org.oxycblt.auxio.ui.NotliGlassTabBar
 import org.oxycblt.auxio.util.collect
 import org.oxycblt.auxio.util.collectImmediately
 import org.oxycblt.auxio.util.dampen
@@ -87,6 +106,8 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
     private var storagePermissionLauncher: ActivityResultLauncher<String>? = null
     private var getContentLauncher: ActivityResultLauncher<String>? = null
     private var pendingImportTarget: Playlist? = null
+    /** Selected page mirrored into the glass tab bar; the ViewPager stays the source of truth. */
+    private val glassTabIndex = mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -107,8 +128,13 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
 
         // Have to set up the permission launcher before the view is shown
         storagePermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-                musicModel.refresh()
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+                if (isGranted) {
+                    L.d("Audio permission granted; refreshing music library")
+                    musicModel.refresh()
+                } else {
+                    L.w("Audio permission was denied; music library cannot be loaded")
+                }
             }
 
         getContentLauncher =
@@ -131,6 +157,7 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
             setOnMenuItemClickListener(this@HomeFragment)
             MenuCompat.setGroupDividerEnabled(menu, true)
         }
+        setupBottomNavigation(binding)
 
         binding.homePager.apply {
             // Update HomeViewModel whenever the user swipes through the ViewPager.
@@ -140,6 +167,7 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
                 object : ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(position: Int) {
                         homeModel.synchronizeTabPosition(position)
+                        glassTabIndex.intValue = position
                     }
                 },
             )
@@ -164,7 +192,6 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
 
         // --- VIEWMODEL SETUP ---
         collect(homeModel.recreateTabs.flow, ::handleRecreate)
-        collect(homeModel.chooseMusicLocations.flow, ::handleChooseFolders)
         collectImmediately(homeModel.currentTabType, ::updateCurrentTab)
         collect(detailModel.toShow.flow, ::handleShow)
         collect(listModel.menu.flow, ::handleMenu)
@@ -173,6 +200,10 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
         collect(musicModel.playlistDecision.flow, ::handlePlaylistDecision)
         collectImmediately(musicModel.playlistMessage.flow, ::handlePlaylistMessage)
         collect(playbackModel.playbackDecision.flow, ::handlePlaybackDecision)
+
+        // Use Android's shared media index by default. Only the system permission prompt is
+        // shown; no folder picker or source-selection dialog is needed.
+        requestAudioPermissionIfNeeded()
     }
 
     override fun onDestroyBinding(binding: FragmentHomeBinding) {
@@ -187,40 +218,157 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
         }
 
         return when (item.itemId) {
-            // Handle main actions (Search, Settings, About)
-            R.id.action_search -> {
-                L.d("Navigating to search")
-                findNavController().navigateSafe(HomeFragmentDirections.search())
-                true
-            }
-            R.id.action_settings -> {
-                L.d("Navigating to preferences")
-                homeModel.showSettings()
-                true
-            }
-            R.id.action_about -> {
-                L.d("Navigating to about")
-                homeModel.showAbout()
-                true
-            }
-
-            // Handle sort menu
-            R.id.action_sort -> {
-                // Junk click event when opening the menu
-                val directions =
-                    when (homeModel.currentTabType.value) {
-                        MusicType.SONGS -> HomeFragmentDirections.sortSongs()
-                        MusicType.ALBUMS -> HomeFragmentDirections.sortAlbums()
-                        MusicType.ARTISTS -> HomeFragmentDirections.sortArtists()
-                        MusicType.GENRES -> HomeFragmentDirections.sortGenres()
-                        MusicType.PLAYLISTS -> HomeFragmentDirections.sortPlaylists()
-                    }
-                findNavController().navigateSafe(directions)
+            R.id.action_more -> {
+                showQuickActions()
                 true
             }
             else -> {
                 L.w("Unexpected menu item selected")
                 false
+            }
+        }
+    }
+
+    private fun showQuickActions() {
+        val density = resources.displayMetrics.density
+        fun dp(value: Int) = (value * density).toInt()
+        val themeValue = TypedValue()
+        requireContext()
+            .theme
+            .resolveAttribute(
+                android.R.attr.colorAccent,
+                themeValue,
+                true,
+            )
+        val accent = ColorStateList.valueOf(themeValue.data)
+        val dialog =
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.lbl_more_actions)
+                .create()
+        val grid =
+            GridLayout(requireContext()).apply {
+                columnCount = 2
+                setPadding(dp(6), dp(6), dp(6), dp(6))
+            }
+        data class QuickAction(val label: Int, val icon: Int, val action: () -> Unit)
+        val actions =
+            listOf(
+                QuickAction(R.string.lbl_search, R.drawable.ic_search_24) {
+                    findNavController().navigateSafe(HomeFragmentDirections.search())
+                },
+                QuickAction(R.string.lbl_sort, R.drawable.ic_sort_24) {
+                    val directions =
+                        when (homeModel.currentTabType.value) {
+                            MusicType.SONGS -> HomeFragmentDirections.sortSongs()
+                            MusicType.ALBUMS -> HomeFragmentDirections.sortAlbums()
+                            MusicType.ARTISTS -> HomeFragmentDirections.sortArtists()
+                            MusicType.GENRES -> HomeFragmentDirections.sortGenres()
+                            MusicType.PLAYLISTS -> HomeFragmentDirections.sortPlaylists()
+                            else -> HomeFragmentDirections.sortSongs()
+                        }
+                    findNavController().navigateSafe(directions)
+                },
+                QuickAction(R.string.lbl_queue, R.drawable.ic_queue_add_24) {
+                    playbackModel.openQueue()
+                },
+                QuickAction(R.string.set_root_title, android.R.drawable.ic_menu_preferences) {
+                    homeModel.showSettings()
+                },
+                QuickAction(R.string.lbl_about, R.drawable.ic_about_24) {
+                    homeModel.showAbout()
+                },
+                QuickAction(R.string.lbl_shuffle, R.drawable.ic_shortcut_shuffle_24) {
+                    playbackModel.shuffleAll()
+                },
+            )
+
+        actions.forEach { action ->
+            val tile =
+                MaterialCardView(requireContext()).apply {
+                    radius = dp(22).toFloat()
+                    cardElevation = dp(2).toFloat()
+                    strokeWidth = dp(1)
+                    strokeColor = accent.defaultColor
+                    isClickable = true
+                    isFocusable = true
+                    setOnClickListener {
+                        dialog.dismiss()
+                        action.action()
+                    }
+                }
+            val content =
+                LinearLayout(requireContext()).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER
+                    setPadding(dp(10), dp(10), dp(10), dp(10))
+                }
+            val icon =
+                ImageView(requireContext()).apply {
+                    setImageResource(action.icon)
+                    imageTintList = accent
+                    contentDescription = getString(action.label)
+                }
+            content.addView(icon, LinearLayout.LayoutParams(dp(26), dp(26)))
+            val label =
+                TextView(requireContext()).apply {
+                    text = getString(action.label)
+                    textSize = 14f
+                    gravity = Gravity.CENTER
+                    setTextColor(accent)
+                    setPadding(0, dp(8), 0, 0)
+                    maxLines = 2
+                }
+            content.addView(
+                label,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ),
+            )
+            tile.addView(
+                content,
+                ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                ),
+            )
+            val params =
+                GridLayout.LayoutParams().apply {
+                    width = 0
+                    height = dp(104)
+                    columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                    setMargins(dp(5), dp(5), dp(5), dp(5))
+                }
+            grid.addView(tile, params)
+        }
+        dialog.setView(grid)
+        dialog.show()
+    }
+
+    private fun setupBottomNavigation(binding: FragmentHomeBinding) {
+        val labels =
+            listOf(
+                getString(R.string.lbl_nav_library),
+                getString(R.string.lbl_nav_search),
+                getString(R.string.lbl_nav_settings),
+            )
+        binding.homeBottomNavigation.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                NotliComposeTheme {
+                    NotliGlassBottomBar(
+                        labels = labels,
+                        selectedIndex = 0,
+                        onSelect = { index ->
+                            when (index) {
+                                1 ->
+                                    findNavController()
+                                        .navigateSafe(HomeFragmentDirections.search())
+                                2 -> homeModel.showSettings()
+                            }
+                        },
+                    )
+                }
             }
         }
     }
@@ -235,10 +383,14 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
             // behavior.
             L.d("Single tab shown, disabling TabLayout")
             binding.homeTabs.isVisible = false
+            binding.homeGlassTabs.isVisible = false
             binding.homeAppbar.setExpanded(true, false)
             toolbarParams.scrollFlags = 0
         } else {
-            binding.homeTabs.isVisible = true
+            // The glass bar replaces the visible TabLayout; the TabLayout stays attached
+            // (hidden) so the existing ViewPager mediator behaves exactly as before.
+            binding.homeTabs.isVisible = false
+            binding.homeGlassTabs.isVisible = true
             toolbarParams.scrollFlags =
                 AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL or
                     AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS
@@ -251,6 +403,21 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
                 NamedTabStrategy(homeModel.currentTabTypes),
             )
             .attach()
+
+        val labels = homeModel.currentTabTypes.map { getString(it.nameRes) }
+        glassTabIndex.intValue = binding.homePager.currentItem
+        binding.homeGlassTabs.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                NotliComposeTheme {
+                    NotliGlassTabBar(
+                        labels = labels,
+                        selectedIndex = glassTabIndex.intValue,
+                        onSelect = { binding.homePager.setCurrentItem(it, true) },
+                    )
+                }
+            }
+        }
     }
 
     private fun updateCurrentTab(tabType: MusicType) {
@@ -280,12 +447,23 @@ class HomeFragment : SelectionFragment<FragmentHomeBinding>() {
         homeModel.recreateTabs.consume()
     }
 
-    private fun handleChooseFolders(unit: Unit?) {
-        if (unit == null) {
+    private fun requestAudioPermissionIfNeeded() {
+        val permission =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                Manifest.permission.READ_MEDIA_AUDIO
+            } else {
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            }
+
+        if (
+            ContextCompat.checkSelfPermission(requireContext(), permission) ==
+                PackageManager.PERMISSION_GRANTED
+        ) {
+            musicModel.refresh()
             return
         }
-        findNavController().navigateSafe(HomeFragmentDirections.chooseLocations())
-        homeModel.chooseMusicLocations.consume()
+
+        storagePermissionLauncher?.launch(permission)
     }
 
     private fun updateIndexerState(state: IndexingState?) {

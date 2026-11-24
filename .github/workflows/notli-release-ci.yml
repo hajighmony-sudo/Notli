@@ -1,0 +1,165 @@
+name: Notli Release CI
+
+run-name: Notli Release CI · ${{ github.event_name }} · ${{ github.ref_name }}
+
+on:
+  push:
+    branches:
+      - noti-core-hardening
+  pull_request:
+    branches:
+      - Noti
+    paths:
+      - 'app/**'
+      - 'musikr/**'
+      - 'native-core/**'
+      - 'media/**'
+      - 'gradle/**'
+      - '*.gradle'
+      - '*.gradle.kts'
+      - 'gradlew'
+      - 'gradle.properties'
+      - '.github/workflows/notli-release-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notli-release-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  ANDROID_NDK_VERSION: '28.2.13676358'
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust-tests:
+    name: Rust core tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native-core
+      - name: Run native Rust tests
+        run: cargo test --manifest-path native-core/Cargo.toml
+
+  android-tests:
+    name: Android formatting and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Install Ninja
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - name: Install Android NDK
+        run: sdkmanager "ndk;${ANDROID_NDK_VERSION}"
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+      - name: Verify Kotlin formatting
+        run: ./gradlew --no-daemon spotlessCheck
+      - name: Run Android unit tests
+        run: ./gradlew --no-daemon musikr:testDebug
+
+  android-apk:
+    name: Build Android debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    needs: rust-tests
+    steps:
+      - name: Install Ninja
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - name: Install Android NDK
+        run: |
+          for attempt in 1 2 3; do
+            if sdkmanager "ndk;${ANDROID_NDK_VERSION}"; then
+              exit 0
+            fi
+            echo "NDK installation attempt ${attempt}/3 failed."
+            rm -rf "$ANDROID_HOME/ndk/${ANDROID_NDK_VERSION}" "$ANDROID_HOME/.temp"
+            sleep 10
+          done
+          echo "Android NDK installation failed after 3 attempts."
+          exit 1
+      - name: Set up Rust Android targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native-core
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --locked
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+      - name: Build debug APK with native Rust core
+        run: ./gradlew --no-daemon patchMedia3ProgressiveMediaSource app:packageDebug
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: Notli-debug-${{ github.sha }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  ci-status:
+    name: Release CI status
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - rust-tests
+      - android-tests
+      - android-apk
+    steps:
+      - name: Require every check to pass
+        env:
+          RUST_RESULT: ${{ needs.rust-tests.result }}
+          ANDROID_TESTS_RESULT: ${{ needs.android-tests.result }}
+          APK_RESULT: ${{ needs.android-apk.result }}
+        run: |
+          echo "Rust tests: ${RUST_RESULT}"
+          echo "Android tests: ${ANDROID_TESTS_RESULT}"
+          echo "APK build: ${APK_RESULT}"
+          test "${RUST_RESULT}" = "success"
+          test "${ANDROID_TESTS_RESULT}" = "success"
+          test "${APK_RESULT}" = "success"

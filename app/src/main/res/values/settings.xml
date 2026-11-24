@@ -30,6 +30,22 @@
     <string name="set_key_locations_mode" translatable="false">auxio_locations_mode</string>
 
     <string name="set_key_headset_autoplay" translatable="false">auxio_headset_autoplay</string>
+    <string name="set_key_eq_preset" translatable="false">auxio_audio_eq_preset</string>
+    <string name="set_key_eq_60" translatable="false">auxio_audio_eq_60</string>
+    <string name="set_key_eq_230" translatable="false">auxio_audio_eq_230</string>
+    <string name="set_key_eq_910" translatable="false">auxio_audio_eq_910</string>
+    <string name="set_key_eq_3600" translatable="false">auxio_audio_eq_3600</string>
+    <string name="set_key_eq_14000" translatable="false">auxio_audio_eq_14000</string>
+    <string name="set_key_bass_boost" translatable="false">auxio_audio_bass_boost</string>
+    <string name="set_key_bass_strength" translatable="false">auxio_audio_bass_strength</string>
+    <string name="set_key_spatial_audio" translatable="false">auxio_audio_spatial</string>
+    <string name="set_key_spatial_strength" translatable="false">auxio_audio_spatial_strength</string>
+    <string name="set_key_pitch_effect" translatable="false">auxio_audio_pitch</string>
+    <string name="set_key_echo_strength" translatable="false">notli_audio_echo_strength</string>
+    <string name="set_key_adaptive_haptics" translatable="false">auxio_adaptive_haptics</string>
+    <string name="set_key_adaptive_haptics_mode" translatable="false">auxio_adaptive_haptics_mode</string>
+    <string name="set_key_adaptive_haptics_intensity" translatable="false">auxio_adaptive_haptics_intensity</string>
+    <string name="set_key_adaptive_haptics_sensitivity" translatable="false">auxio_adaptive_haptics_sensitivity</string>
     <string name="set_key_replay_gain" translatable="false">auxio_replay_gain</string>
     <string name="set_key_pre_amp" translatable="false">auxio_pre_amp</string>
     <string name="set_key_pre_amp_with" translatable="false">auxio_pre_amp_with</string>
@@ -145,6 +161,82 @@
         <item>@integer/play_song_by_itself</item>
     </integer-array>
 
+    <string-array name="entries_adaptive_haptics_mode">
+        <item>@string/set_haptics_mode_bass</item>
+        <item>@string/set_haptics_mode_rhythm</item>
+        <item>@string/set_haptics_mode_smart</item>
+    </string-array>
+
+    <integer-array name="values_adaptive_haptics_mode">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </integer-array>
+
+    <string-array name="entries_adaptive_haptics_intensity">
+        <item>@string/set_haptics_level_1</item>
+        <item>@string/set_haptics_level_2</item>
+        <item>@string/set_haptics_level_3</item>
+        <item>@string/set_haptics_level_4</item>
+        <item>@string/set_haptics_level_5</item>
+    </string-array>
+
+    <integer-array name="values_adaptive_haptics_intensity">
+        <item>1</item><item>2</item><item>3</item><item>4</item><item>5</item>
+    </integer-array>
+
+    <string-array name="entries_adaptive_haptics_sensitivity">
+        <item>@string/set_haptics_sensitivity_1</item>
+        <item>@string/set_haptics_sensitivity_2</item>
+        <item>@string/set_haptics_sensitivity_3</item>
+        <item>@string/set_haptics_sensitivity_4</item>
+        <item>@string/set_haptics_sensitivity_5</item>
+    </string-array>
+
+    <integer-array name="values_adaptive_haptics_sensitivity">
+        <item>1</item><item>2</item><item>3</item><item>4</item><item>5</item>
+    </integer-array>
+
+    <string-array name="entries_effect_strength">
+        <item>@string/set_effect_strength_20</item>
+        <item>@string/set_effect_strength_40</item>
+        <item>@string/set_effect_strength_60</item>
+        <item>@string/set_effect_strength_80</item>
+        <item>@string/set_effect_strength_100</item>
+    </string-array>
+
+    <integer-array name="values_effect_strength">
+        <item>20</item><item>40</item><item>60</item><item>80</item><item>100</item>
+    </integer-array>
+
+    <string-array name="entries_audio_preset">
+        <item>@string/set_audio_preset_flat</item>
+        <item>@string/set_audio_preset_bass</item>
+        <item>@string/set_audio_preset_vocal</item>
+        <item>@string/set_audio_preset_bright</item>
+        <item>@string/set_audio_preset_pop</item>
+    </string-array>
+
+    <integer-array name="values_audio_preset">
+        <item>0</item><item>1</item><item>2</item><item>3</item><item>4</item>
+    </integer-array>
+
+    <string-array name="entries_pitch_effect">
+        <item>@string/set_pitch_normal</item>
+        <item>@string/set_pitch_child</item>
+        <item>@string/set_pitch_deep</item>
+        <item>@string/set_pitch_zombie</item>
+        <item>@string/set_pitch_girl</item>
+        <item>@string/set_pitch_echo</item>
+        <item>@string/set_pitch_dazed</item>
+        <item>@string/set_pitch_alien</item>
+    </string-array>
+
+    <integer-array name="values_pitch_effect">
+        <item>0</item><item>1</item><item>2</item><item>3</item>
+        <item>4</item><item>5</item><item>6</item><item>7</item>
+    </integer-array>
+
     <string-array name="entries_replay_gain">
         <item>@string/set_replay_gain_mode_off</item>
         <item>@string/set_replay_gain_mode_track</item>
@@ -184,4 +276,31 @@
     <integer name="cover_mode_balanced">0xA11D</integer>
     <integer name="cover_mode_high_quality">0xA11E</integer>
     <integer name="cover_mode_as_is">0xA126</integer>
+
+    <string name="set_key_aurora_primary" translatable="false">notli_aurora_primary</string>
+    <string name="set_key_aurora_secondary" translatable="false">notli_aurora_secondary</string>
+    <string name="set_key_aurora_surface" translatable="false">notli_aurora_surface</string>
+    <string name="set_key_aurora_background" translatable="false">notli_aurora_background</string>
+    <string name="set_key_aurora_font_scale" translatable="false">notli_aurora_font_scale</string>
+    <string name="set_key_aurora_icon_scale" translatable="false">notli_aurora_icon_scale</string>
+    <string name="set_key_aurora_density" translatable="false">notli_aurora_density</string>
+    <string name="set_key_aurora_motion" translatable="false">notli_aurora_motion</string>
+    <string name="set_key_aurora_motion_speed" translatable="false">notli_aurora_motion_speed</string>
+
+    <string-array name="entries_aurora_density">
+        <item>@string/aurora_density_compact</item>
+        <item>@string/aurora_density_balanced</item>
+        <item>@string/aurora_density_spacious</item>
+    </string-array>
+    <string-array name="values_aurora_density">
+        <item>0</item><item>1</item><item>2</item>
+    </string-array>
+    <string-array name="entries_aurora_motion">
+        <item>@string/aurora_motion_off</item>
+        <item>@string/aurora_motion_soft</item>
+        <item>@string/aurora_motion_expressive</item>
+    </string-array>
+    <string-array name="values_aurora_motion">
+        <item>0</item><item>1</item><item>2</item>
+    </string-array>
 </resources>

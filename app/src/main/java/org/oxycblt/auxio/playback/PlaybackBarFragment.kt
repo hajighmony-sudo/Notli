@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Auxio Project
+ * Copyright (c) 2021 Auxio Project
  * PlaybackBarFragment.kt is part of Auxio.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,23 +20,22 @@ package org.oxycblt.auxio.playback
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import org.oxycblt.auxio.R
 import org.oxycblt.auxio.databinding.FragmentPlaybackBarBinding
 import org.oxycblt.auxio.detail.DetailViewModel
 import org.oxycblt.auxio.music.resolve
 import org.oxycblt.auxio.music.resolveNames
-import org.oxycblt.auxio.playback.state.RepeatMode
 import org.oxycblt.auxio.ui.ViewBindingFragment
-import org.oxycblt.auxio.util.collectImmediately
-import org.oxycblt.musikr.Song
-import timber.log.Timber as L
 
 /**
- * A [ViewBindingFragment] that shows the current playback state in a compact manner.
+ * Compose-based compact playback surface.
  *
- * @author Alexander Capehart (OxygenCobalt)
+ * Playback, media-session, queue, repeat, and shuffle behavior remain owned by the existing
+ * PlaybackViewModel and service.
  */
 @AndroidEntryPoint
 class PlaybackBarFragment : ViewBindingFragment<FragmentPlaybackBarBinding>() {
@@ -52,105 +51,34 @@ class PlaybackBarFragment : ViewBindingFragment<FragmentPlaybackBarBinding>() {
     ) {
         super.onBindingCreated(binding, savedInstanceState)
 
-        // --- UI SETUP ---
-        binding.root.apply {
-            setOnClickListener { playbackModel.openPlayback() }
-            setOnLongClickListener {
-                playbackModel.song.value?.let(detailModel::showAlbum)
-                true
-            }
-        }
+        binding.playbackCompose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val song by playbackModel.song.collectAsStateWithLifecycle()
+                val isPlaying by playbackModel.isPlaying.collectAsStateWithLifecycle()
+                val positionDs by playbackModel.positionDs.collectAsStateWithLifecycle()
+                val actionMode by playbackModel.currentBarAction.collectAsStateWithLifecycle()
+                val repeatMode by playbackModel.repeatMode.collectAsStateWithLifecycle()
+                val isShuffled by playbackModel.isShuffled.collectAsStateWithLifecycle()
+                val context = androidx.compose.ui.platform.LocalContext.current
 
-        // Set up marquee on song information
-        binding.playbackSong.isSelected = true
-        binding.playbackInfo.isSelected = true
-
-        // Set up actions
-        binding.playbackPlayPause.setOnClickListener { playbackModel.togglePlaying() }
-
-        // -- VIEWMODEL SETUP ---
-        collectImmediately(playbackModel.song, ::updateSong)
-        collectImmediately(playbackModel.isPlaying, ::updatePlaying)
-        collectImmediately(playbackModel.positionDs, ::updatePosition)
-        collectImmediately(
-            playbackModel.currentBarAction,
-            playbackModel.repeatMode,
-            playbackModel.isShuffled,
-            ::updateBarAction,
-        )
-    }
-
-    override fun onDestroyBinding(binding: FragmentPlaybackBarBinding) {
-        super.onDestroyBinding(binding)
-        binding.playbackSecondaryAction.clearPendingIcon()
-        // Marquee elements leak if they are not disabled when the views are destroyed.
-        binding.playbackSong.isSelected = false
-        binding.playbackInfo.isSelected = false
-    }
-
-    private fun updateSong(song: Song?) {
-        if (song == null) {
-            // Nothing to do.
-            return
-        }
-
-        val context = requireContext()
-        val binding = requireBinding()
-        binding.playbackCover.bind(song)
-        binding.playbackSong.text = song.name.resolve(context)
-        binding.playbackInfo.text = song.artists.resolveNames(context)
-        binding.playbackProgressBar.max = song.durationMs.msToDs().toInt()
-    }
-
-    private fun updatePlaying(isPlaying: Boolean) {
-        requireBinding().playbackPlayPause.isChecked = isPlaying
-    }
-
-    private fun updatePosition(positionDs: Long) {
-        requireBinding().playbackProgressBar.progress = positionDs.toInt()
-    }
-
-    private fun updateBarAction(
-        actionMode: ActionMode,
-        repeatMode: RepeatMode,
-        isShuffled: Boolean,
-    ) {
-        val binding = requireBinding()
-        when (actionMode) {
-            ActionMode.NEXT -> {
-                L.d("Using skip next action")
-                binding.playbackSecondaryAction.apply {
-                    if (tag != actionMode) {
-                        setIconResource(R.drawable.ic_skip_next_24)
-                        contentDescription = getString(R.string.desc_skip_next)
-                        setOnClickListener { playbackModel.next() }
-                        isChecked = false
-                        tag = actionMode
-                    }
-                }
-            }
-            ActionMode.REPEAT -> {
-                L.d("Using repeat mode action")
-                binding.playbackSecondaryAction.apply {
-                    if (tag != actionMode) {
-                        contentDescription = getString(R.string.desc_change_repeat)
-                        setOnClickListener { playbackModel.toggleRepeatMode() }
-                        tag = actionMode
-                    }
-                    setIconResource(repeatMode.icon)
-                    isChecked = repeatMode != RepeatMode.NONE
-                }
-            }
-            ActionMode.SHUFFLE -> {
-                L.d("Using shuffle action")
-                binding.playbackSecondaryAction.apply {
-                    if (tag != actionMode) {
-                        setIconResource(R.drawable.sel_shuffle_state_24)
-                        contentDescription = getString(R.string.desc_shuffle)
-                        setOnClickListener { playbackModel.toggleShuffled() }
-                        tag = actionMode
-                    }
-                    isChecked = isShuffled
+                NotliComposeTheme {
+                    NotliPlaybackBar(
+                        song = song,
+                        title = song?.name?.resolve(context).orEmpty(),
+                        artist = song?.artists?.resolveNames(context).orEmpty(),
+                        isPlaying = isPlaying,
+                        positionDs = positionDs,
+                        actionMode = actionMode,
+                        repeatMode = repeatMode,
+                        isShuffled = isShuffled,
+                        onOpen = { playbackModel.openPlayback() },
+                        onShowAlbum = { song?.let(detailModel::showAlbum) },
+                        onTogglePlaying = { playbackModel.togglePlaying() },
+                        onNext = { playbackModel.next() },
+                        onToggleRepeat = { playbackModel.toggleRepeatMode() },
+                        onToggleShuffle = { playbackModel.toggleShuffled() },
+                    )
                 }
             }
         }

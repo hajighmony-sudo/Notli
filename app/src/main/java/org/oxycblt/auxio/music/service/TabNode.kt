@@ -42,7 +42,7 @@ sealed class TabNode {
         override val id = "more"
         override val microId: String = "tm"
         override val nameRes = R.string.lbl_more
-        override val bitmapRes = R.drawable.ic_more_bitmap_24
+        override val bitmapRes = R.drawable.ic_notli_auto_more
     }
 
     data class Home(val type: MusicType) : TabNode() {
@@ -59,11 +59,11 @@ sealed class TabNode {
         override val bitmapRes: Int
             get() =
                 when (type) {
-                    MusicType.SONGS -> R.drawable.ic_song_bitmap_24
-                    MusicType.ALBUMS -> R.drawable.ic_album_bitmap_24
-                    MusicType.ARTISTS -> R.drawable.ic_artist_bitmap_24
-                    MusicType.GENRES -> R.drawable.ic_genre_bitmap_24
-                    MusicType.PLAYLISTS -> R.drawable.ic_playlist_bitmap_24
+                    MusicType.SONGS -> R.drawable.ic_notli_auto_songs
+                    MusicType.ALBUMS -> R.drawable.ic_notli_auto_albums
+                    MusicType.ARTISTS -> R.drawable.ic_notli_auto_artists
+                    MusicType.GENRES -> R.drawable.ic_notli_auto_genres
+                    MusicType.PLAYLISTS -> R.drawable.ic_notli_auto_playlists
                 }
 
         override val nameRes = type.nameRes

@@ -21,6 +21,7 @@ package org.oxycblt.auxio.playback.service
 import android.content.Context
 import android.content.Intent
 import android.media.audiofx.AudioEffect
+import android.os.SystemClock
 import android.provider.OpenableColumns
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
@@ -38,6 +39,9 @@ import androidx.media3.exoplayer.audio.MediaCodecAudioRenderer
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
 import androidx.media3.exoplayer.source.MediaSource
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
@@ -51,6 +55,7 @@ import kotlinx.coroutines.yield
 import org.oxycblt.auxio.image.ImageSettings
 import org.oxycblt.auxio.music.MusicRepository
 import org.oxycblt.auxio.playback.PlaybackSettings
+import org.oxycblt.auxio.playback.nativecore.RustMedia3Bridge
 import org.oxycblt.auxio.playback.persist.PersistenceRepository
 import org.oxycblt.auxio.playback.replaygain.ReplayGainAudioProcessor
 import org.oxycblt.auxio.playback.state.DeferredPlayback
@@ -83,11 +88,14 @@ class ExoPlaybackStateHolder(
     MusicRepository.UpdateListener,
     PlaybackSettings.Listener,
     ImageSettings.Listener {
+    private val rustBridge = RustMedia3Bridge(player)
     private val saveJob = Job()
     private val saveScope = CoroutineScope(Dispatchers.IO + saveJob)
     private val restoreScope = CoroutineScope(Dispatchers.IO + saveJob)
     private var currentSaveJob: Job? = null
     private var openAudioEffectSession = false
+    private var listeningStartedAtElapsedMs: Long? = null
+    private var audioEffects: PlaybackAudioEffects? = null
 
     var sessionOngoing = false
         private set
@@ -102,6 +110,11 @@ class ExoPlaybackStateHolder(
     }
 
     fun release() {
+        persistListeningTime(force = true)
+        listeningStartedAtElapsedMs = null
+        audioEffects?.release()
+        audioEffects = null
+        rustBridge.close()
         saveJob.cancel()
         playbackManager.unregisterStateHolder(this)
         musicRepository.removeUpdateListener(this)
@@ -225,11 +238,11 @@ class ExoPlaybackStateHolder(
     }
 
     override fun playing(playing: Boolean) {
-        player.playWhenReady = playing
+        if (playing) rustBridge.play() else rustBridge.pause()
     }
 
     override fun seekTo(positionMs: Long) {
-        player.seekTo(positionMs)
+        rustBridge.seek(positionMs)
         deferSave()
         // Ack handled w/ExoPlayer events
     }
@@ -241,6 +254,13 @@ class ExoPlaybackStateHolder(
                 RepeatMode.ALL -> Player.REPEAT_MODE_ALL
                 RepeatMode.TRACK -> Player.REPEAT_MODE_ONE
             }
+        rustBridge.setRepeatMode(
+            when (repeatMode) {
+                RepeatMode.NONE -> "Off"
+                RepeatMode.ALL -> "All"
+                RepeatMode.TRACK -> "One"
+            },
+        )
         updatePauseOnRepeat()
         playbackManager.ack(this, StateAck.RepeatModeChanged)
         deferSave()
@@ -259,8 +279,13 @@ class ExoPlaybackStateHolder(
         }
         val target = startIndex ?: player.currentTimeline.getFirstWindowIndex(command.shuffled)
         player.seekTo(target, C.TIME_UNSET)
-        player.prepare()
-        player.play()
+        val rawQueue = resolveQueue()
+        rustBridge.setQueue(
+            rawQueue.resolveSongs(),
+            rawQueue.resolveIndex(),
+            true,
+            rawQueue.isShuffled,
+        )
         playbackManager.ack(this, StateAck.NewPlayback)
         deferSave()
     }
@@ -273,45 +298,30 @@ class ExoPlaybackStateHolder(
                 BetterShuffleOrder(player.mediaItemCount, player.currentMediaItemIndex),
             )
         }
+        val rawQueue = resolveQueue()
+        rustBridge.synchronizeVisibleQueue(
+            rawQueue.resolveSongs(),
+            rawQueue.resolveIndex(),
+            player.playWhenReady,
+            player.currentPosition,
+            rawQueue.isShuffled,
+        )
         playbackManager.ack(this, StateAck.QueueReordered)
         deferSave()
     }
 
     override fun next() {
-        // Replicate the old pseudo-circular queue behavior when no repeat option is implemented.
-        // Basically, you can't skip back and wrap around the queue, but you can skip forward and
-        // wrap around the queue, albeit playback will be paused.
-        if (player.repeatMode == Player.REPEAT_MODE_ALL || player.hasNextMediaItem()) {
-            player.seekToNext()
-            if (!playbackSettings.rememberPause) {
-                player.play()
-            }
-        } else {
-            player.seekTo(
-                player.currentTimeline.getFirstWindowIndex(player.shuffleModeEnabled),
-                C.TIME_UNSET,
-            )
-            // TODO: Dislike the UX implications of this, I feel should I bite the bullet
-            //  and switch to dynamic skip enable/disable?
-            if (!playbackSettings.rememberPause) {
-                player.pause()
-            }
-        }
+        val shouldRemainPaused = playbackSettings.rememberPause && !player.playWhenReady
+        rustBridge.next()
+        if (shouldRemainPaused) rustBridge.pause()
         playbackManager.ack(this, StateAck.IndexMoved)
         deferSave()
     }
 
     override fun prev() {
-        if (playbackSettings.rewindWithPrev) {
-            player.seekToPrevious()
-        } else if (player.hasPreviousMediaItem()) {
-            player.seekToPreviousMediaItem()
-        } else {
-            player.seekTo(0)
-        }
-        if (!playbackSettings.rememberPause) {
-            player.play()
-        }
+        val shouldRemainPaused = playbackSettings.rememberPause && !player.playWhenReady
+        rustBridge.previous(playbackSettings.rewindWithPrev)
+        if (shouldRemainPaused) rustBridge.pause()
         playbackManager.ack(this, StateAck.IndexMoved)
         deferSave()
     }
@@ -322,11 +332,10 @@ class ExoPlaybackStateHolder(
             return
         }
 
-        val trueIndex = indices[index]
-        player.seekTo(trueIndex, C.TIME_UNSET) // Handles remaining custom logic
-        if (!playbackSettings.rememberPause) {
-            player.play()
-        }
+        val shouldRemainPaused = playbackSettings.rememberPause && !player.playWhenReady
+        val song = player.getMediaItemAt(indices[index]).song ?: return
+        rustBridge.playTrack(song)
+        if (shouldRemainPaused) rustBridge.pause()
         playbackManager.ack(this, StateAck.IndexMoved)
         deferSave()
     }
@@ -349,12 +358,14 @@ class ExoPlaybackStateHolder(
         } else {
             player.addMediaItems(nextIndex, songs.map { it.buildMediaItem() })
         }
+        rustBridge.playNext(songs)
         playbackManager.ack(this, ack)
         deferSave()
     }
 
     override fun addToQueue(songs: List<Song>, ack: StateAck.AddToQueue) {
         player.addMediaItems(songs.map { it.buildMediaItem() })
+        rustBridge.addToQueue(songs)
         playbackManager.ack(this, ack)
         deferSave()
     }
@@ -379,6 +390,7 @@ class ExoPlaybackStateHolder(
                 player.moveMediaItem(trueTo - 1, trueFrom)
             }
         }
+        rustBridge.move(from, to)
         playbackManager.ack(this, ack)
         deferSave()
     }
@@ -392,8 +404,9 @@ class ExoPlaybackStateHolder(
         val trueIndex = indices[at]
         val songWillChange = player.currentMediaItemIndex == trueIndex
         player.removeMediaItem(trueIndex)
+        rustBridge.remove(at)
         if (songWillChange && !playbackSettings.rememberPause) {
-            player.play()
+            rustBridge.play()
         }
         playbackManager.ack(this, ack)
         deferSave()
@@ -437,6 +450,13 @@ class ExoPlaybackStateHolder(
         if (shouldSeek || abs(player.currentPosition - positionMs) > 1000L) {
             player.seekTo(positionMs)
         }
+        rustBridge.synchronizeVisibleQueue(
+            rawQueue.resolveSongs(),
+            rawQueue.resolveIndex(),
+            false,
+            positionMs,
+            rawQueue.isShuffled,
+        )
 
         if (sendNewPlaybackEvent) {
             ack?.let { playbackManager.ack(this, it) }
@@ -459,6 +479,7 @@ class ExoPlaybackStateHolder(
 
     override fun reset(ack: StateAck.NewPlayback) {
         player.setMediaItems(listOf())
+        rustBridge.clearQueue()
         playbackManager.ack(this, ack)
         deferSave()
     }
@@ -487,17 +508,43 @@ class ExoPlaybackStateHolder(
         }
     }
 
+    override fun onIsPlayingChanged(isPlaying: Boolean) {
+        super.onIsPlayingChanged(isPlaying)
+        if (isPlaying) {
+            if (audioEffects == null) {
+                audioEffects = PlaybackAudioEffects(context, player)
+            }
+            if (listeningStartedAtElapsedMs == null) {
+                val stats =
+                    context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
+                stats
+                    .edit()
+                    .putLong(KEY_LISTENING_SESSIONS, stats.getLong(KEY_LISTENING_SESSIONS, 0L) + 1L)
+                    .apply()
+                listeningStartedAtElapsedMs = SystemClock.elapsedRealtime()
+            }
+        } else {
+            persistListeningTime(force = true)
+            listeningStartedAtElapsedMs = null
+        }
+    }
+
     override fun onPlaybackStateChanged(playbackState: Int) {
         super.onPlaybackStateChanged(playbackState)
-
-        if (playbackState == Player.STATE_ENDED && player.repeatMode == Player.REPEAT_MODE_OFF) {
-            goto(0)
-            player.pause()
-        }
+        rustBridge.onPlaybackStateChanged(playbackState)
     }
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         super.onMediaItemTransition(mediaItem, reason)
+        rustBridge.onMediaItemTransition(reason)
+        if (mediaItem != null && player.playWhenReady) {
+            val stats = context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
+            stats
+                .edit()
+                .putLong(KEY_TRACKS_PLAYED, stats.getLong(KEY_TRACKS_PLAYED, 0L) + 1L)
+                .putLong(KEY_LAST_PLAYED_AT, System.currentTimeMillis())
+                .apply()
+        }
 
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
             playbackManager.ack(this, StateAck.IndexMoved)
@@ -507,9 +554,20 @@ class ExoPlaybackStateHolder(
 
     override fun onEvents(player: Player, events: Player.Events) {
         super.onEvents(player, events)
+        persistListeningTime()
 
         // So many actions trigger progression changes that it becomes easier just to handle it
         // in an ExoPlayer callback anyway. This doesn't really cause issues anywhere.
+        if (
+            events.containsAny(
+                Player.EVENT_POSITION_DISCONTINUITY,
+                Player.EVENT_PLAYBACK_STATE_CHANGED,
+                Player.EVENT_IS_PLAYING_CHANGED,
+            )
+        ) {
+            rustBridge.onPositionChanged()
+        }
+
         if (
             events.containsAny(
                 Player.EVENT_PLAY_WHEN_READY_CHANGED,
@@ -523,12 +581,28 @@ class ExoPlaybackStateHolder(
     }
 
     override fun onPlayerError(error: PlaybackException) {
-        // TODO: Replace with no skipping and a notification instead
-        // If there's any issue, just go to the next song.
-        L.e("Player error occurred")
-        L.e(error.stackTraceToString())
-        player.prepare()
-        playbackManager.next()
+        L.e(error, "Player error occurred")
+        rustBridge.onPlayerError(error.message ?: error.errorCodeName)
+    }
+
+    private fun persistListeningTime(force: Boolean = false) {
+        val startedAt = listeningStartedAtElapsedMs ?: return
+        val now = SystemClock.elapsedRealtime()
+        val elapsed = now - startedAt
+        if (elapsed < 1_000L || (!force && elapsed < LISTENING_SAVE_INTERVAL_MS)) return
+
+        val stats = context.getSharedPreferences(LISTENING_STATS_PREFS, Context.MODE_PRIVATE)
+        val today = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
+        val storedDay = stats.getString(KEY_DAILY_LISTENING_DATE, null)
+        val todayTotal =
+            if (storedDay == today) stats.getLong(KEY_DAILY_LISTENING_TIME_MS, 0L) else 0L
+        stats
+            .edit()
+            .putLong(KEY_LISTENING_TIME_MS, stats.getLong(KEY_LISTENING_TIME_MS, 0L) + elapsed)
+            .putLong(KEY_DAILY_LISTENING_TIME_MS, todayTotal + elapsed)
+            .putString(KEY_DAILY_LISTENING_DATE, today)
+            .apply()
+        listeningStartedAtElapsedMs = now
     }
 
     private fun broadcastAudioEffectAction(event: String) {
@@ -704,5 +778,13 @@ class ExoPlaybackStateHolder(
 
     private companion object {
         const val SAVE_BUFFER = 5000L
+        const val LISTENING_STATS_PREFS = "notli_listening_stats"
+        const val KEY_LISTENING_TIME_MS = "listening_time_ms"
+        const val KEY_TRACKS_PLAYED = "tracks_played"
+        const val KEY_LISTENING_SESSIONS = "listening_sessions"
+        const val KEY_DAILY_LISTENING_TIME_MS = "daily_listening_time_ms"
+        const val KEY_DAILY_LISTENING_DATE = "daily_listening_date"
+        const val KEY_LAST_PLAYED_AT = "last_played_at"
+        const val LISTENING_SAVE_INTERVAL_MS = 15_000L
     }
 }

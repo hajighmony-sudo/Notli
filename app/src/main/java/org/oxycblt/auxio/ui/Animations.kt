@@ -145,7 +145,11 @@ class Spatial private constructor(@AttrRes val attr: Int, val defaultStyle: Int)
 }
 
 class Effect private constructor(@AttrRes val attr: Int, @StyleRes val defaultStyle: Int) {
-    fun resolve(context: Context) = MotionUtils.resolveThemeSpringForce(context, attr, defaultStyle)
+    fun resolve(context: Context) =
+        AuroraMotion.spring(
+            context,
+            MotionUtils.resolveThemeSpringForce(context, attr, defaultStyle),
+        )
 
     fun alpha(view: View, to: Float, jumpOnCancellation: Boolean = false): SpringAnimation {
         val from = view.alpha

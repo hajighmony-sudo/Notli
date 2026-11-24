@@ -6,6 +6,7 @@ plugins {
     id "kotlin-parcelize"
     id "dagger.hilt.android.plugin"
     id "com.google.devtools.ksp"
+    id "org.jetbrains.kotlin.plugin.compose"
 }
 
 android {
@@ -70,6 +71,7 @@ android {
     buildFeatures {
         viewBinding true
         buildConfig true
+        compose true
     }
 }
 
@@ -79,6 +81,32 @@ kotlin {
         freeCompilerArgs.add("-jvm-default=enable")
         freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
+}
+
+// Build the Rust music engine as Android shared libraries before packaging the app.
+tasks.register("buildRustMusicCore", Exec) {
+    group = "build"
+    description = "Compile the Rust-owned Notli music engine for Android ABIs."
+    workingDir rootProject.file("native-core")
+    def androidSdkPath = System.getenv("ANDROID_SDK_ROOT") ?: System.getenv("ANDROID_HOME")
+    if (androidSdkPath == null) {
+        throw new GradleException("Android SDK path is missing; set ANDROID_SDK_ROOT or ANDROID_HOME.")
+    }
+    environment "ANDROID_NDK_HOME", "${androidSdkPath}/ndk/${ndk_version}"
+    commandLine(
+        "cargo", "ndk",
+        "-t", "arm64-v8a",
+        "-t", "armeabi-v7a",
+        "-t", "x86_64",
+        "-t", "x86",
+        "-o", "../app/src/main/jniLibs",
+        "build", "--release",
+        "--manifest-path", "Cargo.toml",
+    )
+}
+
+tasks.named("preBuild").configure {
+    dependsOn("buildRustMusicCore")
 }
 
 dependencies {
@@ -92,6 +120,18 @@ dependencies {
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlin_coroutines_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-guava:$kotlin_coroutines_version"
+
+    // Incremental Jetpack Compose migration. Existing Views screens stay intact.
+    implementation platform("androidx.compose:compose-bom:2026.09.00")
+    implementation "androidx.compose.ui:ui"
+    implementation "androidx.compose.ui:ui-graphics"
+    implementation "androidx.compose.ui:ui-tooling-preview"
+    implementation "androidx.compose.foundation:foundation"
+    implementation "androidx.compose.animation:animation"
+    implementation "androidx.compose.material3:material3:1.5.0-beta01"
+    implementation "androidx.compose.material:material-icons-extended"
+    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.11.0"
+    debugImplementation "androidx.compose.ui:ui-tooling"
 
     // --- SUPPORT ---
 
@@ -182,4 +222,40 @@ dependencies {
 
     // Fuzzy search
     implementation 'org.apache.commons:commons-text:1.15.0'
+}
+
+
+// The pinned Media3 submodule contains a stale experimental-HAGC argument in
+// ProgressiveMediaSource.createSourceDescriptor(). Its constructor no longer accepts
+// that argument. Apply a narrow, idempotent compatibility patch before any Java
+// compilation so both local builds and CI compile the exact same source.
+def patchMedia3ProgressiveSource = tasks.register("patchMedia3ProgressiveSource") {
+    def sourceFile = rootProject.file("media/libraries/exoplayer/src/main/java/androidx/media3/exoplayer/source/ProgressiveMediaSource.java")
+    inputs.file(sourceFile)
+    outputs.file(sourceFile)
+    doLast {
+        if (!sourceFile.isFile()) {
+            throw new GradleException("Vendored Media3 source is missing: ${sourceFile}")
+        }
+        def source = sourceFile.getText("UTF-8")
+        def staleDeclaration = "      boolean enableHagcPlayback = experimentalEnableHagcPlayback;\n"
+        def staleArgument = "                  enableHagcPlayback,\n"
+        if (source.contains(staleDeclaration) && source.contains(staleArgument)) {
+            source = source.replace(staleDeclaration, "").replace(staleArgument, "")
+            sourceFile.setText(source, "UTF-8")
+            logger.lifecycle("Applied Media3 ProgressiveMediaSource constructor compatibility patch.")
+        } else if (source.contains("experimentalEnableHagcPlayback")) {
+            throw new GradleException("Media3 ProgressiveMediaSource changed; refusing to apply an unsafe compatibility patch.")
+        } else {
+            logger.lifecycle("Media3 ProgressiveMediaSource compatibility patch is already present.")
+        }
+    }
+}
+
+gradle.projectsEvaluated {
+    rootProject.allprojects.each { project ->
+        project.tasks.matching { it.name.contains("JavaWithJavac") }.configureEach {
+            dependsOn(patchMedia3ProgressiveSource)
+        }
+    }
 }

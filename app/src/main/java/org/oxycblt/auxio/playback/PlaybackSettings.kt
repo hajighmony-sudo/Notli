@@ -37,6 +37,14 @@ import timber.log.Timber as L
 interface PlaybackSettings : Settings<PlaybackSettings.Listener> {
     /** The action to display on the playback bar. */
     val barAction: ActionMode
+    /** Whether music rhythm should drive short device haptic pulses. */
+    val adaptiveHapticsEnabled: Boolean
+    /** Haptic analysis profile: 0=bass, 1=rhythm, 2=smart. */
+    val adaptiveHapticsMode: Int
+    /** User-selected haptic output level, from 1 (subtle) to 5 (strong). */
+    val adaptiveHapticsIntensity: Int
+    /** Beat detection sensitivity, from 1 (low) to 5 (high). */
+    val adaptiveHapticsSensitivity: Int
     /** Whether to start playback when a headset is plugged in. */
     val headsetAutoplay: Boolean
     /** The current ReplayGain configuration. */
@@ -98,6 +106,19 @@ class PlaybackSettingsImpl @Inject constructor(@ApplicationContext context: Cont
             ActionMode.fromIntCode(
                 sharedPreferences.getInt(getString(R.string.set_key_bar_action), Int.MIN_VALUE),
             ) ?: ActionMode.NEXT
+
+    override val adaptiveHapticsEnabled: Boolean
+        get() = sharedPreferences.getBoolean(getString(R.string.set_key_adaptive_haptics), false)
+
+    override val adaptiveHapticsMode: Int
+        get() = sharedPreferences.getInt(getString(R.string.set_key_adaptive_haptics_mode), 2)
+
+    override val adaptiveHapticsIntensity: Int
+        get() = sharedPreferences.getInt(getString(R.string.set_key_adaptive_haptics_intensity), 3)
+
+    override val adaptiveHapticsSensitivity: Int
+        get() =
+            sharedPreferences.getInt(getString(R.string.set_key_adaptive_haptics_sensitivity), 3)
 
     override val headsetAutoplay: Boolean
         get() = sharedPreferences.getBoolean(getString(R.string.set_key_headset_autoplay), false)

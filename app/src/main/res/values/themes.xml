@@ -783,4 +783,38 @@
         <item name="colorSurfaceContainerHigh">@color/grey_surfaceContainerHigh</item>
         <item name="colorSurfaceContainerHighest">@color/grey_surfaceContainerHighest</item>
     </style>
+
+    <!-- NOTLI AURORA: custom cyan / violet / gold design palette. -->
+    <style name="Theme.Auxio.Aurora" parent="Theme.Auxio.Cyan">
+        <item name="colorPrimary">@color/aurora_primary</item>
+        <item name="colorOnPrimary">@color/aurora_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/aurora_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/aurora_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/aurora_secondary</item>
+        <item name="colorOnSecondary">@color/aurora_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/aurora_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/aurora_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/aurora_tertiary</item>
+        <item name="colorOnTertiary">@color/aurora_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/aurora_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/aurora_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/aurora_background</item>
+        <item name="colorOnBackground">@color/aurora_onBackground</item>
+        <item name="colorSurface">@color/aurora_surface</item>
+        <item name="colorOnSurface">@color/aurora_onSurface</item>
+        <item name="colorSurfaceVariant">@color/aurora_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/aurora_onSurfaceVariant</item>
+        <item name="colorOutline">@color/aurora_outline</item>
+        <item name="colorOutlineVariant">@color/aurora_outlineVariant</item>
+        <item name="colorSurfaceInverse">@color/aurora_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/aurora_inverseOnSurface</item>
+        <item name="colorPrimaryInverse">@color/aurora_inversePrimary</item>
+        <item name="colorSurfaceDim">@color/aurora_surfaceDim</item>
+        <item name="colorSurfaceBright">@color/aurora_surfaceBright</item>
+        <item name="colorSurfaceContainerLowest">@color/aurora_surfaceContainerLowest</item>
+        <item name="colorSurfaceContainerLow">@color/aurora_surfaceContainerLow</item>
+        <item name="colorSurfaceContainer">@color/aurora_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/aurora_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/aurora_surfaceContainerHighest</item>
+    </style>
 </resources>

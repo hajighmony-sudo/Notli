@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="aurora_base_text_size" type="id" />
+    <item name="aurora_base_padding" type="id" />
+    <item name="aurora_base_icon_size" type="id" />
+    <item name="aurora_recycler_hook" type="id" />
+    <item name="aurora_base_margins" type="id" />
+</resources>

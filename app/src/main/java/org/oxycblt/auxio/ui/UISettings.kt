@@ -44,6 +44,40 @@ interface UISettings : Settings<UISettings.Listener> {
     /** Whether to round additional UI elements that require album covers to be rounded. */
     val roundMode: Boolean
 
+    /** User-defined Aurora palette overrides. Null means use the theme default. */
+    fun auroraColor(key: String): Int?
+
+    fun auroraColorHex(key: String): String?
+
+    fun setAuroraColor(key: String, hex: String)
+
+    fun resetAuroraColors()
+
+    /** Global layout controls. */
+    val auroraFontScale: Float
+    val auroraIconScale: Float
+    val auroraDensity: Int
+
+    fun resetAuroraLayout()
+
+    /** Motion profile: 0 = off, 1 = soft, 2 = expressive. */
+    val auroraMotion: Int
+    val auroraMotionSpeed: Int
+
+    fun resetAuroraMotion()
+
+    companion object {
+        const val AURORA_PRIMARY = "notli_aurora_primary"
+        const val AURORA_SECONDARY = "notli_aurora_secondary"
+        const val AURORA_SURFACE = "notli_aurora_surface"
+        const val AURORA_BACKGROUND = "notli_aurora_background"
+        const val AURORA_FONT_SCALE = "notli_aurora_font_scale"
+        const val AURORA_ICON_SCALE = "notli_aurora_icon_scale"
+        const val AURORA_DENSITY = "notli_aurora_density"
+        const val AURORA_MOTION = "notli_aurora_motion"
+        const val AURORA_MOTION_SPEED = "notli_aurora_motion_speed"
+    }
+
     interface Listener {
         /** Called when [roundMode] changes. */
         fun onRoundModeChanged()
@@ -77,6 +111,59 @@ class UISettingsImpl @Inject constructor(@ApplicationContext context: Context) :
     override val roundMode: Boolean
         get() = sharedPreferences.getBoolean(getString(R.string.set_key_round_mode), true)
 
+    override fun auroraColor(key: String): Int? =
+        auroraColorHex(key)?.let {
+            runCatching { android.graphics.Color.parseColor(it) }.getOrNull()
+        }
+
+    override fun auroraColorHex(key: String): String? =
+        if (key in AURORA_COLOR_KEYS) sharedPreferences.getString(key, null) else null
+
+    override fun setAuroraColor(key: String, hex: String) {
+        require(key in AURORA_COLOR_KEYS)
+        val normalized = hex.trim().let { if (it.startsWith("#")) it else "#$it" }
+        require(normalized.matches(Regex("#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})")))
+        sharedPreferences.edit { putString(key, normalized.uppercase()) }
+    }
+
+    override fun resetAuroraColors() {
+        sharedPreferences.edit { AURORA_COLOR_KEYS.forEach { remove(it) } }
+    }
+
+    override val auroraFontScale: Float
+        get() = sharedPreferences.getInt(UISettings.AURORA_FONT_SCALE, 100).coerceIn(80, 140) / 100f
+
+    override val auroraIconScale: Float
+        get() = sharedPreferences.getInt(UISettings.AURORA_ICON_SCALE, 100).coerceIn(75, 150) / 100f
+
+    override val auroraDensity: Int
+        get() =
+            (sharedPreferences.getString(UISettings.AURORA_DENSITY, "1")?.toIntOrNull() ?: 1)
+                .coerceIn(0, 2)
+
+    override fun resetAuroraLayout() {
+        sharedPreferences.edit {
+            remove(UISettings.AURORA_FONT_SCALE)
+            remove(UISettings.AURORA_ICON_SCALE)
+            remove(UISettings.AURORA_DENSITY)
+        }
+    }
+
+    override val auroraMotion: Int
+        get() =
+            (sharedPreferences.getString(UISettings.AURORA_MOTION, "2")?.toIntOrNull() ?: 2)
+                .coerceIn(0, 2)
+
+    override val auroraMotionSpeed: Int
+        get() = sharedPreferences.getInt(UISettings.AURORA_MOTION_SPEED, 100).coerceIn(50, 150)
+
+    override fun resetAuroraMotion() {
+        sharedPreferences.edit {
+            remove(UISettings.AURORA_MOTION)
+            remove(UISettings.AURORA_MOTION_SPEED)
+        }
+    }
+
     override fun migrate() {
         if (sharedPreferences.contains(OLD_KEY_ACCENT3)) {
             L.d("Migrating $OLD_KEY_ACCENT3")
@@ -106,5 +193,12 @@ class UISettingsImpl @Inject constructor(@ApplicationContext context: Context) :
 
     private companion object {
         const val OLD_KEY_ACCENT3 = "auxio_accent"
+        val AURORA_COLOR_KEYS =
+            setOf(
+                UISettings.AURORA_PRIMARY,
+                UISettings.AURORA_SECONDARY,
+                UISettings.AURORA_SURFACE,
+                UISettings.AURORA_BACKGROUND,
+            )
     }
 }

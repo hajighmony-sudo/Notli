@@ -104,7 +104,7 @@ class AuxioService :
 
     override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaItem>>) {
         val maximumRootChildLimit = getRootChildrenLimit()
-        musicFragment.getChildren(parentId, maximumRootChildLimit, result)
+        musicFragment.getChildren(parentId, maximumRootChildLimit, null, result)
     }
 
     override fun onLoadChildren(
@@ -113,7 +113,7 @@ class AuxioService :
         options: Bundle,
     ) {
         val maximumRootChildLimit = getRootChildrenLimit()
-        musicFragment.getChildren(parentId, maximumRootChildLimit, result)
+        musicFragment.getChildren(parentId, maximumRootChildLimit, options, result)
     }
 
     override fun onSearch(query: String, extras: Bundle?, result: Result<MutableList<MediaItem>>) {
@@ -121,10 +121,13 @@ class AuxioService :
     }
 
     private fun getRootChildrenLimit(): Int {
-        return browserRootHints?.getInt(
-            MediaConstants.BROWSER_ROOT_HINTS_KEY_ROOT_CHILDREN_LIMIT,
-            4,
-        ) ?: 4
+        // A malformed or overly restrictive host hint must never make the root
+        // browser tree throw while calculating the "More" category.
+        return (browserRootHints?.getInt(
+                MediaConstants.BROWSER_ROOT_HINTS_KEY_ROOT_CHILDREN_LIMIT,
+                4,
+            ) ?: 4)
+            .coerceAtLeast(1)
     }
 
     override fun updateForeground(change: ForegroundListener.Change) {

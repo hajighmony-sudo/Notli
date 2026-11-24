@@ -173,4 +173,18 @@
         <item name="colorSurfaceContainerHigh">@color/grey_surfaceContainerHigh_black</item>
         <item name="colorSurfaceContainerHighest">@color/grey_surfaceContainerHighest_black</item>
     </style>
+
+    <!-- OLED variant keeps the Aurora accents but uses true-black surfaces. -->
+    <style name="Theme.Auxio.Aurora.Black" parent="Theme.Auxio.Aurora">
+        <item name="android:colorBackground">@color/aurora_black_background</item>
+        <item name="colorSurface">@color/aurora_black_surface</item>
+        <item name="colorSurfaceVariant">@color/aurora_black_surfaceVariant</item>
+        <item name="colorSurfaceDim">@color/aurora_black_surfaceDim</item>
+        <item name="colorSurfaceBright">@color/aurora_black_surfaceBright</item>
+        <item name="colorSurfaceContainerLowest">@color/aurora_black_surfaceContainerLowest</item>
+        <item name="colorSurfaceContainerLow">@color/aurora_black_surfaceContainerLow</item>
+        <item name="colorSurfaceContainer">@color/aurora_black_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/aurora_black_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/aurora_black_surfaceContainerHighest</item>
+    </style>
 </resources>

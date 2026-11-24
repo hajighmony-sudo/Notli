@@ -19,6 +19,7 @@
 package org.oxycblt.auxio
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
@@ -26,11 +27,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.WindowCompat
 import androidx.core.view.updatePadding
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.preference.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import org.oxycblt.auxio.databinding.ActivityMainBinding
 import org.oxycblt.auxio.playback.PlaybackViewModel
 import org.oxycblt.auxio.playback.state.DeferredPlayback
+import org.oxycblt.auxio.ui.AuroraAppearance
 import org.oxycblt.auxio.ui.UISettings
 import org.oxycblt.auxio.util.isNight
 import org.oxycblt.auxio.util.systemBarInsetsCompat
@@ -54,20 +59,50 @@ import timber.log.Timber as L
 class MainActivity : AppCompatActivity() {
     private val playbackModel: PlaybackViewModel by viewModels()
     @Inject lateinit var uiSettings: UISettings
+    private var appearanceRoot: View? = null
+    private val appearanceRefresh = Runnable {
+        appearanceRoot?.let { AuroraAppearance.apply(it, uiSettings) }
+    }
+    private val appearancePreferenceListener =
+        SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key?.startsWith("notli_aurora_") == true) {
+                appearanceRoot?.let { root ->
+                    root.removeCallbacks(appearanceRefresh)
+                    root.postDelayed(appearanceRefresh, 80L)
+                }
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupTheme()
         // Inflate the views after setting up the theme so that the theme attributes are applied.
+        supportFragmentManager.registerFragmentLifecycleCallbacks(
+            object : FragmentManager.FragmentLifecycleCallbacks() {
+                override fun onFragmentViewCreated(
+                    fm: FragmentManager,
+                    fragment: Fragment,
+                    view: View,
+                    savedInstanceState: Bundle?,
+                ) {
+                    AuroraAppearance.apply(view, uiSettings)
+                }
+            },
+            true,
+        )
         val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        appearanceRoot = binding.root
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .registerOnSharedPreferenceChangeListener(appearancePreferenceListener)
         setupEdgeToEdge(binding.root)
+        AuroraAppearance.apply(binding.root, uiSettings)
+        binding.root.post { AuroraAppearance.apply(binding.root, uiSettings) }
         L.d("Activity created")
     }
 
     override fun onResume() {
         super.onResume()
-
         startService(
             Intent(this, AuxioService::class.java)
                 .setAction(AuxioService.ACTION_START)
@@ -78,6 +113,14 @@ class MainActivity : AppCompatActivity() {
             // No intent action to do, just restore the previously saved state.
             playbackModel.playDeferred(DeferredPlayback.RestoreState(false))
         }
+    }
+
+    override fun onDestroy() {
+        appearanceRoot?.removeCallbacks(appearanceRefresh)
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .unregisterOnSharedPreferenceChangeListener(appearancePreferenceListener)
+        appearanceRoot = null
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -91,11 +134,11 @@ class MainActivity : AppCompatActivity() {
         // Apply the color scheme. The black theme requires it's own set of themes since
         // it's not possible to modify the themes at run-time.
         if (isNight && uiSettings.useBlackTheme) {
-            L.d("Applying black theme [accent ${uiSettings.accent}]")
-            setTheme(uiSettings.accent.blackTheme)
+            L.d("Applying NOTLI AURORA OLED theme")
+            setTheme(R.style.Theme_Auxio_Aurora_Black)
         } else {
-            L.d("Applying normal theme [accent ${uiSettings.accent}]")
-            setTheme(uiSettings.accent.theme)
+            L.d("Applying NOTLI AURORA theme")
+            setTheme(R.style.Theme_Auxio_Aurora)
         }
     }
 

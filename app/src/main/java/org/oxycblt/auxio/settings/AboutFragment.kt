@@ -18,17 +18,16 @@
  
 package org.oxycblt.auxio.settings
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.text.format.Formatter
 import android.view.LayoutInflater
-import androidx.core.net.toUri
 import androidx.core.view.updatePadding
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.transition.MaterialFadeThrough
 import dagger.hilt.android.AndroidEntryPoint
+import java.text.DateFormat
+import java.util.Date
 import org.oxycblt.auxio.BuildConfig
 import org.oxycblt.auxio.R
 import org.oxycblt.auxio.databinding.FragmentAboutBinding
@@ -36,8 +35,6 @@ import org.oxycblt.auxio.music.MusicViewModel
 import org.oxycblt.auxio.playback.formatDurationMs
 import org.oxycblt.auxio.ui.ViewBindingFragment
 import org.oxycblt.auxio.util.collectImmediately
-import org.oxycblt.auxio.util.openInBrowser
-import org.oxycblt.auxio.util.startIntent
 import org.oxycblt.auxio.util.systemBarInsetsCompat
 
 /**
@@ -67,31 +64,35 @@ class AboutFragment : ViewBindingFragment<FragmentAboutBinding>() {
             insets
         }
         binding.aboutVersion.text = BuildConfig.VERSION_NAME
-        binding.aboutCode.setOnClickListener { requireContext().openInBrowser(LINK_SOURCE) }
-        binding.aboutWiki.setOnClickListener { requireContext().openInBrowser(LINK_WIKI) }
-        binding.aboutLicenses.setOnClickListener { requireContext().openInBrowser(LINK_LICENSES) }
-        binding.aboutProfile.setOnClickListener { requireContext().openInBrowser(LINK_PROFILE) }
-        binding.aboutDonate.setOnClickListener { requireContext().openInBrowser(LINK_DONATE) }
-        binding.aboutFeedbackGithub.setOnClickListener {
-            requireContext().openInBrowser(LINK_NEW_ISSUE)
-        }
-        binding.aboutFeedbackEmail.setOnClickListener {
-            requireContext().sendEmail("feedback@auxio.app")
-        }
-
-        binding.aboutSupportersBkkellyh.setOnClickListener {
-            requireContext().openInBrowser(LINK_BKKELLYH)
-        }
-        binding.aboutSupportersGruntstumper.setOnClickListener {
-            requireContext().openInBrowser(LINK_GRUNTSTUMPER)
-        }
-
-        binding.aboutSupportersPromo.setOnClickListener {
-            requireContext().openInBrowser(LINK_DONATE)
-        }
-
         // VIEWMODEL SETUP
         collectImmediately(musicModel.statistics, ::updateStatistics)
+        updateListeningStatistics()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateListeningStatistics()
+    }
+
+    private fun updateListeningStatistics() {
+        val stats = requireContext().getSharedPreferences("notli_listening_stats", 0)
+        val listeningMs = stats.getLong("listening_time_ms", 0L)
+        val tracksPlayed = stats.getLong("tracks_played", 0L)
+        val listeningSessions = stats.getLong("listening_sessions", 0L)
+        val todayListeningMs = stats.getLong("daily_listening_time_ms", 0L)
+        val lastPlayedAt = stats.getLong("last_played_at", 0L)
+        val lastPlayed =
+            if (lastPlayedAt > 0L) DateFormat.getDateTimeInstance().format(Date(lastPlayedAt))
+            else getString(R.string.lbl_never_played)
+        val binding = requireBinding()
+        binding.aboutListeningTime.text =
+            getString(R.string.fmt_listening_time, listeningMs.formatDurationMs(false))
+        binding.aboutTracksPlayed.text = getString(R.string.fmt_tracks_played, tracksPlayed)
+        binding.aboutTodayListening.text =
+            getString(R.string.fmt_listening_today, todayListeningMs.formatDurationMs(false))
+        binding.aboutListeningSessions.text =
+            getString(R.string.fmt_listening_sessions, listeningSessions)
+        binding.aboutLastPlayed.text = getString(R.string.fmt_last_played, lastPlayed)
     }
 
     private fun updateStatistics(statistics: MusicViewModel.Statistics?) {
@@ -114,21 +115,5 @@ class AboutFragment : ViewBindingFragment<FragmentAboutBinding>() {
                 R.string.fmt_lib_total_size,
                 Formatter.formatFileSize(context, statistics?.totalSizeBytes ?: 0L),
             )
-    }
-
-    private fun Context.sendEmail(recipient: String) {
-        val intent = Intent(Intent.ACTION_SENDTO).apply { data = "mailto:$recipient".toUri() }
-        startIntent(intent)
-    }
-
-    private companion object {
-        const val LINK_SOURCE = "https://github.com/OxygenCobalt/Auxio"
-        const val LINK_WIKI = "$LINK_SOURCE/wiki"
-        const val LINK_LICENSES = "$LINK_WIKI/Licenses"
-        const val LINK_NEW_ISSUE = "$LINK_SOURCE/issues/new"
-        const val LINK_PROFILE = "https://github.com/OxygenCobalt"
-        const val LINK_BKKELLYH = "https://github.com/bkkellyh"
-        const val LINK_GRUNTSTUMPER = "https://github.com/gruntstumper"
-        const val LINK_DONATE = "https://github.com/sponsors/OxygenCobalt"
     }
 }

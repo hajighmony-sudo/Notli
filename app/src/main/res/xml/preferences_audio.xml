@@ -2,12 +2,153 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     app:title="@string/set_audio">
+    <PreferenceCategory android:title="@string/set_sound_effects">
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="0"
+            app:entries="@array/entries_audio_preset"
+            app:entryValues="@array/values_audio_preset"
+            app:key="@string/set_key_eq_preset"
+            app:title="@string/set_equalizer_preset"
+            app:summary="@string/set_equalizer_preset_desc" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="@string/set_key_bass_boost"
+            app:title="@string/set_bass_boost"
+            app:summary="@string/set_bass_boost_desc" />
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="60"
+            app:dependency="@string/set_key_bass_boost"
+            app:entries="@array/entries_effect_strength"
+            app:entryValues="@array/values_effect_strength"
+            app:key="@string/set_key_bass_strength"
+            app:title="@string/set_bass_strength"
+            app:summary="@string/set_bass_strength_desc" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="@string/set_key_spatial_audio"
+            app:title="@string/set_spatial_audio"
+            app:summary="@string/set_spatial_audio_desc" />
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="60"
+            app:dependency="@string/set_key_spatial_audio"
+            app:entries="@array/entries_effect_strength"
+            app:entryValues="@array/values_effect_strength"
+            app:key="@string/set_key_spatial_strength"
+            app:title="@string/set_spatial_strength"
+            app:summary="@string/set_spatial_strength_desc" />
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="0"
+            app:entries="@array/entries_pitch_effect"
+            app:entryValues="@array/values_pitch_effect"
+            app:key="@string/set_key_pitch_effect"
+            app:title="@string/set_pitch_effect"
+            app:summary="@string/set_pitch_effect_desc" />
+
+        <SeekBarPreference
+            app:defaultValue="0"
+            app:key="@string/set_key_echo_strength"
+            app:min="0"
+            android:max="100"
+            app:seekBarIncrement="1"
+            app:showSeekBarValue="true"
+            app:title="@string/set_echo_strength"
+            app:summary="@string/set_echo_strength_desc" />
+
+        <PreferenceCategory android:title="@string/set_manual_equalizer">
+            <SeekBarPreference
+                app:defaultValue="12"
+                app:key="@string/set_key_eq_60"
+                app:min="0"
+                android:max="24"
+                app:seekBarIncrement="1"
+                app:showSeekBarValue="true"
+                app:title="@string/set_eq_60" />
+            <SeekBarPreference
+                app:defaultValue="12"
+                app:key="@string/set_key_eq_230"
+                app:min="0"
+                android:max="24"
+                app:seekBarIncrement="1"
+                app:showSeekBarValue="true"
+                app:title="@string/set_eq_230" />
+            <SeekBarPreference
+                app:defaultValue="12"
+                app:key="@string/set_key_eq_910"
+                app:min="0"
+                android:max="24"
+                app:seekBarIncrement="1"
+                app:showSeekBarValue="true"
+                app:title="@string/set_eq_910" />
+            <SeekBarPreference
+                app:defaultValue="12"
+                app:key="@string/set_key_eq_3600"
+                app:min="0"
+                android:max="24"
+                app:seekBarIncrement="1"
+                app:showSeekBarValue="true"
+                app:title="@string/set_eq_3600" />
+            <SeekBarPreference
+                app:defaultValue="12"
+                app:key="@string/set_key_eq_14000"
+                app:min="0"
+                android:max="24"
+                app:seekBarIncrement="1"
+                app:showSeekBarValue="true"
+                app:title="@string/set_eq_14000" />
+        </PreferenceCategory>
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/set_playback">
 
         <SwitchPreferenceCompat
             app:key="@string/set_key_headset_autoplay"
             app:summary="@string/set_headset_autoplay_desc"
             app:title="@string/set_headset_autoplay" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="@string/set_key_adaptive_haptics"
+            app:summary="@string/set_adaptive_haptics_desc"
+            app:title="@string/set_adaptive_haptics" />
+
+        <Preference
+            app:key="adaptive_haptics_test"
+            app:dependency="@string/set_key_adaptive_haptics"
+            app:title="@string/set_haptics_test"
+            app:summary="@string/set_haptics_test_desc" />
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="2"
+            app:dependency="@string/set_key_adaptive_haptics"
+            app:entries="@array/entries_adaptive_haptics_mode"
+            app:entryValues="@array/values_adaptive_haptics_mode"
+            app:key="@string/set_key_adaptive_haptics_mode"
+            app:title="@string/set_haptics_mode"
+            app:summary="@string/set_haptics_mode_desc" />
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="3"
+            app:dependency="@string/set_key_adaptive_haptics"
+            app:entries="@array/entries_adaptive_haptics_intensity"
+            app:entryValues="@array/values_adaptive_haptics_intensity"
+            app:key="@string/set_key_adaptive_haptics_intensity"
+            app:title="@string/set_haptics_intensity"
+            app:summary="@string/set_haptics_intensity_desc" />
+
+        <org.oxycblt.auxio.settings.ui.IntListPreference
+            app:defaultValue="3"
+            app:dependency="@string/set_key_adaptive_haptics"
+            app:entries="@array/entries_adaptive_haptics_sensitivity"
+            app:entryValues="@array/values_adaptive_haptics_sensitivity"
+            app:key="@string/set_key_adaptive_haptics_sensitivity"
+            app:title="@string/set_haptics_sensitivity"
+            app:summary="@string/set_haptics_sensitivity_desc" />
 
         <SwitchPreferenceCompat
             app:defaultValue="true"
